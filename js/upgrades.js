@@ -97,6 +97,10 @@ const Upgrades = {
         if (this.options[index]) {
             this.options[index].apply();
             Game.resurrections++;
+            
+            // Restaurer les vies lors de la résurrection
+            Game.lives = 3;
+            
             Game.state = 'playing';
             this.options = [];
             Audio.playSoundEffect('revive');

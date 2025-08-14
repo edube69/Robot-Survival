@@ -6,9 +6,9 @@ const CONFIG = {
         HEIGHT: 1800
     },
     
-    // Dimensions du canvas
+    // Dimensions du canvas (ratio de référence)
     CANVAS: {
-        WIDTH: 800,
+        WIDTH: 1000,
         HEIGHT: 600
     },
     
@@ -27,7 +27,18 @@ const CONFIG = {
     
     // Configuration de la caméra
     CAMERA: {
-        FOLLOW_SPEED: 0.1
+        FOLLOW_SPEED: 0.1,
+        ZOOM: 1.8 // Zoom > 1 rapproche la caméra (tout apparaît plus gros)
+    },
+    
+    // Sol / motif du fond
+    FLOOR: {
+        TILE: 64, // taille de la tuile en pixels (unités monde)
+        LINE_COLOR: 'rgba(0,255,255,0.07)',
+        MAJOR_LINE_COLOR: 'rgba(0,255,255,0.12)',
+        DOT_COLOR: 'rgba(0,255,255,0.10)',
+        DOT_SIZE: 2,
+        MAJOR_EVERY: 4 // une ligne renforcée toutes les N tuiles
     },
     
     // Configuration des ennemis
@@ -42,7 +53,9 @@ const CONFIG = {
                 color: '#f0f', 
                 health: 1, 
                 points: 100, 
-                shape: 'triangle' 
+                shape: 'scout',
+                name: 'Scout',
+                description: 'Fast and agile recon unit'
             },
             fast: { 
                 radius: 4, 
@@ -51,7 +64,9 @@ const CONFIG = {
                 color: '#f44', 
                 health: 1, 
                 points: 150, 
-                shape: 'diamond' 
+                shape: 'interceptor',
+                name: 'Interceptor',
+                description: 'High-speed assault drone'
             },
             tank: { 
                 radius: 11, 
@@ -60,7 +75,9 @@ const CONFIG = {
                 color: '#84f', 
                 health: 4, 
                 points: 400, 
-                shape: 'hexagon' 
+                shape: 'crusher',
+                name: 'Crusher',
+                description: 'Heavy armored destroyer'
             },
             splitter: { 
                 radius: 8, 
@@ -69,7 +86,9 @@ const CONFIG = {
                 color: '#f80', 
                 health: 3, 
                 points: 350, 
-                shape: 'star' 
+                shape: 'shredder',
+                name: 'Shredder',
+                description: 'Multi-weapon platform'
             }
         }
     },
@@ -80,12 +99,25 @@ const CONFIG = {
         COUNT: 8
     },
     
-    // Configuration des gemmes
+    // Configuration des gemmes/pièces d'or
     CURRENCY: {
         HIGH_VALUE_CHANCE: 0.2,
         HIGH_VALUE: 3,
         LOW_VALUE: 1,
-        MAGNET_SPEED: 6
+        MAGNET_SPEED: 6,
+        SPIN_SPEED: 0.08, // vitesse de rotation
+        COLORS: {
+            LOW: {
+                BRIGHT: '#FFEF00',  // jaune plus vif
+                MEDIUM: '#FFD700',  // or classique
+                DARK: '#FFA500'     // or orange pour les reflets
+            },
+            HIGH: {
+                BRIGHT: '#FFFF00',  // or brillant
+                MEDIUM: '#FFD700',  // or classique
+                DARK: '#FFA500'     // or moyen
+            }
+        }
     },
     
     // Configuration des orbes

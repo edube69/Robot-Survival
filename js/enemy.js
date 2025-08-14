@@ -58,7 +58,12 @@ const Enemy = {
             maxHealth: enemyData.health,
             points: enemyData.points,
             shape: enemyData.shape,
-            type: enemyType
+            type: enemyType,
+            // Propriétés d'animation
+            animTime: Math.random() * Math.PI * 2,
+            thrusterFlicker: 0,
+            rotationAngle: Math.random() * Math.PI * 2,
+            pulsePhase: Math.random() * Math.PI * 2
         };
         
         this.list.push(enemy);
@@ -79,6 +84,12 @@ const Enemy = {
                 enemy.x += (dx / distance) * enemy.speed;
                 enemy.y += (dy / distance) * enemy.speed;
             }
+            
+            // Mise à jour des animations
+            enemy.animTime += 0.1;
+            enemy.thrusterFlicker = Math.random();
+            enemy.rotationAngle += (enemy.type === 'fast' ? 0.15 : 0.05);
+            enemy.pulsePhase += 0.08;
             
             // Collision avec le joueur
             const playerDistance = Math.sqrt((enemy.x - Player.data.x) ** 2 + (enemy.y - Player.data.y) ** 2);

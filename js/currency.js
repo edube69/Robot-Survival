@@ -8,16 +8,18 @@ const Currency = {
     
     create(x, y) {
         const value = Math.random() < CONFIG.CURRENCY.HIGH_VALUE_CHANCE ? CONFIG.CURRENCY.HIGH_VALUE : CONFIG.CURRENCY.LOW_VALUE;
+        const colors = value === CONFIG.CURRENCY.HIGH_VALUE ? CONFIG.CURRENCY.COLORS.HIGH : CONFIG.CURRENCY.COLORS.LOW;
         this.list.push({
             x: x + (Math.random() - 0.5) * 20,
             y: y + (Math.random() - 0.5) * 20,
             vx: (Math.random() - 0.5) * 2,
             vy: (Math.random() - 0.5) * 2,
-            radius: value === CONFIG.CURRENCY.HIGH_VALUE ? 5 : 3,
+            radius: value === CONFIG.CURRENCY.HIGH_VALUE ? 6 : 4,
             value: value,
-            color: value === CONFIG.CURRENCY.HIGH_VALUE ? '#0f0' : '#4f4',
+            colors: colors, // stocke les couleurs d'or
             magnetized: false,
-            bobOffset: Math.random() * Math.PI * 2
+            bobOffset: Math.random() * Math.PI * 2,
+            spinAngle: Math.random() * Math.PI * 2 // angle de rotation initial
         });
     },
     
@@ -51,7 +53,7 @@ const Currency = {
             // Collection
             if (distance < drop.radius + Player.data.radius) {
                 Game.gems += drop.value;
-                Particle.createExplosion(drop.x, drop.y, drop.color, 4);
+                Particle.createExplosion(drop.x, drop.y, drop.colors.BRIGHT, 4);
                 this.list.splice(i, 1);
                 Audio.playSoundEffect('gemCollect');
                 
@@ -63,7 +65,9 @@ const Currency = {
                 }
             }
             
+            // Animation: bobbing et rotation
             drop.bobOffset += 0.1;
+            drop.spinAngle += CONFIG.CURRENCY.SPIN_SPEED;
         }
     }
 };

@@ -120,9 +120,61 @@ body {
 /* Game Screen */
 #gameScreen {
     display: none;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* HUD Outside Arena */
+#gameHUD {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+}
+
+.hud-section {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+}
+
+.hud-item label {
+    font-size: 11px;
+    color: #0ff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.hud-item span, #movementMode {
+    font-size: 16px;
+    font-weight: bold;
+    color: #0f0;
+    text-shadow: 0 0 8px currentColor;
+}
+
+#movementMode {
+    color: #ff0;
+    font-size: 14px;
+    text-align: center;
 }
 
 #gameContainer {
@@ -134,15 +186,6 @@ body {
 canvas {
     background: #111;
     display: block;
-}
-
-#ui {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: #0f0;
-    font-size: 18px;
-    text-shadow: 0 0 10px #0f0;
 }
 
 #gameOver, #reviveScreen {
@@ -168,12 +211,45 @@ canvas {
     text-shadow: 0 0 20px #0ff;
 }
 
+/* Game Over options */
+#gameOverActions {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.go-option {
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 0, 0, 0.5);
+    border-radius: 6px;
+    color: #fdd;
+    background: rgba(0, 0, 0, 0.4);
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.go-option:hover {
+    background: rgba(255, 0, 0, 0.08);
+    border-color: #f44;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
 .revive-option {
     margin: 10px 0;
     padding: 10px;
     border: 1px solid #0ff;
     border-radius: 5px;
     background: rgba(0, 0, 0, 0.5);
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.revive-option:hover {
+    background: rgba(0, 255, 255, 0.08);
+    border-color: #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    transform: translateY(-2px);
 }
 
 .revive-option h4 {
@@ -203,4 +279,34 @@ canvas {
 
 .glow {
     text-shadow: 0 0 10px currentColor;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #gameScreen {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    #gameHUD {
+        flex-direction: column;
+        gap: 15px;
+        padding: 12px;
+    }
+    
+    .hud-section {
+        gap: 15px;
+    }
+    
+    .hud-item {
+        min-width: 60px;
+    }
+    
+    .hud-item label {
+        font-size: 10px;
+    }
+    
+    .hud-item span, #movementMode {
+        font-size: 14px;
+    }
 }
