@@ -1,5 +1,12 @@
+import { CONFIG } from './config.js';
+import { Player } from './player.js';
+import { Particle } from './particle.js';
+import { Audio } from './audio.js';
+import { Enemy } from './enemy.js';
+import { Orb } from './orb.js';
+
 // Module de gestion des gemmes/monnaie
-const Currency = {
+export const Currency = {
     list: [],
     
     init() {
@@ -11,7 +18,7 @@ const Currency = {
         const radius = isHighValue ? 8 : 6;
         const colors = isHighValue ? CONFIG.CURRENCY.COLORS.HIGH : CONFIG.CURRENCY.COLORS.LOW;
         
-        // Vérifier que CONFIG.CURRENCY.COLORS existe
+        // Vï¿½rifier que CONFIG.CURRENCY.COLORS existe
         const safeColors = colors || {
             BRIGHT: '#FFD700',
             MEDIUM: '#FFD700', 
@@ -33,11 +40,11 @@ const Currency = {
         });
     },
     
-    // === NOUVELLE MÉTHODE POUR CRÉER DES LOOT BOXES ===
+    // === NOUVELLE Mï¿½THODE POUR CRï¿½ER DES LOOT BOXES ===
     createLootBox(x, y, lootType) {
         const lootConfig = this.getLootBoxConfig(lootType);
         
-        // Vérifier que lootConfig et lootConfig.color existent
+        // Vï¿½rifier que lootConfig et lootConfig.color existent
         const safeColor = (lootConfig && lootConfig.color) ? lootConfig.color : '#FFD700';
         
         this.list.push({
@@ -46,14 +53,14 @@ const Currency = {
             vx: (Math.random() - 0.5) * 3,
             vy: (Math.random() - 0.5) * 3,
             radius: 12,
-            value: 0, // Valeur spéciale pour les loot boxes
+            value: 0, // Valeur spï¿½ciale pour les loot boxes
             colors: { BRIGHT: safeColor, MEDIUM: safeColor, DARK: safeColor },
             magnetized: false,
             bobOffset: Math.random() * Math.PI * 2,
             spinAngle: Math.random() * Math.PI * 2,
             type: 'lootbox',
             lootType: lootType,
-            // Animation spéciale
+            // Animation spï¿½ciale
             pulsePhase: Math.random() * Math.PI * 2,
             sparkleTimer: 0,
             glowIntensity: 1.0
@@ -66,13 +73,13 @@ const Currency = {
     // Configuration des loot boxes
     getLootBoxConfig(lootType) {
         const configs = {
-            'TREASURE': { color: '#FFD700', probability: 0.25 },    // Réduit pour faire place aux nouvelles
-            'WEAPON': { color: '#FF4444', probability: 0.15 },      // Réduit pour faire place aux nouvelles  
+            'TREASURE': { color: '#FFD700', probability: 0.25 },    // Rï¿½duit pour faire place aux nouvelles
+            'WEAPON': { color: '#FF4444', probability: 0.15 },      // Rï¿½duit pour faire place aux nouvelles  
             'NUKE': { color: '#FF8800', probability: 0.15 },        // Maintenu
             'MAGNET': { color: '#4488FF', probability: 0.1 },       // Maintenu
             // === LOOT BOXES POUR ORBES ===
             'ORB_SHIELD': { color: '#FF8800', probability: 0.15 },  // Ajoute des orbes de protection
-            'ORB_UPGRADE': { color: '#8844FF', probability: 0.1 },  // Améliore les orbes existantes
+            'ORB_UPGRADE': { color: '#8844FF', probability: 0.1 },  // Amï¿½liore les orbes existantes
             // === NOUVELLE LOOT BOX UTILITAIRE ===
             'UTILITY': { color: '#44FF88', probability: 0.1 }       // Upgrades utilitaires (magnet, speed, etc.)
         };
@@ -81,14 +88,14 @@ const Currency = {
     
     // Effets visuels de spawn pour loot box
     createLootBoxSpawnEffects(x, y, color) {
-        // Stocker les coordonnées pour éviter les problèmes avec setTimeout
+        // Stocker les coordonnï¿½es pour ï¿½viter les problï¿½mes avec setTimeout
         const spawnX = x;
         const spawnY = y;
         
-        // Explosion colorée plus importante
+        // Explosion colorï¿½e plus importante
         Particle.createExplosion(spawnX, spawnY, color, 20);
         
-        // Anneaux d'énergie
+        // Anneaux d'ï¿½nergie
         for (let ring = 0; ring < 4; ring++) {
             setTimeout(() => {
                 const radius = 25 + ring * 20;
@@ -104,7 +111,7 @@ const Currency = {
             }, ring * 200);
         }
         
-        // Son spécial
+        // Son spï¿½cial
         Audio.playSoundEffect('lootBoxSpawn');
     },
     
@@ -114,7 +121,7 @@ const Currency = {
         for (let i = this.list.length - 1; i >= 0; i--) {
             const drop = this.list[i];
             
-            // Vérification de sécurité : s'assurer que drop existe
+            // Vï¿½rification de sï¿½curitï¿½ : s'assurer que drop existe
             if (!drop || drop.x === undefined || drop.y === undefined) {
                 this.list.splice(i, 1);
                 continue;
@@ -124,14 +131,14 @@ const Currency = {
             const dy = Player.data.y - drop.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // === GESTION SPÉCIALE POUR LES LOOT BOXES ===
+            // === GESTION SPï¿½CIALE POUR LES LOOT BOXES ===
             if (drop.type === 'lootbox') {
                 this.updateLootBox(drop, dx, dy, distance, i);
                 continue;
             }
             
             // === GESTION NORMALE POUR LES GEMS ===
-            // Magnétisme
+            // Magnï¿½tisme
             if (distance < Player.data.magnetRange && !drop.magnetized) {
                 drop.magnetized = true;
             }
@@ -155,11 +162,11 @@ const Currency = {
                 const finalValue = Math.floor(drop.value * gemMultiplier);
                 Game.gems += finalValue;
                 
-                // Vérifier que drop.colors existe avant de l'utiliser
+                // Vï¿½rifier que drop.colors existe avant de l'utiliser
                 if (drop.colors && drop.colors.BRIGHT) {
                     Particle.createExplosion(drop.x, drop.y, drop.colors.BRIGHT, 4);
                 } else {
-                    // Fallback couleur par défaut si colors est undefined
+                    // Fallback couleur par dï¿½faut si colors est undefined
                     Particle.createExplosion(drop.x, drop.y, '#FFD700', 4);
                 }
                 
@@ -172,10 +179,10 @@ const Currency = {
                 } else {
                     console.log(`Collected ${finalValue} gems! Total: ${Game.gems}/${Game.gemsForUpgrade}`);
                 }
-                continue; // ? AJOUT: Éviter l'animation si l'objet est supprimé
+                continue; // ? AJOUT: ï¿½viter l'animation si l'objet est supprimï¿½
             }
             
-            // Animation: bobbing et rotation (seulement si l'objet n'a pas été collecté)
+            // Animation: bobbing et rotation (seulement si l'objet n'a pas ï¿½tï¿½ collectï¿½)
             if (drop.bobOffset !== undefined && drop.spinAngle !== undefined) {
                 drop.bobOffset += 0.1;
                 drop.spinAngle += CONFIG.CURRENCY.SPIN_SPEED || 0.08;
@@ -183,15 +190,15 @@ const Currency = {
         }
     },
     
-    // Mise à jour spéciale pour les loot boxes
+    // Mise ï¿½ jour spï¿½ciale pour les loot boxes
     updateLootBox(lootBox, dx, dy, distance, index) {
-        // === NOUVEAU : MAGNÉTISME POUR LES LOOT BOXES ===
-        // Les loot boxes sont attirées par le magnet mais plus lentement et à plus courte portée
-        const lootBoxMagnetRange = Player.data.magnetRange * 0.7; // 70% de la portée normale
+        // === NOUVEAU : MAGNï¿½TISME POUR LES LOOT BOXES ===
+        // Les loot boxes sont attirï¿½es par le magnet mais plus lentement et ï¿½ plus courte portï¿½e
+        const lootBoxMagnetRange = Player.data.magnetRange * 0.7; // 70% de la portï¿½e normale
         
         if (distance < lootBoxMagnetRange && !lootBox.magnetized) {
             lootBox.magnetized = true;
-            // Effet visuel spécial quand une loot box est magnétisée
+            // Effet visuel spï¿½cial quand une loot box est magnï¿½tisï¿½e
             Particle.createExplosion(lootBox.x, lootBox.y, lootBox.colors.BRIGHT, 6);
         }
         
@@ -203,7 +210,7 @@ const Currency = {
             lootBox.vx += (dx / distance) * attractionForce * 0.3; // Attraction progressive
             lootBox.vy += (dy / distance) * attractionForce * 0.3;
             
-            // Limite la vitesse maximale pour éviter que les loot boxes aillent trop vite
+            // Limite la vitesse maximale pour ï¿½viter que les loot boxes aillent trop vite
             const maxSpeed = 4;
             const currentSpeed = Math.sqrt(lootBox.vx * lootBox.vx + lootBox.vy * lootBox.vy);
             if (currentSpeed > maxSpeed) {
@@ -211,7 +218,7 @@ const Currency = {
                 lootBox.vy = (lootBox.vy / currentSpeed) * maxSpeed;
             }
         } else {
-            // Physique normale pour les loot boxes non-magnétisées
+            // Physique normale pour les loot boxes non-magnï¿½tisï¿½es
             lootBox.vx *= 0.95;
             lootBox.vy *= 0.95;
         }
@@ -219,7 +226,7 @@ const Currency = {
         lootBox.x += lootBox.vx;
         lootBox.y += lootBox.vy;
         
-        // Animation spéciale
+        // Animation spï¿½ciale
         lootBox.bobOffset += 0.08; // Plus lent que les gems
         lootBox.spinAngle += 0.03; // Plus lent
         lootBox.pulsePhase += 0.1;
@@ -227,19 +234,19 @@ const Currency = {
         // Effet de pulsation
         lootBox.glowIntensity = 0.7 + Math.sin(lootBox.pulsePhase) * 0.3;
         
-        // Effet spécial si magnétisé : pulsation plus intense
+        // Effet spï¿½cial si magnï¿½tisï¿½ : pulsation plus intense
         if (lootBox.magnetized) {
             lootBox.glowIntensity += Math.sin(lootBox.pulsePhase * 2) * 0.2;
         }
         
-        // Étincelles occasionnelles
+        // ï¿½tincelles occasionnelles
         lootBox.sparkleTimer++;
         if (lootBox.sparkleTimer > 30 && Math.random() < 0.4) {
             lootBox.sparkleTimer = 0;
             this.createLootBoxSparkles(lootBox);
         }
         
-        // Étincelles magnétiques supplémentaires quand magnétisé
+        // ï¿½tincelles magnï¿½tiques supplï¿½mentaires quand magnï¿½tisï¿½
         if (lootBox.magnetized && Math.random() < 0.3) {
             this.createMagneticSparkles(lootBox);
         }
@@ -250,7 +257,7 @@ const Currency = {
         }
     },
     
-    // Créer des étincelles autour de la loot box
+    // Crï¿½er des ï¿½tincelles autour de la loot box
     createLootBoxSparkles(lootBox) {
         const sparkleCount = 4;
         for (let i = 0; i < sparkleCount; i++) {
@@ -263,7 +270,7 @@ const Currency = {
         }
     },
     
-    // === NOUVELLE MÉTHODE : Étincelles magnétiques pour loot boxes ===
+    // === NOUVELLE Mï¿½THODE : ï¿½tincelles magnï¿½tiques pour loot boxes ===
     createMagneticSparkles(lootBox) {
         const sparkleCount = 2;
         for (let i = 0; i < sparkleCount; i++) {
@@ -272,11 +279,11 @@ const Currency = {
             const sx = lootBox.x + Math.cos(angle) * distance;
             const sy = lootBox.y + Math.sin(angle) * distance;
             
-            // Étincelles bleues pour indiquer l'effet magnétique
+            // ï¿½tincelles bleues pour indiquer l'effet magnï¿½tique
             Particle.createExplosion(sx, sy, '#88BBFF', 1);
         }
         
-        // Traînée magnétique vers le joueur
+        // Traï¿½nï¿½e magnï¿½tique vers le joueur
         if (Player.data && Math.random() < 0.5) {
             const dx = Player.data.x - lootBox.x;
             const dy = Player.data.y - lootBox.y;
@@ -332,7 +339,7 @@ const Currency = {
         }
     },
     
-    // Effet trésor : grosse somme de gems
+    // Effet trï¿½sor : grosse somme de gems
     applyTreasureEffect(lootBox) {
         const baseAmount = 15 + Math.floor(Math.random() * 21); // 15-35 gems
         
@@ -341,11 +348,11 @@ const Currency = {
         const finalAmount = Math.floor(baseAmount * gemMultiplier);
         Game.gems += finalAmount;
         
-        // Stocker les coordonnées AVANT la suppression potentielle
+        // Stocker les coordonnï¿½es AVANT la suppression potentielle
         const treasureX = lootBox.x;
         const treasureY = lootBox.y;
         
-        // Pluie de gems dorées
+        // Pluie de gems dorï¿½es
         for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
@@ -365,7 +372,7 @@ const Currency = {
         }
     },
     
-    // Effet arme : déverrouiller une arme aléatoire
+    // Effet arme : dï¿½verrouiller une arme alï¿½atoire
     applyWeaponEffect(lootBox) {
         const availableWeapons = [];
         
@@ -378,7 +385,7 @@ const Currency = {
             const randomWeapon = availableWeapons[Math.floor(Math.random() * availableWeapons.length)];
             Player.upgrade(randomWeapon.name);
             
-            // Stocker les coordonnées AVANT la suppression potentielle
+            // Stocker les coordonnï¿½es AVANT la suppression potentielle
             const weaponX = lootBox.x;
             const weaponY = lootBox.y;
             
@@ -396,7 +403,7 @@ const Currency = {
             
             console.log(`?? WEAPON UNLOCKED: ${randomWeapon.display}!`);
         } else {
-            // Si toutes les armes sont déjà déverrouillées
+            // Si toutes les armes sont dï¿½jï¿½ dï¿½verrouillï¿½es
             const gemMultiplier = Player.data.gemMultiplier || 1;
             const finalBonus = Math.floor(25 * gemMultiplier);
             Game.gems += finalBonus;
@@ -409,29 +416,29 @@ const Currency = {
         }
     },
     
-    // Effet bombe nucléaire
+    // Effet bombe nuclï¿½aire
     applyNukeEffect(lootBox) {
         const enemiesDestroyed = Enemy.list.length;
         let totalPoints = 0;
         let totalGems = 0;
         
-        // Stocker les coordonnées AVANT la suppression potentielle
+        // Stocker les coordonnï¿½es AVANT la suppression potentielle
         const nukeX = lootBox.x;
         const nukeY = lootBox.y;
         
-        // Calculer récompenses
+        // Calculer rï¿½compenses
         Enemy.list.forEach(enemy => {
             totalPoints += enemy.points;
             totalGems += Enemy.calculateGemValue(enemy);
         });
         
-        // EXPLOSION NUCLÉAIRE !
+        // EXPLOSION NUCLï¿½AIRE !
         this.createNuclearExplosion(nukeX, nukeY);
         
-        // Détruire tous les ennemis
+        // Dï¿½truire tous les ennemis
         Enemy.list = [];
         
-        // Ajouter récompenses
+        // Ajouter rï¿½compenses
         Game.score += totalPoints;
         Game.gems += totalGems;
         
@@ -440,17 +447,17 @@ const Currency = {
         console.log(`?? NUCLEAR STRIKE! ${enemiesDestroyed} enemies destroyed! +${totalPoints} points, +${totalGems} gems`);
     },
     
-    // Effet magnet géant
+    // Effet magnet gï¿½ant
     applyMagnetEffect(lootBox) {
         const gemsCollected = this.list.filter(item => item.type === 'gem').length;
         let totalValue = 0;
         const gemsToCollect = []; // Stocker les infos des gems avant suppression
         
-        // Stocker les coordonnées AVANT la suppression potentielle
+        // Stocker les coordonnï¿½es AVANT la suppression potentielle
         const magnetX = lootBox.x;
         const magnetY = lootBox.y;
         
-        // Effet spirale magnétique
+        // Effet spirale magnï¿½tique
         this.createMagneticEffect(magnetX, magnetY);
         
         // Collecter toutes les gems
@@ -470,7 +477,7 @@ const Currency = {
             }
         }
         
-        // Créer les effets visuels avec les données stockées
+        // Crï¿½er les effets visuels avec les donnï¿½es stockï¿½es
         gemsToCollect.forEach((gemInfo, index) => {
             setTimeout(() => {
                 Particle.createExplosion(gemInfo.x, gemInfo.y, gemInfo.colors.BRIGHT, 4);
@@ -493,12 +500,12 @@ const Currency = {
     
     // Effet ORB_SHIELD : Ajouter 1-2 orbes de protection
     applyOrbShieldEffect(lootBox) {
-        // === NOUVEAU : Vérifier la limite maximale d'orbes ===
-        const maxOrbs = CONFIG.ORBS.MAX_TOTAL || 9; // Ajusté à 9
+        // === NOUVEAU : Vï¿½rifier la limite maximale d'orbes ===
+        const maxOrbs = CONFIG.ORBS.MAX_TOTAL || 9; // Ajustï¿½ ï¿½ 9
         const currentOrbs = Player.data.orbCount || 0;
         
         if (currentOrbs >= maxOrbs) {
-            // Si limite atteinte, donner des gems à la place
+            // Si limite atteinte, donner des gems ï¿½ la place
             const gemMultiplier = Player.data.gemMultiplier || 1;
             const finalBonus = Math.floor(15 * gemMultiplier);
             Game.gems += finalBonus;
@@ -516,7 +523,7 @@ const Currency = {
             return;
         }
         
-        // === RÉDUIT : 1-2 orbes au lieu de 2-3 ===
+        // === Rï¿½DUIT : 1-2 orbes au lieu de 2-3 ===
         const orbsToAdd = Math.min(1 + Math.floor(Math.random() * 2), maxOrbs - currentOrbs); // 1-2 orbes max
         
         if (orbsToAdd <= 0) {
@@ -532,7 +539,7 @@ const Currency = {
             return;
         }
         
-        // Stocker les coordonnées AVANT la suppression potentielle
+        // Stocker les coordonnï¿½es AVANT la suppression potentielle
         const orbX = lootBox.x;
         const orbY = lootBox.y;
         
@@ -553,7 +560,7 @@ const Currency = {
             }, i * 60);
         }
         
-        // Anneaux d'énergie orbitale
+        // Anneaux d'ï¿½nergie orbitale
         for (let ring = 0; ring < 4; ring++) {
             setTimeout(() => {
                 const ringRadius = 25 + ring * 20;
@@ -572,18 +579,18 @@ const Currency = {
         console.log(`?? ORB SHIELD! +${orbsToAdd} orbital defenders added! (${currentOrbs + orbsToAdd}/${maxOrbs})`);
     },
     
-    // Effet ORB_UPGRADE : Améliorer toutes les orbes existantes
+    // Effet ORB_UPGRADE : Amï¿½liorer toutes les orbes existantes
     applyOrbUpgradeEffect(lootBox) {
-        const maxOrbs = CONFIG.ORBS.MAX_TOTAL || 9; // Ajusté à 9
-        const maxSpeed = CONFIG.ORBS.MAX_SPEED || 1.0; // Ajusté à 1.0
+        const maxOrbs = CONFIG.ORBS.MAX_TOTAL || 9; // Ajustï¿½ ï¿½ 9
+        const maxSpeed = CONFIG.ORBS.MAX_SPEED || 1.0; // Ajustï¿½ ï¿½ 1.0
         const currentOrbs = Player.data.orbCount || 0;
         const currentSpeed = Player.data.orbSpeed || 1.0;
         
         if (currentOrbs === 0) {
-            // Si pas d'orbes, en donner une et l'améliorer (si possible)
+            // Si pas d'orbes, en donner une et l'amï¿½liorer (si possible)
             if (currentOrbs < maxOrbs) {
                 Player.upgrade('orbCount', 1);
-                // === RÉDUIT : augmentation de vitesse plus petite ===
+                // === Rï¿½DUIT : augmentation de vitesse plus petite ===
                 Player.upgrade('orbSpeed', Math.min(0.15, maxSpeed - currentSpeed));
                 console.log('?? No orbs detected! Creating and upgrading first orbital defender!');
             } else {
@@ -592,12 +599,12 @@ const Currency = {
                 return;
             }
         } else {
-            // Améliorer les orbes existantes
+            // Amï¿½liorer les orbes existantes
             const availableUpgrades = [];
             
-            // === NOUVEAU : Vérifier les limites avant d'ajouter les upgrades ===
+            // === NOUVEAU : Vï¿½rifier les limites avant d'ajouter les upgrades ===
             if (currentSpeed < maxSpeed) {
-                // === RÉDUIT : augmentation de vitesse plus petite ===
+                // === Rï¿½DUIT : augmentation de vitesse plus petite ===
                 const speedIncrease = Math.min(0.15, maxSpeed - currentSpeed);
                 if (speedIncrease > 0) {
                     availableUpgrades.push({ 
@@ -616,7 +623,7 @@ const Currency = {
                 });
             }
             
-            // Ajouter une orbe supplémentaire seulement si sous la limite
+            // Ajouter une orbe supplï¿½mentaire seulement si sous la limite
             if (currentOrbs < maxOrbs) {
                 availableUpgrades.push({ 
                     name: 'orbCount', 
@@ -626,7 +633,7 @@ const Currency = {
             }
             
             if (availableUpgrades.length === 0) {
-                // Si aucune amélioration possible, donner des gems
+                // Si aucune amï¿½lioration possible, donner des gems
                 const gemMultiplier = Player.data.gemMultiplier || 1;
                 const finalBonus = Math.floor(20 * gemMultiplier);
                 Game.gems += finalBonus;
@@ -639,7 +646,7 @@ const Currency = {
                 return;
             }
             
-            // Appliquer 1 amélioration aléatoire (réduits de 1-2 à 1 pour équilibrer)
+            // Appliquer 1 amï¿½lioration alï¿½atoire (rï¿½duits de 1-2 ï¿½ 1 pour ï¿½quilibrer)
             const upgradeCount = 1;
             const appliedUpgrades = [];
             
@@ -649,7 +656,7 @@ const Currency = {
                 const randomIndex = Math.floor(Math.random() * availableUpgrades.length);
                 const upgrade = availableUpgrades[randomIndex];
                 
-                // Appliquer l'amélioration
+                // Appliquer l'amï¿½lioration
                 if (upgrade.name === 'orbCount') {
                     Player.upgrade('orbCount', 1);
                     appliedUpgrades.push('Extra Orbital Shield');
@@ -661,7 +668,7 @@ const Currency = {
                     appliedUpgrades.push('Armed Orbs');
                 }
                 
-                // Supprimer les améliorations appliquées de la liste
+                // Supprimer les amï¿½liorations appliquï¿½es de la liste
                 availableUpgrades.splice(randomIndex, 1);
             }
             
@@ -669,11 +676,11 @@ const Currency = {
         }
     },
     
-    // === NOUVELLE MÉTHODE : Effet UTILITY - Upgrades utilitaires ===
+    // === NOUVELLE Mï¿½THODE : Effet UTILITY - Upgrades utilitaires ===
     applyUtilityEffect(lootBox) {
         const availableUtilities = [];
         
-        // Vérifier quelles améliorations utilitaires sont disponibles
+        // Vï¿½rifier quelles amï¿½liorations utilitaires sont disponibles
         if (Player.data.magnetRange < 200) {
             availableUtilities.push({ 
                 name: 'magnetRange', 
@@ -698,7 +705,7 @@ const Currency = {
             });
         }
         
-        // Amélioration de la portée (nouvelle propriété)
+        // Amï¿½lioration de la portï¿½e (nouvelle propriï¿½tï¿½)
         if (!Player.data.range || Player.data.range < 400) {
             availableUtilities.push({ 
                 name: 'range', 
@@ -707,7 +714,7 @@ const Currency = {
             });
         }
         
-        // Amélioration du bouclier énergétique (invulnérabilité plus longue)
+        // Amï¿½lioration du bouclier ï¿½nergï¿½tique (invulnï¿½rabilitï¿½ plus longue)
         if (!Player.data.shieldDuration || Player.data.shieldDuration < 200) {
             availableUtilities.push({ 
                 name: 'shieldDuration', 
@@ -717,7 +724,7 @@ const Currency = {
         }
         
         if (availableUtilities.length > 0) {
-            // Appliquer 1-2 améliorations utilitaires aléatoires
+            // Appliquer 1-2 amï¿½liorations utilitaires alï¿½atoires
             const upgradeCount = Math.min(availableUtilities.length, 1 + Math.floor(Math.random() * 2));
             const appliedUpgrades = [];
             
@@ -733,7 +740,7 @@ const Currency = {
             
             console.log(`?? UTILITY UPGRADE! Applied: ${appliedUpgrades.join(', ')}`);
         } else {
-            // Si toutes les améliorations utilitaires sont au maximum, donner des gems
+            // Si toutes les amï¿½liorations utilitaires sont au maximum, donner des gems
             const gemMultiplier = Player.data.gemMultiplier || 1;
             const finalBonus = Math.floor(20 * gemMultiplier);
             Game.gems += finalBonus;
@@ -746,9 +753,9 @@ const Currency = {
         }
     },
     
-    // Création d'une explosion nucléaire
+    // Crï¿½ation d'une explosion nuclï¿½aire
     createNuclearExplosion(x, y) {
-        // Stocker les coordonnées pour éviter les problèmes avec setTimeout
+        // Stocker les coordonnï¿½es pour ï¿½viter les problï¿½mes avec setTimeout
         const explosionX = x;
         const explosionY = y;
         
@@ -772,7 +779,7 @@ const Currency = {
             }, wave * 200);
         }
         
-        // Champignon nucléaire
+        // Champignon nuclï¿½aire
         setTimeout(() => {
             for (let i = 0; i < 40; i++) {
                 setTimeout(() => {
@@ -785,13 +792,13 @@ const Currency = {
         }, 1000);
     },
     
-    // Effet magnétique
+    // Effet magnï¿½tique
     createMagneticEffect(x, y) {
-        // Stocker les coordonnées pour éviter les problèmes avec setTimeout
+        // Stocker les coordonnï¿½es pour ï¿½viter les problï¿½mes avec setTimeout
         const magnetX = x;
         const magnetY = y;
         
-        // Spirales magnétiques
+        // Spirales magnï¿½tiques
         for (let spiral = 0; spiral < 6; spiral++) {
             for (let i = 0; i < 25; i++) {
                 setTimeout(() => {

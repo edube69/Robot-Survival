@@ -1,5 +1,13 @@
+import { CONFIG } from './config.js';
+import { Audio } from './audio.js';
+import { Input } from './input.js';
+import { Player } from './player.js';
+import { Camera } from './camera.js';
+import { Enemy } from './enemy.js';
+import { Particle } from './particle.js';
+
 // Module des projectiles
-const Bullet = {
+export const Bullet = {
     list: [],
     
     init() {
@@ -26,29 +34,29 @@ const Bullet = {
         const normalizedDx = dx / distance;
         const normalizedDy = dy / distance;
         
-        // === SYSTÈME D'ARMES CUMULATIVES ===
-        // Toutes les armes équipées tirent en même temps !
+        // === SYSTï¿½ME D'ARMES CUMULATIVES ===
+        // Toutes les armes ï¿½quipï¿½es tirent en mï¿½me temps !
         
         // Tir de base (toujours actif)
         this.createBasicBullet(normalizedDx, normalizedDy);
         
-        // Triple Shot (si équipé, tir en plus du basic)
+        // Triple Shot (si ï¿½quipï¿½, tir en plus du basic)
         if (Player.data.tripleShot) {
             this.createTripleShot(normalizedDx, normalizedDy);
         }
         
-        // Shotgun Blast (si équipé, tir en plus des autres)
+        // Shotgun Blast (si ï¿½quipï¿½, tir en plus des autres)
         if (Player.data.shotgunBlast) {
             this.createShotgunBlast(normalizedDx, normalizedDy);
         }
         
-        // Missiles à tête chercheuse (tir supplémentaire avec cooldown)
+        // Missiles ï¿½ tï¿½te chercheuse (tir supplï¿½mentaire avec cooldown)
         if (Player.data.homingMissiles && Player.data.missileCooldown <= 0) {
             this.createHomingMissile(targetEnemy);
             Player.data.missileCooldown = CONFIG.WEAPONS.HOMING_MISSILE.COOLDOWN;
         }
         
-        // Canon explosif (tir supplémentaire avec cooldown)
+        // Canon explosif (tir supplï¿½mentaire avec cooldown)
         if (Player.data.explosiveCannon && Player.data.cannonCooldown <= 0) {
             this.createExplosiveCannon(normalizedDx, normalizedDy);
             Player.data.cannonCooldown = CONFIG.WEAPONS.EXPLOSIVE_CANNON.COOLDOWN;
@@ -169,14 +177,14 @@ const Bullet = {
     },
     
     update() {
-        // Réduire les cooldowns
+        // Rï¿½duire les cooldowns
         if (Player.data.missileCooldown > 0) Player.data.missileCooldown--;
         if (Player.data.cannonCooldown > 0) Player.data.cannonCooldown--;
         
         for (let i = this.list.length - 1; i >= 0; i--) {
             const bullet = this.list[i];
             
-            // Mise à jour selon le type
+            // Mise ï¿½ jour selon le type
             this.updateBulletByType(bullet);
             
             // Supprimer les balles qui sortent du monde
@@ -186,7 +194,7 @@ const Bullet = {
                 continue;
             }
             
-            // Vérifier la distance maximale pour les pellets
+            // Vï¿½rifier la distance maximale pour les pellets
             if (bullet.type === 'pellet') {
                 bullet.traveledDistance += Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
                 if (bullet.traveledDistance > bullet.maxDistance) {
@@ -232,7 +240,7 @@ const Bullet = {
     },
     
     updateHomingMissile(bullet) {
-        // Ajouter à la traînée
+        // Ajouter ï¿½ la traï¿½nï¿½e
         bullet.trail.push({x: bullet.x, y: bullet.y});
         if (bullet.trail.length > 8) bullet.trail.shift();
         
@@ -272,11 +280,11 @@ const Bullet = {
     },
     
     createExplosion(x, y, radius, damage) {
-        // Stocker les coordonnées pour éviter les problèmes avec setTimeout
+        // Stocker les coordonnï¿½es pour ï¿½viter les problï¿½mes avec setTimeout
         const explosionX = x;
         const explosionY = y;
         
-        // Dégâts d'explosion en zone
+        // Dï¿½gï¿½ts d'explosion en zone
         Enemy.list.forEach(enemy => {
             const distance = Math.sqrt((enemy.x - explosionX) ** 2 + (enemy.y - explosionY) ** 2);
             if (distance < radius) {

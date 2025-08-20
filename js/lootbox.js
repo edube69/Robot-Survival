@@ -1,7 +1,9 @@
-// Module LootBox - Gestion centralisée des loot boxes
-// Note: L'implémentation principale est dans currency.js pour la compatibilité
+import { Currency } from './currency.js';
 
-const LootBox = {
+// Module LootBox - Gestion centralisï¿½e des loot boxes
+// Note: L'implï¿½mentation principale est dans currency.js pour la compatibilitï¿½
+
+export const LootBox = {
     // Types de loot boxes disponibles
     TYPES: {
         TREASURE: 'TREASURE',
@@ -10,7 +12,7 @@ const LootBox = {
         MAGNET: 'MAGNET'
     },
     
-    // Méthode utilitaire pour créer une loot box via Currency
+    // Mï¿½thode utilitaire pour crï¿½er une loot box via Currency
     create(x, y, type = 'TREASURE') {
         if (Currency && Currency.createLootBox) {
             Currency.createLootBox(x, y, type);
@@ -19,13 +21,13 @@ const LootBox = {
         }
     },
     
-    // Méthode utilitaire pour obtenir un type aléatoire
+    // Mï¿½thode utilitaire pour obtenir un type alï¿½atoire
     getRandomType() {
         const types = Object.values(this.TYPES);
         return types[Math.floor(Math.random() * types.length)];
     },
     
-    // Méthode pour obtenir la configuration d'un type
+    // Mï¿½thode pour obtenir la configuration d'un type
     getConfig(type) {
         if (Currency && Currency.getLootBoxConfig) {
             return Currency.getLootBoxConfig(type);
@@ -42,7 +44,7 @@ const LootBox = {
     }
 };
 
-// Exporter pour utilisation éventuelle
+// Exporter pour utilisation ï¿½ventuelle
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = LootBox;
 }

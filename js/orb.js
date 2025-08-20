@@ -1,5 +1,12 @@
+import { CONFIG } from './config.js';
+import { Audio } from './audio.js';
+import { Player } from './player.js';
+import { Enemy } from './enemy.js';
+import { Bullet } from './bullet.js';
+import { Particle } from './particle.js';
+
 // Module des orbes orbitales
-const Orb = {
+export const Orb = {
     list: [],
     time: 0,
     shootingEnabled: false,
@@ -12,9 +19,9 @@ const Orb = {
     
     enableShooting() {
         this.shootingEnabled = true;
-        // Équiper toutes les orbes existantes
+        // ï¿½quiper toutes les orbes existantes
         this.list.forEach(orb => {
-            orb.shootingCooldown = Math.random() * CONFIG.ORBS.SHOOTING_RATE; // Décalage aléatoire
+            orb.shootingCooldown = Math.random() * CONFIG.ORBS.SHOOTING_RATE; // Dï¿½calage alï¿½atoire
             orb.canShoot = true;
         });
     },
@@ -35,7 +42,7 @@ const Orb = {
             damage: Player.data.orbDamage,
             x: 0,
             y: 0,
-            // Nouvelles propriétés pour le tir
+            // Nouvelles propriï¿½tï¿½s pour le tir
             canShoot: this.shootingEnabled,
             shootingCooldown: this.shootingEnabled ? Math.random() * CONFIG.ORBS.SHOOTING_RATE : 0
         });
@@ -61,7 +68,7 @@ const Orb = {
         };
     },
     
-    // Couleur différente selon l'orbite
+    // Couleur diffï¿½rente selon l'orbite
     getOrbColor(orbitIndex) {
         const colors = [
             '#ff8800', // Orange (orbite 1)
@@ -77,10 +84,10 @@ const Orb = {
     update() {
         if (!Player.data) return;
         
-        // Augmenter la vitesse temporelle globale, modifiée par l'upgrade
+        // Augmenter la vitesse temporelle globale, modifiï¿½e par l'upgrade
         this.time += 0.1 * Player.data.orbSpeed;
         
-        // Version simplifiée pour corriger le bug de rotation
+        // Version simplifiï¿½e pour corriger le bug de rotation
         for (let i = 0; i < this.list.length; i++) {
             const orb = this.list[i];
             
@@ -89,28 +96,28 @@ const Orb = {
             const orbitIndex = Math.floor(i / maxPerOrbit);
             const positionInOrbit = i % maxPerOrbit;
             
-            // Compter combien d'orbes sont réellement dans cette orbite
+            // Compter combien d'orbes sont rï¿½ellement dans cette orbite
             const orbsInThisOrbit = Math.min(maxPerOrbit, this.list.length - (orbitIndex * maxPerOrbit));
             
-            // Vitesses de rotation modifiées par l'upgrade de vitesse
+            // Vitesses de rotation modifiï¿½es par l'upgrade de vitesse
             const baseSpeed = (CONFIG.ORBS.BASE_SPEED || 0.12) * Player.data.orbSpeed;
             const speedIncrement = (CONFIG.ORBS.SPEED_INCREMENT || 0.03) * Player.data.orbSpeed;
             
-            // Formule progressive: orbites plus éloignées tournent plus vite
+            // Formule progressive: orbites plus ï¿½loignï¿½es tournent plus vite
             const orbitSpeed = baseSpeed + (orbitIndex * speedIncrement);
             
             // Angle de base pour cette position + rotation temporelle
             const baseAngle = (positionInOrbit * (Math.PI * 2)) / orbsInThisOrbit;
             orb.angle = baseAngle + (this.time * orbitSpeed);
             
-            // Mettre à jour la distance (au cas où elle aurait changé)
+            // Mettre ï¿½ jour la distance (au cas oï¿½ elle aurait changï¿½)
             orb.distance = CONFIG.ORBS.DISTANCE + (orbitIndex * CONFIG.ORBS.DISTANCE_INCREMENT);
             
             // Position finale
             orb.x = Player.data.x + Math.cos(orb.angle) * orb.distance;
             orb.y = Player.data.y + Math.sin(orb.angle) * orb.distance;
             
-            // Système de tir des orbes
+            // Systï¿½me de tir des orbes
             if (orb.canShoot && this.shootingEnabled) {
                 orb.shootingCooldown--;
                 if (orb.shootingCooldown <= 0) {
@@ -149,7 +156,7 @@ const Orb = {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         if (distance > 0) {
-            // Créer projectile d'orbe
+            // Crï¿½er projectile d'orbe
             Bullet.createOrbBullet(orb, dx / distance, dy / distance);
             
             // Effet visuel de tir
@@ -158,10 +165,10 @@ const Orb = {
         }
     },
     
-    // Méthode pour réorganiser les orbes après destruction d'ennemis
+    // Mï¿½thode pour rï¿½organiser les orbes aprï¿½s destruction d'ennemis
     reorganizeOrbs() {
-        // Cette méthode pourrait être utilisée si on veut réorganiser 
-        // dynamiquement les orbes après qu'une soit détruite
+        // Cette mï¿½thode pourrait ï¿½tre utilisï¿½e si on veut rï¿½organiser 
+        // dynamiquement les orbes aprï¿½s qu'une soit dï¿½truite
         this.list.forEach((orb, index) => {
             const newPosition = this.calculateOrbPosition.call({list: this.list.slice(0, index + 1)});
             orb.distance = newPosition.distance;

@@ -1,5 +1,9 @@
-// Module de gestion des entrées
-const Input = {
+import { Audio } from './audio.js';
+import { Player } from './player.js';
+import { Upgrades } from './upgrades.js';
+
+// Module de gestion des entrï¿½es
+export const Input = {
     keys: {},
     mouse: { x: 400, y: 300 },
     
@@ -18,7 +22,7 @@ const Input = {
     handleKeyDown(e) {
         this.keys[e.key.toLowerCase()] = true;
         
-        // Gestion des touches spéciales
+        // Gestion des touches spï¿½ciales
         if (e.key === ' ' && Game.state === 'gameOver') {
             Game.restart();
         }
@@ -35,14 +39,14 @@ const Input = {
             Audio.toggle();
         }
         
-        // Gestion des choix d'amélioration
+        // Gestion des choix d'amï¿½lioration
         if (Game.state === 'upgrade') {
             if (e.key === '1') Upgrades.select(0);
             if (e.key === '2') Upgrades.select(1);
             if (e.key === '3') Upgrades.select(2);
         }
         
-        // Gestion de la résurrection
+        // Gestion de la rï¿½surrection
         if (Game.state === 'revive') {
             if (e.key === '1') Upgrades.selectRevive(0);
             if (e.key === '2') Upgrades.selectRevive(1);
@@ -62,7 +66,7 @@ const Input = {
         this.mouse.y = e.clientY - rect.top;
     },
 
-    // Clic dans le canvas pour l'écran de level up
+    // Clic dans le canvas pour l'ï¿½cran de level up
     handleClick(e) {
         if (Game.state !== 'upgrade') return;
         const canvas = document.getElementById('gameCanvas');
@@ -70,7 +74,7 @@ const Input = {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Coordonnées des cartes d'upgrade (doivent correspondre à Renderer.drawUpgradeScreen)
+        // Coordonnï¿½es des cartes d'upgrade (doivent correspondre ï¿½ Renderer.drawUpgradeScreen)
         const left = 100;
         const right = canvas.width - 100;
         for (let i = 0; i < (Upgrades.options ? Upgrades.options.length : 0); i++) {
@@ -84,7 +88,7 @@ const Input = {
         }
     },
 
-    // Clics sur l'écran de résurrection et Mission Failed (DOM overlay)
+    // Clics sur l'ï¿½cran de rï¿½surrection et Mission Failed (DOM overlay)
     handleDocumentClick(e) {
         if (Game.state === 'revive') {
             const optionEl = e.target.closest && e.target.closest('.revive-option');

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Survival - High Scores</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="highscores-container">
+        <h1>High Scores</h1>
+        <div id="highscores-list">
+            <!-- Les scores seront injectés ici -->
+        </div>
+        <button onclick="window.location.href='index.html'">Retour au jeu</button>
+    </div>
+
+    <script type="module">
+        import { getHighScores } from './js/firebase-config.js';
+
+        async function displayHighScores() {
+            const scoresList = document.getElementById('highscores-list');
+            const scores = await getHighScores();
+            
+            if (scores.length === 0) {
+                scoresList.innerHTML = '<p>Aucun score enregistr�</p>';
+                return;
+            }
+
+            const html = scores.map((score, index) => `
+                <div class="score-entry">
+                    <span class="rank">#${index + 1}</span>
+                    <span class="name">${score.playerName}</span>
+                    <span class="score">Score: ${score.score}</span>
+                    <span class="kills">Kills: ${score.kills}</span>
+                    <span class="time">Temps: ${score.time}s</span>
+                </div>
+            `).join('');
+
+            scoresList.innerHTML = html;
+        }
+
+        displayHighScores();
+    </script>
+</body>
+</html>

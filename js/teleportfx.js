@@ -1,5 +1,9 @@
-// Effets visuels de téléportation (dessinés de façon procédurale pour plus de fluidité)
-const TeleportFX = {
+import { CONFIG } from './config.js';
+import { Camera } from './camera.js';
+
+
+// Effets visuels de tï¿½lï¿½portation (dessinï¿½s de faï¿½on procï¿½durale pour plus de fluiditï¿½)
+export const TeleportFX = {
     list: [],
 
     init() {
@@ -45,7 +49,7 @@ const TeleportFX = {
                 ctx.restore();
             }
 
-            // Anneaux concentriques (lissés, durée étalée)
+            // Anneaux concentriques (lissï¿½s, durï¿½e ï¿½talï¿½e)
             for (let r = 0; r < fx.rings; r++) {
                 const rp = Math.min(1, Math.max(0, (fx.t - r * 14) / (fx.duration - r * 10)));
                 if (rp <= 0) continue;
@@ -61,7 +65,7 @@ const TeleportFX = {
                 ctx.restore();
             }
 
-            // Spirales énergétiques (segments suffisants)
+            // Spirales ï¿½nergï¿½tiques (segments suffisants)
             for (let s = 0; s < fx.spirals; s++) {
                 ctx.save();
                 ctx.strokeStyle = 'rgba(180,255,255,0.65)';
@@ -81,7 +85,7 @@ const TeleportFX = {
                 ctx.restore();
             }
 
-            // Éclairs stylisés (durée étalée)
+            // ï¿½clairs stylisï¿½s (durï¿½e ï¿½talï¿½e)
             const boltAlpha = Math.max(0, 0.6 - p * 0.6);
             if (boltAlpha > 0.05) {
                 ctx.save();

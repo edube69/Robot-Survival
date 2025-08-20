@@ -1,5 +1,15 @@
+import { CONFIG } from './config.js';
+import { Audio } from './audio.js';
+import { Input } from './input.js';
+import { Camera } from './camera.js';
+import { Enemy } from './enemy.js';
+import { Bullet } from './bullet.js';
+import { Particle } from './particle.js';
+import { Orb } from './orb.js';
+
+
 // Module du joueur
-const Player = {
+export const Player = {
     data: null,
     bulletCooldown: 0,
     
@@ -28,13 +38,13 @@ const Player = {
             invulnerableTime: 0,
             vampiric: false,
             flameMode: false,
-            // Nouveaux systèmes d'armes
+            // Nouveaux systï¿½mes d'armes
             tripleShot: false,
             homingMissiles: false,
             explosiveCannon: false,
             laserBeam: false,
             shotgunBlast: false,
-            // Cooldowns pour armes spéciales
+            // Cooldowns pour armes spï¿½ciales
             missileCooldown: 0,
             cannonCooldown: 0,
             laserEnergy: 100
@@ -45,7 +55,7 @@ const Player = {
     update() {
         if (Game.state !== 'playing' || !this.data) return;
         
-        // Gestion de l'invulnérabilité
+        // Gestion de l'invulnï¿½rabilitï¿½
         if (this.data.invulnerable && this.data.invulnerableTime > 0) {
             this.data.invulnerableTime--;
             if (this.data.invulnerableTime <= 0) {
@@ -61,7 +71,7 @@ const Player = {
         let moveX = 0, moveY = 0;
         
         if (this.data.followMouse) {
-            // Convertir la position de la souris en coordonnées du monde
+            // Convertir la position de la souris en coordonnï¿½es du monde
             const worldMouse = Camera.screenToWorld(Input.mouse.x, Input.mouse.y);
             
             const dx = worldMouse.x - this.data.x;
@@ -119,7 +129,7 @@ const Player = {
                 const x = i * cellWidth + cellWidth / 2;
                 const y = j * cellHeight + cellHeight / 2;
                 
-                // Compter les ennemis dans un rayon de sécurité
+                // Compter les ennemis dans un rayon de sï¿½curitï¿½
                 let enemyCount = 0;
                 const safeRadius = 200;
                 
@@ -147,7 +157,7 @@ const Player = {
     takeDamage() {
         if (this.data.invulnerable) return false;
         
-        // Déclencher la séquence de mort dramatique
+        // Dï¿½clencher la sï¿½quence de mort dramatique
         this.createDeathExplosion();
         
         Game.lives--;
@@ -155,35 +165,35 @@ const Player = {
         // Jouer le son de mort dramatique au lieu du simple playerHit
         Audio.playSoundEffect('playerDeath');
         
-        // Démarrer la séquence de ralenti dramatique
+        // Dï¿½marrer la sï¿½quence de ralenti dramatique
         Game.startDeathSequence();
         
         return true;
     },
     
     createTeleportationEffect(targetX, targetY) {
-        // Effet de téléportation optimisé et plus fluide
+        // Effet de tï¿½lï¿½portation optimisï¿½ et plus fluide
         
-        // 1. Portal d'ouverture simplifié (réduite de 25 à 15 particules)
+        // 1. Portal d'ouverture simplifiï¿½ (rï¿½duite de 25 ï¿½ 15 particules)
         Particle.createExplosion(targetX, targetY, '#00ffff', 15);
         
-        // 2. Anneaux énergétiques concentriques (3 au lieu de 5)
+        // 2. Anneaux ï¿½nergï¿½tiques concentriques (3 au lieu de 5)
         for (let ring = 0; ring < 3; ring++) {
             setTimeout(() => {
                 const radius = 25 + ring * 20;
-                const particleCount = 8 + ring; // Réduite: 8, 9, 10 particules
+                const particleCount = 8 + ring; // Rï¿½duite: 8, 9, 10 particules
                 
                 for (let i = 0; i < particleCount; i++) {
                     const angle = (i * Math.PI * 2) / particleCount;
                     const x = targetX + Math.cos(angle) * radius;
                     const y = targetY + Math.sin(angle) * radius;
                     
-                    Particle.createExplosion(x, y, '#44ffff', 4); // Réduite de 8 à 4
+                    Particle.createExplosion(x, y, '#44ffff', 4); // Rï¿½duite de 8 ï¿½ 4
                 }
             }, ring * 100);
         }
         
-        // 3. Spirales énergétiques simplifiées (2 au lieu de 3, 12 au lieu de 20)
+        // 3. Spirales ï¿½nergï¿½tiques simplifiï¿½es (2 au lieu de 3, 12 au lieu de 20)
         for (let spiral = 0; spiral < 2; spiral++) {
             for (let i = 0; i < 12; i++) {
                 setTimeout(() => {
@@ -195,12 +205,12 @@ const Player = {
                     
                     const colors = ['#00ffff', '#44ffff', '#88ffff'];
                     const color = colors[Math.floor(progress * colors.length)];
-                    Particle.createExplosion(x, y, color, 3); // Réduite de 6 à 3
+                    Particle.createExplosion(x, y, color, 3); // Rï¿½duite de 6 ï¿½ 3
                 }, spiral * 60 + i * 25);
             }
         }
         
-        // 4. Colonnes d'énergie simplifiées (6 au lieu de 8, 4 au lieu de 6 étages)
+        // 4. Colonnes d'ï¿½nergie simplifiï¿½es (6 au lieu de 8, 4 au lieu de 6 ï¿½tages)
         for (let col = 0; col < 6; col++) {
             setTimeout(() => {
                 const angle = (col * Math.PI * 2) / 6;
@@ -211,64 +221,64 @@ const Player = {
                     setTimeout(() => {
                         const x = baseX + (Math.random() - 0.5) * 8;
                         const y = baseY + (Math.random() - 0.5) * 8;
-                        Particle.createExplosion(x, y, '#66ffff', 6); // Réduite de 10 à 6
+                        Particle.createExplosion(x, y, '#66ffff', 6); // Rï¿½duite de 10 ï¿½ 6
                     }, height * 40);
                 }
             }, col * 80);
         }
         
-        // 5. Explosion finale de matérialisation (réduite)
+        // 5. Explosion finale de matï¿½rialisation (rï¿½duite)
         setTimeout(() => {
-            Particle.createExplosion(targetX, targetY, '#ffffff', 25); // Réduite de 40 à 25
-        }, 400); // Plus tôt: 400ms au lieu de 500ms
+            Particle.createExplosion(targetX, targetY, '#ffffff', 25); // Rï¿½duite de 40 ï¿½ 25
+        }, 400); // Plus tï¿½t: 400ms au lieu de 500ms
         
-        // 6. Ondes de choc simplifiées (2 au lieu de 3)
+        // 6. Ondes de choc simplifiï¿½es (2 au lieu de 3)
         setTimeout(() => {
             for (let wave = 0; wave < 2; wave++) {
                 setTimeout(() => {
                     const radius = 50 + wave * 30;
-                    const particleCount = 12; // Réduite de 16 à 12
+                    const particleCount = 12; // Rï¿½duite de 16 ï¿½ 12
                     
                     for (let i = 0; i < particleCount; i++) {
                         const angle = (i * Math.PI * 2) / particleCount;
                         const x = targetX + Math.cos(angle) * radius;
                         const y = targetY + Math.sin(angle) * radius;
                         
-                        Particle.createExplosion(x, y, '#00ccff', 3); // Réduite de 5 à 3
+                        Particle.createExplosion(x, y, '#00ccff', 3); // Rï¿½duite de 5 ï¿½ 3
                     }
                 }, wave * 120);
             }
         }, 500);
         
-        // 7. Particules flottantes réduites (15 au lieu de 30)
+        // 7. Particules flottantes rï¿½duites (15 au lieu de 30)
         for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 60; // Réduite de 80 à 60
+                const distance = Math.random() * 60; // Rï¿½duite de 80 ï¿½ 60
                 const x = targetX + Math.cos(angle) * distance;
                 const y = targetY + Math.sin(angle) * distance;
                 
                 const floatColors = ['#88ffff', '#aaffff'];
                 const color = floatColors[Math.floor(Math.random() * floatColors.length)];
-                Particle.createExplosion(x, y, color, 2); // Réduite de 4 à 2
-            }, 300 + Math.random() * 400); // Durée réduite
+                Particle.createExplosion(x, y, color, 2); // Rï¿½duite de 4 ï¿½ 2
+            }, 300 + Math.random() * 400); // Durï¿½e rï¿½duite
         }
         
-        // 8. Éclairs simplifiés (4 au lieu de 6, 6 au lieu de 8 segments)
+        // 8. ï¿½clairs simplifiï¿½s (4 au lieu de 6, 6 au lieu de 8 segments)
         setTimeout(() => {
             for (let bolt = 0; bolt < 4; bolt++) {
                 const angle = (bolt * Math.PI * 2) / 4;
                 const endX = targetX + Math.cos(angle) * 50;
                 const endY = targetY + Math.sin(angle) * 50;
                 
-                // Créer un éclair en segments réduits
+                // Crï¿½er un ï¿½clair en segments rï¿½duits
                 for (let segment = 0; segment < 6; segment++) {
                     const progress = segment / 6;
                     const x = targetX + (endX - targetX) * progress + (Math.random() - 0.5) * 15;
                     const y = targetY + (endY - targetY) * progress + (Math.random() - 0.5) * 15;
                     
                     setTimeout(() => {
-                        Particle.createExplosion(x, y, '#ffff88', 2); // Réduite de 3 à 2
+                        Particle.createExplosion(x, y, '#ffff88', 2); // Rï¿½duite de 3 ï¿½ 2
                     }, segment * 15);
                 }
             }
@@ -281,10 +291,10 @@ const Player = {
         
         // EXPLOSION MASSIVE avec beaucoup plus de particules
         
-        // Explosion principale gigantesque (immédiate)
+        // Explosion principale gigantesque (immï¿½diate)
         Particle.createExplosion(centerX, centerY, '#ff2222', 80);
         
-        // Première onde - cercle rapproché avec plus d'explosions
+        // Premiï¿½re onde - cercle rapprochï¿½ avec plus d'explosions
         for (let i = 0; i < 20; i++) {
             const angle = (i * Math.PI * 2) / 20;
             const radius = 20 + Math.random() * 25;
@@ -296,7 +306,7 @@ const Player = {
             }, 30 + i * 20);
         }
         
-        // Deuxième onde - cercle moyen avec variations
+        // Deuxiï¿½me onde - cercle moyen avec variations
         for (let i = 0; i < 16; i++) {
             const angle = (i * Math.PI * 2) / 16 + Math.PI / 16;
             const radius = 45 + Math.random() * 35;
@@ -308,7 +318,7 @@ const Player = {
             }, 150 + i * 40);
         }
         
-        // Troisième onde - cercle large
+        // Troisiï¿½me onde - cercle large
         for (let i = 0; i < 12; i++) {
             const angle = (i * Math.PI * 2) / 12;
             const radius = 75 + Math.random() * 40;
@@ -320,7 +330,7 @@ const Player = {
             }, 350 + i * 60);
         }
         
-        // Quatrième onde - explosion lointaine
+        // Quatriï¿½me onde - explosion lointaine
         for (let i = 0; i < 8; i++) {
             const angle = (i * Math.PI * 2) / 8 + Math.PI / 8;
             const radius = 110 + Math.random() * 50;
@@ -332,7 +342,7 @@ const Player = {
             }, 600 + i * 80);
         }
         
-        // ÉNORMÉMENT de débris/fragments en vagues successives
+        // ï¿½NORMï¿½MENT de dï¿½bris/fragments en vagues successives
         for (let wave = 0; wave < 5; wave++) {
             for (let i = 0; i < 25; i++) {
                 setTimeout(() => {
@@ -366,7 +376,7 @@ const Player = {
             Particle.createExplosion(centerX, centerY, '#ffffdd', 120);
         }, 1000);
         
-        // Pluie d'étincelles qui continue longtemps
+        // Pluie d'ï¿½tincelles qui continue longtemps
         for (let i = 0; i < 60; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
@@ -380,7 +390,7 @@ const Player = {
             }, 500 + Math.random() * 1200);
         }
         
-        // Explosions de résonance tardives (effet d'onde de choc)
+        // Explosions de rï¿½sonance tardives (effet d'onde de choc)
         for (let i = 0; i < 10; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
@@ -401,7 +411,7 @@ const Player = {
         switch(type) {
             case 'fireRate':
                 const newFireRate = this.data.fireRate - value;
-                // Limite minimum plus basse pour permettre plus d'améliorations
+                // Limite minimum plus basse pour permettre plus d'amï¿½liorations
                 this.data.fireRate = Math.max(3, newFireRate);
                 console.log(`Fire rate upgraded: ${this.data.fireRate} (reduced by ${value})`);
                 break;

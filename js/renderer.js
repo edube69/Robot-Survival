@@ -1,18 +1,30 @@
+import { CONFIG } from './config.js';
+import { Input } from './input.js';
+import { Player } from './player.js';
+import { Camera } from './camera.js';
+import { Enemy } from './enemy.js';
+import { Bullet } from './bullet.js';
+import { Particle } from './particle.js';
+import { Currency } from './currency.js';
+import { Orb } from './orb.js';
+import { TeleportFX } from './teleportfx.js';
+import { Upgrades } from './upgrades.js';
+
 // Module de rendu
-const Renderer = {
+export const Renderer = {
     canvas: null,
     ctx: null,
     
     init() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        // Adapter à la taille de la fenêtre au chargement
+        // Adapter ï¿½ la taille de la fenï¿½tre au chargement
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
     },
     
     resizeCanvas() {
-        // Garde un ratio max tout en remplissant une bonne partie de l'écran
+        // Garde un ratio max tout en remplissant une bonne partie de l'ï¿½cran
         const maxWidth = Math.min(window.innerWidth - 80, CONFIG.WORLD.WIDTH);
         const maxHeight = Math.min(window.innerHeight - 160, CONFIG.WORLD.HEIGHT);
         const aspect = CONFIG.CANVAS.WIDTH / CONFIG.CANVAS.HEIGHT; // 4:3
@@ -65,14 +77,14 @@ const Renderer = {
             this.ctx.stroke();
         }
 
-        // Points aux intersections (léger motif)
+        // Points aux intersections (lï¿½ger motif)
         const dotSize = CONFIG.FLOOR.DOT_SIZE;
         this.ctx.fillStyle = CONFIG.FLOOR.DOT_COLOR;
         for (let x = startWorldX; x <= endWorldX; x += tile) {
             for (let y = startWorldY; y <= endWorldY; y += tile) {
                 const idx = Math.floor(x / tile);
                 const idy = Math.floor(y / tile);
-                // Pour alléger, ne dessiner des points que sur une sous-grille (ex: un sur deux)
+                // Pour allï¿½ger, ne dessiner des points que sur une sous-grille (ex: un sur deux)
                 if ((idx + idy) % 2 !== 0) continue;
                 const sx = (x - Camera.x) * zoom;
                 const sy = (y - Camera.y) * zoom;
@@ -93,18 +105,18 @@ const Renderer = {
         this.ctx.translate(screen.x, screen.y);
         this.ctx.scale(zoom, zoom);
         
-        // === CERCLE DE PORTÉE DU MAGNET ===
-        if (Player.data.magnetRange > 50) { // Afficher seulement si amélioré
+        // === CERCLE DE PORTï¿½E DU MAGNET ===
+        if (Player.data.magnetRange > 50) { // Afficher seulement si amï¿½liorï¿½
             this.ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
             this.ctx.lineWidth = 2;
             this.ctx.setLineDash([8, 4]);
             this.ctx.beginPath();
             this.ctx.arc(0, 0, Player.data.magnetRange, 0, Math.PI * 2);
             this.ctx.stroke();
-            this.ctx.setLineDash([]); // Réinitialiser le style de ligne
+            this.ctx.setLineDash([]); // Rï¿½initialiser le style de ligne
         }
         
-        // Effet d'invulnérabilité
+        // Effet d'invulnï¿½rabilitï¿½
         if (Player.data.invulnerable) {
             const flash = Math.sin(Date.now() * 0.02) > 0;
             if (flash) {
@@ -127,7 +139,7 @@ const Renderer = {
         this.ctx.fillStyle = robotColor;
         this.ctx.fillRect(-8, -10, 16, 20);
         
-        // Tête
+        // Tï¿½te
         this.ctx.fillStyle = bodyColor;
         this.ctx.fillRect(-6, -14, 12, 6);
         
@@ -136,7 +148,7 @@ const Renderer = {
         this.ctx.fillRect(-4, -12, 2, 2);
         this.ctx.fillRect(2, -12, 2, 2);
         
-        // Armes sur les épaules
+        // Armes sur les ï¿½paules
         this.ctx.fillStyle = detailColor;
         this.ctx.fillRect(-12, -8, 4, 6);
         this.ctx.fillRect(8, -8, 4, 6);
@@ -169,7 +181,7 @@ const Renderer = {
             
             if (!Camera.isVisible(bullet.x, bullet.y, 20)) return;
             
-            // Rendu spécialisé selon le type de projectile
+            // Rendu spï¿½cialisï¿½ selon le type de projectile
             this.drawBulletByType(bullet, screen, zoom);
         });
     },
@@ -198,7 +210,7 @@ const Renderer = {
     },
     
     drawHomingMissile(bullet, screen, zoom) {
-        // Traînée du missile
+        // Traï¿½nï¿½e du missile
         if (bullet.trail && bullet.trail.length > 1) {
             this.ctx.strokeStyle = bullet.color + '60';
             this.ctx.lineWidth = 3 * zoom;
@@ -240,7 +252,7 @@ const Renderer = {
         const length = bullet.length * zoom;
         const width = bullet.radius * 2 * zoom;
         
-        // Gradient pour le corps principal (aspect métallique)
+        // Gradient pour le corps principal (aspect mï¿½tallique)
         const gradient = this.ctx.createLinearGradient(-length/2, -width/2, -length/2, width/2);
         gradient.addColorStop(0, '#ff8844');
         gradient.addColorStop(0.3, '#ff4400');
@@ -261,7 +273,7 @@ const Renderer = {
         
         // === AILETTES STABILISATRICES ===
         this.ctx.fillStyle = '#ff6622';
-        // Ailette supérieure
+        // Ailette supï¿½rieure
         this.ctx.beginPath();
         this.ctx.moveTo(-length/2, -width/2);
         this.ctx.lineTo(-length/2 - width*0.8, -width*1.2);
@@ -269,7 +281,7 @@ const Renderer = {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Ailette inférieure
+        // Ailette infï¿½rieure
         this.ctx.beginPath();
         this.ctx.moveTo(-length/2, width/2);
         this.ctx.lineTo(-length/2 - width*0.8, width*1.2);
@@ -296,14 +308,14 @@ const Renderer = {
         
         // === EFFETS AUTOUR DU PROJECTILE ===
         
-        // Traînée de fumée chaude
+        // Traï¿½nï¿½e de fumï¿½e chaude
         if (Math.random() < 0.6) {
             const trailX = bullet.x - Math.cos(angle) * (length/2 + 10);
             const trailY = bullet.y - Math.sin(angle) * (length/2 + 10);
             Particle.createExplosion(trailX, trailY, '#ff8844', 2);
         }
         
-        // Étincelles qui s'échappent
+        // ï¿½tincelles qui s'ï¿½chappent
         if (Math.random() < 0.4) {
             const sparkAngle = angle + (Math.random() - 0.5) * 0.8;
             const sparkDistance = 8 + Math.random() * 12;
@@ -312,7 +324,7 @@ const Renderer = {
             Particle.createExplosion(sparkX, sparkY, '#ffaa00', 1);
         }
         
-        // Aura d'énergie explosive (cercle pulsant)
+        // Aura d'ï¿½nergie explosive (cercle pulsant)
         this.ctx.save();
         this.ctx.globalAlpha = 0.3 * pulseIntensity;
         this.ctx.strokeStyle = '#ff4400';
@@ -336,7 +348,7 @@ const Renderer = {
             this.ctx.restore();
         }
         
-        // Points d'énergie clignotants sur l'ogive
+        // Points d'ï¿½nergie clignotants sur l'ogive
         if (Math.sin(time * 12) > 0.5) {
             this.ctx.save();
             this.ctx.translate(screen.x, screen.y);
@@ -430,7 +442,7 @@ const Renderer = {
         
         // === EFFET DE SPAWN ===
         if (enemy.spawning) {
-            // Effet de matérialisation progressive
+            // Effet de matï¿½rialisation progressive
             this.ctx.save();
             this.ctx.scale(enemy.spawnScale, enemy.spawnScale);
             
@@ -463,7 +475,7 @@ const Renderer = {
                 this.drawShredder(enemy, baseColor, pulseIntensity);
                 break;
             default:
-                // Fallback vers les anciennes formes géométriques
+                // Fallback vers les anciennes formes gï¿½omï¿½triques
                 this.drawBasicShape(enemy, baseColor);
         }
         
@@ -475,7 +487,7 @@ const Renderer = {
         this.ctx.globalAlpha = 1;
     },
     
-    // Utilitaire pour éclaircir une couleur pendant le spawn
+    // Utilitaire pour ï¿½claircir une couleur pendant le spawn
     lightenColor(color, intensity) {
         // Convertit #f0f en couleur plus brillante
         const r = parseInt(color.substr(1,1), 16) * 16;
@@ -501,7 +513,7 @@ const Renderer = {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Réacteurs clignotants
+        // Rï¿½acteurs clignotants
         const thrusterGlow = enemy.thrusterFlicker > 0.5 ? '#ff8' : '#f84';
         this.ctx.fillStyle = thrusterGlow;
         this.ctx.beginPath();
@@ -511,7 +523,7 @@ const Renderer = {
         this.ctx.arc(r * 0.4, r * 0.3, r * 0.2, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Détecteur avant
+        // Dï¿½tecteur avant
         this.ctx.fillStyle = '#0ff';
         this.ctx.beginPath();
         this.ctx.arc(0, -r * 0.5, r * 0.15, 0, Math.PI * 2);
@@ -534,12 +546,12 @@ const Renderer = {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Ailes avec réacteurs
+        // Ailes avec rï¿½acteurs
         this.ctx.fillStyle = '#f66';
         this.ctx.fillRect(-r * 0.9, -r * 0.2, r * 0.4, r * 0.4);
         this.ctx.fillRect(r * 0.5, -r * 0.2, r * 0.4, r * 0.4);
         
-        // Réacteurs principales (arrière)
+        // Rï¿½acteurs principales (arriï¿½re)
         const mainThruster = enemy.thrusterFlicker > 0.3 ? '#fff' : '#ff4';
         this.ctx.fillStyle = mainThruster;
         this.ctx.fillRect(-r * 0.3, r * 0.8, r * 0.2, r * 0.4);
@@ -558,7 +570,7 @@ const Renderer = {
         const r = enemy.radius;
         const armor = Math.sin(enemy.animTime * 0.5) * 0.1 + 0.9;
         
-        // Corps hexagonal blindé
+        // Corps hexagonal blindï¿½
         this.ctx.fillStyle = baseColor;
         this.ctx.beginPath();
         for (let i = 0; i < 6; i++) {
@@ -584,7 +596,7 @@ const Renderer = {
         this.ctx.fillRect(-r * 0.1, -r * 0.6, r * 0.2, r * 1.2);
         this.ctx.restore();
         
-        // Réacteurs de propulsion
+        // Rï¿½acteurs de propulsion
         const engineGlow = Math.sin(enemy.animTime) > 0 ? '#8cf' : '#4af';
         this.ctx.fillStyle = engineGlow;
         for (let i = 0; i < 6; i++) {
@@ -596,7 +608,7 @@ const Renderer = {
             this.ctx.fill();
         }
         
-        // Œil central
+        // ï¿½il central
         this.ctx.fillStyle = '#f84';
         this.ctx.beginPath();
         this.ctx.arc(0, 0, r * 0.2 * pulseIntensity, 0, Math.PI * 2);
@@ -609,7 +621,7 @@ const Renderer = {
         this.ctx.save();
         this.ctx.rotate(enemy.rotationAngle * 0.3);
         
-        // Corps en étoile avec lames rotatives
+        // Corps en ï¿½toile avec lames rotatives
         this.ctx.fillStyle = baseColor;
         const spikes = 8;
         this.ctx.beginPath();
@@ -626,7 +638,7 @@ const Renderer = {
         
         this.ctx.restore();
         
-        // Lames de découpe rotatives
+        // Lames de dï¿½coupe rotatives
         this.ctx.save();
         this.ctx.rotate(-enemy.rotationAngle * 0.8);
         this.ctx.strokeStyle = '#fa4';
@@ -639,7 +651,7 @@ const Renderer = {
         this.ctx.stroke();
         this.ctx.restore();
         
-        // Core énergétique central
+        // Core ï¿½nergï¿½tique central
         const coreColor = Math.sin(enemy.animTime * 2) > 0 ? '#ff0' : '#f80';
         this.ctx.fillStyle = coreColor;
         this.ctx.beginPath();
@@ -660,7 +672,7 @@ const Renderer = {
     },
     
     drawBasicShape(enemy, baseColor) {
-        // Formes géométriques de base pour compatibilité
+        // Formes gï¿½omï¿½triques de base pour compatibilitï¿½
         this.ctx.fillStyle = baseColor;
         this.ctx.beginPath();
         
@@ -717,12 +729,12 @@ const Renderer = {
             this.ctx.translate(screen.x, bobY);
             this.ctx.scale(zoom, zoom);
             
-            // Dessiner une pièce d'or 3D qui tourne
+            // Dessiner une piï¿½ce d'or 3D qui tourne
             this.drawGoldCoin(drop);
             
             this.ctx.restore();
             
-            // Afficher la valeur pour les pièces de haute valeur
+            // Afficher la valeur pour les piï¿½ces de haute valeur
             if (drop.value > 1) {
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = `${Math.floor(10 * zoom)}px Courier New`;
@@ -733,7 +745,7 @@ const Renderer = {
     },
     
     drawGoldCoin(drop) {
-        // === RENDU SPÉCIAL POUR LES LOOT BOXES ===
+        // === RENDU SPï¿½CIAL POUR LES LOOT BOXES ===
         if (drop.type === 'lootbox') {
             this.drawLootBox(drop);
             return;
@@ -743,11 +755,11 @@ const Renderer = {
         const radius = drop.radius;
         const spin = drop.spinAngle;
         
-        // Calcul de l'effet 3D: la pièce apparaît plus étroite selon l'angle
+        // Calcul de l'effet 3D: la piï¿½ce apparaï¿½t plus ï¿½troite selon l'angle
         const perspective = Math.abs(Math.cos(spin));
         const width = radius * perspective;
         
-        // Couleurs selon l'orientation de la pièce
+        // Couleurs selon l'orientation de la piï¿½ce
         let mainColor, edgeColor, highlightColor;
         if (Math.cos(spin) > 0.3) {
             // Face visible
@@ -766,25 +778,25 @@ const Renderer = {
             highlightColor = drop.colors.BRIGHT;
         }
         
-        // Ombre portée
+        // Ombre portï¿½e
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 2;
         this.ctx.shadowOffsetY = 2;
         
-        // Corps principal de la pièce (ellipse)
+        // Corps principal de la piï¿½ce (ellipse)
         this.ctx.fillStyle = mainColor;
         this.ctx.beginPath();
         this.ctx.ellipse(0, 0, width, radius, 0, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Désactiver l'ombre pour les détails
+        // Dï¿½sactiver l'ombre pour les dï¿½tails
         this.ctx.shadowColor = 'transparent';
         this.ctx.shadowBlur = 0;
         this.ctx.shadowOffsetX = 0;
         this.ctx.shadowOffsetY = 0;
         
-        // Bord de la pièce
+        // Bord de la piï¿½ce
         this.ctx.strokeStyle = edgeColor;
         this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
@@ -801,7 +813,7 @@ const Renderer = {
             this.ctx.globalAlpha = 1;
         }
         
-        // Motif central (pour les pièces de haute valeur)
+        // Motif central (pour les piï¿½ces de haute valeur)
         if (drop.value > 1 && Math.abs(Math.cos(spin)) > 0.5) {
             this.ctx.strokeStyle = edgeColor;
             this.ctx.lineWidth = 1;
@@ -810,7 +822,7 @@ const Renderer = {
             this.ctx.stroke();
         }
         
-        // Effet de lueur si magnétisé
+        // Effet de lueur si magnï¿½tisï¿½
         if (drop.magnetized) {
             this.ctx.shadowColor = mainColor;
             this.ctx.shadowBlur = 15;
@@ -843,7 +855,7 @@ const Renderer = {
         this.ctx.fillStyle = lootBox.colors.MEDIUM;
         this.ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
         
-        // Face supérieure (effet 3D)
+        // Face supï¿½rieure (effet 3D)
         this.ctx.fillStyle = lootBox.colors.BRIGHT;
         this.ctx.beginPath();
         this.ctx.moveTo(-radius, -radius);
@@ -901,7 +913,7 @@ const Renderer = {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(-radius, -radius, radius * 2, radius * 2);
         
-        // === ÉTINCELLES AUTOUR ===
+        // === ï¿½TINCELLES AUTOUR ===
         if (Math.random() < 0.3) {
             for (let i = 0; i < 3; i++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -958,7 +970,7 @@ const Renderer = {
             this.ctx.fill();
         });
 
-        // Dessiner l'effet de téléportation procédural au-dessus des particules
+        // Dessiner l'effet de tï¿½lï¿½portation procï¿½dural au-dessus des particules
         TeleportFX.draw(this.ctx);
     },
     
@@ -973,7 +985,7 @@ const Renderer = {
         this.ctx.textAlign = 'center';
         this.ctx.fillText('LEVEL UP!', this.canvas.width / 2, 150);
         
-        // Détection de hover
+        // Dï¿½tection de hover
         let anyHover = false;
         const left = 100;
         const width = this.canvas.width - 200;
@@ -1065,11 +1077,11 @@ const Renderer = {
     drawOffscreenEnemyIndicators() {
         if (!Player.data || Enemy.list.length === 0) return;
         
-        const margin = 20; // Distance du bord de l'écran
+        const margin = 20; // Distance du bord de l'ï¿½cran
         const indicatorSize = 8; // Taille des indicateurs
         
         Enemy.list.forEach(enemy => {
-            // Vérifier si l'ennemi est hors écran
+            // Vï¿½rifier si l'ennemi est hors ï¿½cran
             if (Camera.isVisible(enemy.x, enemy.y, 50)) return;
             
             // Calculer la direction de l'ennemi par rapport au joueur
@@ -1087,20 +1099,20 @@ const Renderer = {
             const dirX = dx / distance;
             const dirY = dy / distance;
             
-            // Calculer l'intersection avec les bords de l'écran
+            // Calculer l'intersection avec les bords de l'ï¿½cran
             let indicatorX, indicatorY;
             
-            // Limites de l'écran avec marge
+            // Limites de l'ï¿½cran avec marge
             const minX = margin;
             const maxX = this.canvas.width - margin;
             const minY = margin;
             const maxY = this.canvas.height - margin;
             
-            // Trouver l'intersection avec le bord de l'écran
+            // Trouver l'intersection avec le bord de l'ï¿½cran
             const centerX = this.canvas.width / 2;
             const centerY = this.canvas.height / 2;
             
-            // Échelle pour aller du centre vers les bords
+            // ï¿½chelle pour aller du centre vers les bords
             const scaleX = dirX !== 0 ? Math.abs((dirX > 0 ? maxX : minX) - centerX) / Math.abs(dirX) : Infinity;
             const scaleY = dirY !== 0 ? Math.abs((dirY > 0 ? maxY : minY) - centerY) / Math.abs(dirY) : Infinity;
             
@@ -1138,7 +1150,7 @@ const Renderer = {
         this.ctx.translate(x, y);
         this.ctx.rotate(angle);
         
-        // Ombre pour la visibilité
+        // Ombre pour la visibilitï¿½
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 1;
@@ -1154,7 +1166,7 @@ const Renderer = {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Contour pour la visibilité
+        // Contour pour la visibilitï¿½
         this.ctx.strokeStyle = '#fff';
         this.ctx.lineWidth = 1;
         this.ctx.globalAlpha = pulseIntensity * 0.8;
@@ -1197,7 +1209,7 @@ const Renderer = {
         this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
         this.ctx.lineWidth = 1;
         this.ctx.beginPath();
-        // Lignes croisées
+        // Lignes croisï¿½es
         this.ctx.moveTo(radarX, radarY + radarRadius);
         this.ctx.lineTo(radarX + radarSize, radarY + radarRadius);
         this.ctx.moveTo(radarX + radarRadius, radarY);
@@ -1216,7 +1228,7 @@ const Renderer = {
         this.ctx.fill();
         
         // Ennemis sur le radar
-        const radarRange = 600; // Portée du radar en unités monde
+        const radarRange = 600; // Portï¿½e du radar en unitï¿½s monde
         const scale = radarRadius / radarRange;
         
         Enemy.list.forEach(enemy => {
@@ -1266,12 +1278,12 @@ const Renderer = {
         this.clear();
         Camera.update();
 
-        // Réinitialiser le curseur si pas en upgrade
+        // Rï¿½initialiser le curseur si pas en upgrade
         if (Game.state !== 'upgrade') {
             this.canvas.style.cursor = 'default';
         }
 
-        // Dessiner le sol avant les entités
+        // Dessiner le sol avant les entitï¿½s
         this.drawFloor();
         
         this.drawPlayer();
@@ -1281,10 +1293,10 @@ const Renderer = {
         this.drawOrbs();
         this.drawParticles();
         
-        // Indicateurs d'ennemis hors écran
+        // Indicateurs d'ennemis hors ï¿½cran
         this.drawOffscreenEnemyIndicators();
         
-        // Mini radar en haut à droite
+        // Mini radar en haut ï¿½ droite
         this.drawMiniRadar();
         
         this.drawUpgradeScreen();

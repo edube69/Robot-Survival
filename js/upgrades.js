@@ -1,5 +1,13 @@
-// Module des améliorations
-const Upgrades = {
+import { CONFIG } from './config.js';
+import { Audio } from './audio.js';
+import { Player } from './player.js';
+import { Enemy } from './enemy.js';
+import { Particle } from './particle.js';
+import { Orb } from './orb.js';
+
+
+// Module des amï¿½liorations
+export const Upgrades = {
     options: [],
     
     generateOptions() {
@@ -8,7 +16,7 @@ const Upgrades = {
             let nextValue;
             if (upgradeName === 'fireRate') {
                 // Pour fireRate, on diminue la valeur (frames entre tirs)
-                nextValue = Math.max(maxValue, currentValue + increment); // increment est négatif, maxValue est plus petit
+                nextValue = Math.max(maxValue, currentValue + increment); // increment est nï¿½gatif, maxValue est plus petit
             } else {
                 nextValue = Math.min(maxValue, currentValue + increment);
             }
@@ -20,7 +28,7 @@ const Upgrades = {
             };
         };
         
-        // === NOUVEAU SYSTÈME : Upgrades intelligentes avec vérification des prérequis ===
+        // === NOUVEAU SYSTï¿½ME : Upgrades intelligentes avec vï¿½rification des prï¿½requis ===
         const getAllAvailableUpgrades = () => {
             const upgrades = [];
             
@@ -56,7 +64,7 @@ const Upgrades = {
             }
             
             if (!Player.data.range || Player.data.range < 400) {
-                const currentRange = Player.data.range || 200; // Valeur par défaut
+                const currentRange = Player.data.range || 200; // Valeur par dï¿½faut
                 const info = getUpgradeInfo('range', currentRange, 40, 400);
                 upgrades.push({ 
                     name: "Range+", 
@@ -148,11 +156,11 @@ const Upgrades = {
                 });
             }
             
-            // === UPGRADE DE VIE (toujours disponible mais coûteuse) ===
+            // === UPGRADE DE VIE (toujours disponible mais coï¿½teuse) ===
             upgrades.push({ 
                 name: "Health+", 
                 desc: `Gain extra life (${Game.lives}?${Game.lives + 1})`, 
-                priority: 1, // Priorité basse
+                priority: 1, // Prioritï¿½ basse
                 apply: () => Game.lives++
             });
             
@@ -197,16 +205,16 @@ const Upgrades = {
             return;
         }
         
-        // === SÉLECTION INTELLIGENTE : Prioriser les upgrades importantes ===
+        // === Sï¿½LECTION INTELLIGENTE : Prioriser les upgrades importantes ===
         const selectUpgradesByPriority = () => {
             const selected = [];
             
-            // Séparer par priorité
+            // Sï¿½parer par prioritï¿½
             const highPriority = availableUpgrades.filter(u => u.priority >= 4);
             const mediumPriority = availableUpgrades.filter(u => u.priority === 3);
             const lowPriority = availableUpgrades.filter(u => u.priority <= 2);
             
-            // Sélectionner 1-2 upgrades de haute priorité si disponibles
+            // Sï¿½lectionner 1-2 upgrades de haute prioritï¿½ si disponibles
             if (highPriority.length > 0) {
                 const count = Math.min(2, highPriority.length);
                 for (let i = 0; i < count; i++) {
@@ -215,7 +223,7 @@ const Upgrades = {
                 }
             }
             
-            // Compléter avec des upgrades de priorité moyenne/basse
+            // Complï¿½ter avec des upgrades de prioritï¿½ moyenne/basse
             const remaining = [...mediumPriority, ...lowPriority];
             while (selected.length < 3 && remaining.length > 0) {
                 const index = Math.floor(Math.random() * remaining.length);
@@ -233,7 +241,7 @@ const Upgrades = {
             this.options.push(availableUpgrades.splice(index, 1)[0]);
         }
         
-        // Fallback final : dupliquer les dernières options si nécessaire
+        // Fallback final : dupliquer les derniï¿½res options si nï¿½cessaire
         while (this.options.length < 3) {
             const gemBonus = 20 + Math.floor(Game.wave * 3);
             this.options.push({
@@ -250,7 +258,7 @@ const Upgrades = {
     },
     
     generateReviveOptions() {
-        // === NOUVEAU : Vérifier si tous les upgrades sont maxés ===
+        // === NOUVEAU : Vï¿½rifier si tous les upgrades sont maxï¿½s ===
         const areAllUpgradesMaxed = () => {
             const maxOrbs = CONFIG.ORBS.MAX_TOTAL || 9;
             const maxOrbSpeed = CONFIG.ORBS.MAX_SPEED || 1.0;
@@ -258,20 +266,20 @@ const Upgrades = {
             const currentOrbSpeed = Player.data.orbSpeed || 1.0;
             
             return (
-                // Armes toutes débloquées
+                // Armes toutes dï¿½bloquï¿½es
                 Player.data.tripleShot &&
                 Player.data.shotgunBlast &&
                 Player.data.homingMissiles &&
                 Player.data.explosiveCannon &&
                 
-                // Stats de base maxées
+                // Stats de base maxï¿½es
                 Player.data.fireRate <= 8 &&
                 Player.data.speed >= 6 &&
                 Player.data.bulletSpeed >= 12 &&
                 (Player.data.range && Player.data.range >= 400) &&
                 Player.data.magnetRange >= 200 &&
                 
-                // Orbes maxées
+                // Orbes maxï¿½es
                 currentOrbs >= maxOrbs &&
                 currentOrbSpeed >= maxOrbSpeed &&
                 Orb.shootingEnabled
@@ -279,7 +287,7 @@ const Upgrades = {
         };
         
         if (areAllUpgradesMaxed()) {
-            // === SI TOUS LES UPGRADES SONT MAXÉS : Multiplicateurs de gems ===
+            // === SI TOUS LES UPGRADES SONT MAXï¿½S : Multiplicateurs de gems ===
             const reviveMultipliers = [
                 { 
                     name: "?? Gem Multiplier x2", 
@@ -289,7 +297,7 @@ const Upgrades = {
                         if (!Player.data.gemMultiplier) Player.data.gemMultiplier = 1;
                         Player.data.gemMultiplier *= 2;
                         
-                        // Bonus immédiat de gems
+                        // Bonus immï¿½diat de gems
                         const immediateBonus = 100 + Math.floor(Game.wave * 20);
                         Game.gems += immediateBonus;
                         
@@ -304,7 +312,7 @@ const Upgrades = {
                         if (!Player.data.gemMultiplier) Player.data.gemMultiplier = 1;
                         Player.data.gemMultiplier *= 3;
                         
-                        // Bonus massif immédiat
+                        // Bonus massif immï¿½diat
                         const windfall = 200 + Math.floor(Game.wave * 35);
                         Game.gems += windfall;
                         
@@ -338,17 +346,17 @@ const Upgrades = {
             return;
         }
         
-        // === SYSTÈME NORMAL : Upgrades de résurrection classiques ===
+        // === SYSTï¿½ME NORMAL : Upgrades de rï¿½surrection classiques ===
         const reviveUpgrades = [
             { 
                 name: "Phoenix Protocol", 
                 desc: "Massive fire rate + flame bullets",
                 benefit: "Fire rate boost + bullet speed",
                 apply: () => {
-                    // Amélioration significative mais équilibrée du taux de tir
+                    // Amï¿½lioration significative mais ï¿½quilibrï¿½e du taux de tir
                     const currentFireRate = Player.data.fireRate;
                     const minFireRate = 8;
-                    let fireRateBoost = Math.min(Math.floor(currentFireRate * 0.4), 15); // Max 15 frames de réduction
+                    let fireRateBoost = Math.min(Math.floor(currentFireRate * 0.4), 15); // Max 15 frames de rï¿½duction
                     let newFireRate = Math.max(minFireRate, currentFireRate - fireRateBoost);
                     let actualBoost = currentFireRate - newFireRate;
                     if (actualBoost > 0) {
@@ -366,14 +374,14 @@ const Upgrades = {
                 desc: "Extended invincibility + speed boost", 
                 benefit: "12 seconds invulnerable + speed",
                 apply: () => {
-                    // Boost de vitesse équilibré
+                    // Boost de vitesse ï¿½quilibrï¿½
                     const currentSpeed = Player.data.speed;
                     const speedBoost = Math.min(1.5, 6 - currentSpeed); // Respecter la limite de vitesse
                     Player.upgrade('speed', speedBoost);
                     
-                    // Invulnérabilité étendue (12 secondes au lieu de 10)
+                    // Invulnï¿½rabilitï¿½ ï¿½tendue (12 secondes au lieu de 10)
                     Player.data.invulnerable = true;
-                    Player.data.invulnerableTime = 720; // 12 secondes à 60 FPS
+                    Player.data.invulnerableTime = 720; // 12 secondes ï¿½ 60 FPS
                     
                     console.log(`?? GHOST MODE! Speed boosted by ${speedBoost}, 12 seconds invulnerability!`);
                 }
@@ -386,7 +394,7 @@ const Upgrades = {
                     // === NOUVEAU : Respecter les limites d'orbes ===
                     const maxOrbs = CONFIG.ORBS.MAX_TOTAL || 9;
                     const currentOrbs = Player.data.orbCount || 0;
-                    const orbsToAdd = Math.min(3, maxOrbs - currentOrbs); // Maximum 3 orbes ou jusqu'à la limite
+                    const orbsToAdd = Math.min(3, maxOrbs - currentOrbs); // Maximum 3 orbes ou jusqu'ï¿½ la limite
                     
                     if (orbsToAdd > 0) {
                         for(let i = 0; i < orbsToAdd; i++) {
@@ -397,15 +405,15 @@ const Upgrades = {
                         console.log(`?? BERSERKER RAGE! Max orbs reached, but damage boost applied!`);
                     }
                     
-                    // Toujours appliquer le bonus de dégâts
+                    // Toujours appliquer le bonus de dï¿½gï¿½ts
                     Player.data.orbDamage += 30;
                     
-                    // === BONUS SUPPLÉMENTAIRE si on ne peut pas ajouter d'orbes ===
+                    // === BONUS SUPPLï¿½MENTAIRE si on ne peut pas ajouter d'orbes ===
                     if (orbsToAdd < 3) {
-                        // Compensation avec autres améliorations
+                        // Compensation avec autres amï¿½liorations
                         const compensation = 3 - orbsToAdd;
                         
-                        // Améliorer la vitesse de rotation des orbes existantes
+                        // Amï¿½liorer la vitesse de rotation des orbes existantes
                         const maxOrbSpeed = CONFIG.ORBS.MAX_SPEED || 1.0;
                         const currentOrbSpeed = Player.data.orbSpeed || 1.0;
                         if (currentOrbSpeed < maxOrbSpeed) {
@@ -437,7 +445,7 @@ const Upgrades = {
             Game.gems -= Game.gemsForUpgrade;
             Game.gemsForUpgrade = Math.floor(Game.gemsForUpgrade * CONFIG.UPGRADES.COST_MULTIPLIER);
             
-            // Notifier le système qu'une upgrade a été faite
+            // Notifier le systï¿½me qu'une upgrade a ï¿½tï¿½ faite
             Game.onUpgrade();
             
             Game.state = 'playing';
@@ -456,7 +464,7 @@ const Upgrades = {
             this.options[index].apply();
             Game.resurrections++;
             
-            // Restaurer les vies lors de la résurrection
+            // Restaurer les vies lors de la rï¿½surrection
             Game.lives = 3;
             
             Game.state = 'playing';

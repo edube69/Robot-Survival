@@ -1,5 +1,7 @@
+import { CONFIG } from './config.js';
+
 // Module des particules
-const Particle = {
+export const Particle = {
     list: [],
     
     init() {

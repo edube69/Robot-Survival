@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robotron: Retro Survival</title>
+    <title>Robot Survival</title>
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
@@ -12,58 +12,66 @@
         <h1 class="title">ROBOTRON</h1>
         <p class="subtitle">Retro Survival Arena</p>
         
-        <button class="start-button" onclick="Game.start()">
-            Start Mission
-        </button>
+        <button id="startButton" class="start-button">Start Mission</button>
         
         <div class="features">
             <div class="feature-grid">
                 <div class="feature">
-                    <h3>?? Auto-Targeting</h3>
+                    <h3>🎯 Auto-Targeting</h3>
                     <p>Advanced AI targeting system locks onto the nearest threat</p>
                 </div>
                 <div class="feature">
-                    <h3>? Power Upgrades</h3>
+                    <h3>⚡ Power Upgrades</h3>
                     <p>Collect gems to unlock devastating abilities and orbital shields</p>
                 </div>
                 <div class="feature">
-                    <h3>?? Enemy Variants</h3>
+                    <h3>🤖 Enemy Variants</h3>
                     <p>Face off against Fast Scouts, Heavy Tanks, and Splitter Units</p>
                 </div>
                 <div class="feature">
-                    <h3>?? Resurrection</h3>
+                    <h3>🔄 Resurrection</h3>
                     <p>Death is not the end - revive with enhanced abilities</p>
                 </div>
             </div>
         </div>
+        
+        <button id="highscoresButton" class="highscores-button">View High Scores</button>
     </div>
     
     <!-- Game Screen -->
     <div id="gameScreen">
+        <div id="gameHUD">
+            <div class="hud-section">
+                <div class="hud-item"><label>Score</label><span id="score">0</span></div>
+                <div class="hud-item"><label>Wave</label><span id="wave">1</span></div>
+                <div class="hud-item"><label>Lives</label><span id="lives">3</span></div>
+            </div>
+            <div id="movementMode">MODE: WASD</div>
+            <div class="hud-section">
+                <div class="hud-item"><label>Gems</label><span id="gems">0</span></div>
+                <div class="hud-item"><label>Next Upgrade</label><span id="nextUpgrade">75</span></div>
+                <div class="hud-item"><label>Resurrections</label><span id="resurrections">0</span></div>
+            </div>
+        </div>
+
         <div id="gameContainer">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
-            <div id="ui">
-                <div>SCORE: <span id="score">0</span></div>
-                <div>WAVE: <span id="wave">1</span></div>
-                <div>LIVES: <span id="lives">3</span></div>
-                <div>GEMS: <span id="gems">0</span></div>
-                <div>NEXT UPGRADE: <span id="nextUpgrade">75</span></div>
-                <div id="movementMode" style="color: #ff0;">MODE: WASD</div>
-                <div>RESURRECTIONS: <span id="resurrections">0</span></div>
-            </div>
             
             <div id="gameOver">
                 <div class="glow">MISSION FAILED</div>
-                <div style="font-size: 16px; margin-top: 10px;">Press SPACE to restart or ESC for main menu</div>
+                <div class="game-over-prompt">Press SPACE to restart or ESC for main menu</div>
+                <div class="score-form">
+                    <label for="username">Enter your name for the leaderboard:</label>
+                    <input type="text" id="username" class="username-input" maxlength="10">
+                    <button id="submitScore" class="submit-button">Submit Score</button>
+                </div>
             </div>
             
             <div id="reviveScreen">
                 <div class="glow">RESURRECTION PROTOCOL</div>
-                <div style="font-size: 16px; margin: 20px 0;">Choose your enhanced abilities:</div>
+                <div class="revive-prompt">Choose your enhanced abilities:</div>
                 <div id="reviveOptions"></div>
-                <div style="font-size: 14px; margin-top: 20px; color: #888;">
-                    Press 1, 2, or 3 to choose � 4 to skip resurrection
-                </div>
+                <div class="revive-instructions">Press 1, 2, or 3 to choose • 4 to skip resurrection</div>
             </div>
             
             <div id="instructions">
@@ -72,20 +80,14 @@
         </div>
     </div>
 
-    <!-- JavaScript Modules -->
-    <script src="js/config.js"></script>
-    <script src="js/audio.js"></script>
-    <script src="js/input.js"></script>
-    <script src="js/camera.js"></script>
-    <script src="js/player.js"></script>
-    <script src="js/enemy.js"></script>
-    <script src="js/bullet.js"></script>
-    <script src="js/particle.js"></script>
-    <script src="js/currency.js"></script>
-    <script src="js/orb.js"></script>
-    <script src="js/teleportfx.js"></script>
-    <script src="js/upgrades.js"></script>
-    <script src="js/renderer.js"></script>
-    <script src="js/game.js"></script>
+    <!-- Firebase Scripts -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    
+    <!-- Base Configuration -->
+    <script type="module" src="js/config.js"></script>
+    
+    <!-- Core Engine Modules -->
+    <script type="module" src="js/game.js"></script>
 </body>
 </html>

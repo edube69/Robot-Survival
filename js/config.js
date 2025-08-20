@@ -1,12 +1,12 @@
 // Configuration globale du jeu
-const CONFIG = {
+export const CONFIG = {
     // Dimensions du monde
     WORLD: {
         WIDTH: 2400,
         HEIGHT: 1800
     },
     
-    // Dimensions du canvas (ratio de référence)
+    // Dimensions du canvas (ratio de rï¿½fï¿½rence)
     CANVAS: {
         WIDTH: 1000,
         HEIGHT: 600
@@ -25,20 +25,20 @@ const CONFIG = {
         MAGNET_RANGE: 60
     },
     
-    // Configuration de la caméra
+    // Configuration de la camï¿½ra
     CAMERA: {
-        FOLLOW_SPEED: 0.08, // Légèrement plus rapide pour réduire la latence
-        ZOOM: 1.8 // Zoom > 1 rapproche la caméra (tout apparaît plus gros)
+        FOLLOW_SPEED: 0.08, // Lï¿½gï¿½rement plus rapide pour rï¿½duire la latence
+        ZOOM: 1.8 // Zoom > 1 rapproche la camï¿½ra (tout apparaï¿½t plus gros)
     },
     
     // Sol / motif du fond
     FLOOR: {
-        TILE: 64, // taille de la tuile en pixels (unités monde)
+        TILE: 64, // taille de la tuile en pixels (unitï¿½s monde)
         LINE_COLOR: 'rgba(0,255,255,0.07)',
         MAJOR_LINE_COLOR: 'rgba(0,255,255,0.12)',
         DOT_COLOR: 'rgba(0,255,255,0.10)',
         DOT_SIZE: 2,
-        MAJOR_EVERY: 4 // une ligne renforcée toutes les N tuiles
+        MAJOR_EVERY: 4 // une ligne renforcï¿½e toutes les N tuiles
     },
     
     // Configuration des ennemis
@@ -59,8 +59,8 @@ const CONFIG = {
             },
             fast: { 
                 radius: 4, 
-                speedBase: 2.8, // Réduit de 3.5 à 2.8 pour moins de vitesse initiale
-                speedVariation: 1.0, // Réduit de 1.5 à 1.0 pour moins de variation
+                speedBase: 2.8, // Rï¿½duit de 3.5 ï¿½ 2.8 pour moins de vitesse initiale
+                speedVariation: 1.0, // Rï¿½duit de 1.5 ï¿½ 1.0 pour moins de variation
                 color: '#f44', 
                 health: 1, 
                 points: 150, 
@@ -99,7 +99,7 @@ const CONFIG = {
         COUNT: 8
     },
     
-    // Configuration des gemmes/pièces d'or
+    // Configuration des gemmes/piï¿½ces d'or
     CURRENCY: {
         HIGH_VALUE_CHANCE: 0.2,
         HIGH_VALUE: 3,
@@ -122,8 +122,8 @@ const CONFIG = {
     
     // Configuration des loot boxes
     LOOT_BOXES: {
-        DROP_CHANCE: 0.08,  // Réduit de 15% à 8% pour être moins fréquent
-        ELITE_DROP_CHANCE: 0.15, // Réduit de 25% à 15% pour les élites
+        DROP_CHANCE: 0.08,  // Rï¿½duit de 15% ï¿½ 8% pour ï¿½tre moins frï¿½quent
+        ELITE_DROP_CHANCE: 0.15, // Rï¿½duit de 25% ï¿½ 15% pour les ï¿½lites
         TYPES: {
             TREASURE: {
                 COLOR: '#FFD700',
@@ -158,50 +158,50 @@ const CONFIG = {
     // Configuration des orbes
     ORBS: {
         RADIUS: 5,
-        DISTANCE: 40,        // Distance de la première orbite
-        DISTANCE_INCREMENT: 25, // Distance supplémentaire pour chaque orbite
+        DISTANCE: 40,        // Distance de la premiï¿½re orbite
+        DISTANCE_INCREMENT: 25, // Distance supplï¿½mentaire pour chaque orbite
         COLOR: '#ff8800',
         DAMAGE: 40,
-        MAX_PER_ORBIT: 3,    // === RÉDUIT DE 6 À 3 ORBES PAR ORBITE ===
-        MAX_TOTAL: 9,        // === AJUSTÉ : 3 orbites × 3 orbes = 9 orbes max ===
-        BASE_SPEED: 0.06,    // === RÉDUIT DE MOITIÉ : était 0.12, maintenant 0.06 ===
-        SPEED_INCREMENT: 0.015, // === RÉDUIT DE MOITIÉ : était 0.03, maintenant 0.015 ===
+        MAX_PER_ORBIT: 3,    // === Rï¿½DUIT DE 6 ï¿½ 3 ORBES PAR ORBITE ===
+        MAX_TOTAL: 9,        // === AJUSTï¿½ : 3 orbites ï¿½ 3 orbes = 9 orbes max ===
+        BASE_SPEED: 0.06,    // === Rï¿½DUIT DE MOITIï¿½ : ï¿½tait 0.12, maintenant 0.06 ===
+        SPEED_INCREMENT: 0.015, // === Rï¿½DUIT DE MOITIï¿½ : ï¿½tait 0.03, maintenant 0.015 ===
         SPEED_MULTIPLIER: 1.0, // Multiplicateur de vitesse global pour upgrade
-        MAX_SPEED: 1.0,      // === RÉDUIT : vitesse maximale de 1.5x à 1.0x ===
+        MAX_SPEED: 1.0,      // === Rï¿½DUIT : vitesse maximale de 1.5x ï¿½ 1.0x ===
         SHOOTING_ENABLED: false, // Les orbes peuvent-elles tirer ?
-        SHOOTING_RATE: 120,  // === DOUBLÉ : était 60, maintenant 120 (tire 2x moins vite) ===
+        SHOOTING_RATE: 120,  // === DOUBLï¿½ : ï¿½tait 60, maintenant 120 (tire 2x moins vite) ===
         BULLET_SPEED: 5,     // Vitesse des projectiles d'orbes
-        BULLET_DAMAGE: 25    // Dégâts des projectiles d'orbes
+        BULLET_DAMAGE: 25    // Dï¿½gï¿½ts des projectiles d'orbes
     },
     
-    // Configuration des armements avancés
+    // Configuration des armements avancï¿½s
     WEAPONS: {
         TRIPLE_SHOT: {
             ENABLED: false,
-            SPREAD_ANGLE: 0.3,  // Angle d'écartement en radians
-            SPEED_MULTIPLIER: 0.9 // Légèrement plus lent
+            SPREAD_ANGLE: 0.3,  // Angle d'ï¿½cartement en radians
+            SPEED_MULTIPLIER: 0.9 // Lï¿½gï¿½rement plus lent
         },
         HOMING_MISSILE: {
             ENABLED: false,
             SPEED: 3,
             TURN_RATE: 0.08,    // Vitesse de rotation vers la cible
             LOCK_RANGE: 200,    // Distance de verrouillage
-            DAMAGE: 60,         // Plus de dégâts que les balles normales
+            DAMAGE: 60,         // Plus de dï¿½gï¿½ts que les balles normales
             COOLDOWN: 90        // Cooldown plus long
         },
         EXPLOSIVE_CANNON: {
             ENABLED: false,
             SPEED: 4,
             BLAST_RADIUS: 50,   // Rayon d'explosion
-            DAMAGE: 80,         // Gros dégâts
-            COOLDOWN: 120       // Cooldown très long
+            DAMAGE: 80,         // Gros dï¿½gï¿½ts
+            COOLDOWN: 120       // Cooldown trï¿½s long
         },
         LASER_BEAM: {
             ENABLED: false,
             WIDTH: 3,
             LENGTH: 300,
-            DAMAGE: 15,         // Dégâts continus
-            ENERGY_COST: 2     // Coût en énergie par frame
+            DAMAGE: 15,         // Dï¿½gï¿½ts continus
+            ENERGY_COST: 2     // Coï¿½t en ï¿½nergie par frame
         },
         SHOTGUN_BLAST: {
             ENABLED: false,
@@ -212,15 +212,15 @@ const CONFIG = {
         }
     },
     
-    // Configuration des améliorations
+    // Configuration des amï¿½liorations
     UPGRADES: {
-        BASE_COST: 50, // Réduit de 75 à 50 car les gems ont plus de valeur maintenant
-        COST_MULTIPLIER: 1.4 // Réduit de 1.5 à 1.4 pour une progression plus douce
+        BASE_COST: 50, // Rï¿½duit de 75 ï¿½ 50 car les gems ont plus de valeur maintenant
+        COST_MULTIPLIER: 1.4 // Rï¿½duit de 1.5 ï¿½ 1.4 pour une progression plus douce
     },
     
     // Limites du jeu
     LIMITS: {
-        MAX_RESURRECTIONS: 10,
-        MAX_LIVES: 10
+        MAX_RESURRECTIONS: 0,
+        MAX_LIVES: 3
     }
 };

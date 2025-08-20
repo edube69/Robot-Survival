@@ -1,4 +1,19 @@
 // Module principal du jeu
+import { getCurrentUser, saveScore } from './firebase-config.js';
+import { CONFIG } from './config.js';
+import { Audio } from './audio.js';
+import { Input } from './input.js';
+import { Renderer } from './renderer.js';
+import { Player } from './player.js';
+import { Camera } from './camera.js';
+import { Enemy } from './enemy.js';
+import { Bullet } from './bullet.js';
+import { Particle } from './particle.js';
+import { Currency } from './currency.js';
+import { Orb } from './orb.js';
+import { TeleportFX } from './teleportfx.js';
+import { Upgrades } from './upgrades.js';
+
 const Game = {
     state: 'menu',
     score: 0,
@@ -8,17 +23,25 @@ const Game = {
     gemsForUpgrade: CONFIG.UPGRADES.BASE_COST,
     resurrections: 0,
     timeScale: 1.0, // Facteur de ralenti global
-    deathSequenceTimer: 0, // Timer pour la séquence de mort
+    deathSequenceTimer: 0, // Timer pour la sï¿½quence de mort
     waveAnnouncementTimer: 0, // Timer pour l'annonce de vague
     upgradesThisWave: 0, // Compteur d'upgrades dans cette vague
     upgradeOptions: [], // Options d'upgrade disponibles
+    startTime: 0, // Pour suivre le temps de jeu
+    kills: 0, // Pour suivre le nombre de kills
     
     init() {
-        // Initialiser tous les modules
+        // Initialiser dans un ordre qui respecte les dÃ©pendances
+        this.startTime = Date.now();
+        
+        // Modules de base d'abord
         Audio.init();
         Input.init();
-        Renderer.init();
-        Player.init(); // Initialiser le joueur AVANT la caméra
+        
+        // Ensuite le joueur (car beaucoup de modules en dÃ©pendent)
+        Player.init();
+        
+        // Puis les modules qui dÃ©pendent du joueur
         Camera.init();
         Enemy.init();
         Bullet.init();
@@ -26,6 +49,16 @@ const Game = {
         Currency.init();
         Orb.init();
         TeleportFX.init();
+        
+        // Renderer en dernier car il dÃ©pend de tout le reste
+        Renderer.init();
+        
+        // Event listeners
+        document.getElementById('startButton').addEventListener('click', () => this.start());
+        document.getElementById('highscoresButton').addEventListener('click', () => {
+            window.location.href = 'highscores.html';
+        });
+        document.getElementById('submitScore').addEventListener('click', () => this.submitScore());
         
         // Commencer la boucle de jeu
         this.gameLoop();
@@ -52,11 +85,11 @@ const Game = {
         this.timeScale = 1.0;
         this.deathSequenceTimer = 0;
         this.waveAnnouncementTimer = 0; // Initialiser le timer d'annonce
-        this.upgradesThisWave = 0; // Réinitialiser le compteur d'upgrades
+        this.upgradesThisWave = 0; // Rï¿½initialiser le compteur d'upgrades
         
-        // Réinitialiser tous les modules
+        // Rï¿½initialiser tous les modules
         Player.reset();
-        Camera.init(); // Réinitialiser la caméra après le joueur
+        Camera.init(); // Rï¿½initialiser la camï¿½ra aprï¿½s le joueur
         Enemy.init(); // Ceci initialise waveEnemiesSpawned = 0 et setWaveLimit()
         Bullet.init();
         Particle.init();
@@ -64,14 +97,14 @@ const Game = {
         Orb.init();
         TeleportFX.init();
         
-        // Masquer les écrans
+        // Masquer les ï¿½crans
         document.getElementById('gameOver').style.display = 'none';
         document.getElementById('reviveScreen').style.display = 'none';
         
         console.log('Game restarted - Wave 1 begins');
         
         // Spawn initial d'ennemis plus important pour la vague 1
-        const initialSpawn = 10; // Augmenté de 6 à 10
+        const initialSpawn = 10; // Augmentï¿½ de 6 ï¿½ 10
         for (let i = 0; i < initialSpawn; i++) {
             setTimeout(() => {
                 Enemy.create();
@@ -90,12 +123,12 @@ const Game = {
     },
     
     announceNewWave() {
-        // Ne pas incrémenter si c'est la première vague (déjà à 1)
+        // Ne pas incrï¿½menter si c'est la premiï¿½re vague (dï¿½jï¿½ ï¿½ 1)
         if (Game.wave > 0) {
             this.wave++;
         }
         
-        // Réinitialiser le compteur d'upgrades pour la nouvelle vague
+        // Rï¿½initialiser le compteur d'upgrades pour la nouvelle vague
         this.upgradesThisWave = 0;
         
         this.state = 'waveAnnouncement';
@@ -103,9 +136,9 @@ const Game = {
         
         console.log(`Starting Wave ${this.wave}`); // Debug
         
-        // Réinitialiser le système d'ennemis pour la nouvelle vague (important!)
+        // Rï¿½initialiser le systï¿½me d'ennemis pour la nouvelle vague (important!)
         Enemy.waveEnemiesSpawned = 0;
-        Enemy.bonusWaveActive = false; // S'assurer que la vague bonus est désactivée
+        Enemy.bonusWaveActive = false; // S'assurer que la vague bonus est dï¿½sactivï¿½e
         Enemy.bonusWaveSpawned = 0;
         Enemy.bonusWaveTarget = 0;
         Enemy.setWaveLimit();
@@ -116,7 +149,7 @@ const Game = {
         // Son d'annonce de vague
         Audio.playSoundEffect('newWave');
         
-        // Spawn des ennemis après l'annonce (spawn initial plus important)
+        // Spawn des ennemis aprï¿½s l'annonce (spawn initial plus important)
         setTimeout(() => {
             console.log(`Spawning initial enemies for Wave ${this.wave}`); // Debug
             const initialSpawn = Math.min(8 + Math.floor(this.wave * 1.2), 15); // Spawn initial plus important
@@ -124,14 +157,14 @@ const Game = {
                 setTimeout(() => {
                     Enemy.create();
                     Enemy.waveEnemiesSpawned++;
-                }, i * 250); // Légèrement plus rapide
+                }, i * 250); // Lï¿½gï¿½rement plus rapide
             }
             this.state = 'playing';
             console.log(`State changed back to playing. Initial spawn: ${initialSpawn}`); // Debug
         }, 2000);
     },
     
-    // Méthode appelée quand le joueur fait une upgrade
+    // Mï¿½thode appelï¿½e quand le joueur fait une upgrade
     onUpgrade() {
         this.upgradesThisWave++;
         console.log(`Upgrade ${this.upgradesThisWave} acquired this wave`);
@@ -142,10 +175,10 @@ const Game = {
         const centerX = Player.data.x;
         const centerY = Player.data.y;
         
-        // Explosion centrale dorée
+        // Explosion centrale dorï¿½e
         Particle.createExplosion(centerX, centerY, '#FFD700', 40);
         
-        // Anneaux d'énergie qui s'expandent
+        // Anneaux d'ï¿½nergie qui s'expandent
         for (let ring = 0; ring < 5; ring++) {
             setTimeout(() => {
                 const radius = 50 + ring * 30;
@@ -161,7 +194,7 @@ const Game = {
             }, ring * 200);
         }
         
-        // Étoiles qui tombent du ciel
+        // ï¿½toiles qui tombent du ciel
         for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 const x = centerX + (Math.random() - 0.5) * 400;
@@ -175,7 +208,7 @@ const Game = {
     update() {
         // Gestion des inputs pour les upgrades
         if (this.state === 'upgrade') {
-            // Touches 1, 2, 3 pour sélectionner les upgrades
+            // Touches 1, 2, 3 pour sï¿½lectionner les upgrades
             if (Input.isKeyPressed('1')) {
                 Upgrades.select(0);
             } else if (Input.isKeyPressed('2')) {
@@ -192,27 +225,27 @@ const Game = {
             if (this.waveAnnouncementTimer <= 0) {
                 this.state = 'playing';
             }
-            // Continue à mettre à jour les particules et effets
+            // Continue ï¿½ mettre ï¿½ jour les particules et effets
             Particle.update();
             TeleportFX.update();
             return;
         }
         
-        // Gestion de la séquence de mort
+        // Gestion de la sï¿½quence de mort
         if (this.state === 'deathSequence') {
             this.deathSequenceTimer--;
             if (this.deathSequenceTimer <= 0) {
-                // Basculer immédiatement pour éviter des appels multiples
+                // Basculer immï¿½diatement pour ï¿½viter des appels multiples
                 this.deathSequenceTimer = 0;
                 this.completeDeathSequence();
             }
-            // Continue à mettre à jour les particules et l'effet de TP pendant la séquence
+            // Continue ï¿½ mettre ï¿½ jour les particules et l'effet de TP pendant la sï¿½quence
             Particle.update();
             TeleportFX.update();
             return;
         }
         
-        // Gestion de l'attente de téléportation (évite les doublons)
+        // Gestion de l'attente de tï¿½lï¿½portation (ï¿½vite les doublons)
         if (this.state === 'teleporting') {
             Particle.update();
             TeleportFX.update();
@@ -232,7 +265,7 @@ const Game = {
                 TeleportFX.update();
             };
             
-            // Si timeScale < 1, on fait plusieurs micro-updates pour garder la fluidité
+            // Si timeScale < 1, on fait plusieurs micro-updates pour garder la fluiditï¿½
             if (this.timeScale < 1) {
                 const steps = Math.ceil(1 / this.timeScale);
                 for (let i = 0; i < steps; i++) {
@@ -254,6 +287,80 @@ const Game = {
         this.deathSequenceTimer = 180; // 3 secondes en 60 FPS
     },
     
+    async showGameOverModal() {
+        const gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+        const modal = document.createElement('div');
+        modal.className = 'game-over-modal';
+
+        // On donne des ID aux boutons pour pouvoir y attacher des Ã©couteurs d'Ã©vÃ©nements
+        modal.innerHTML = `
+            <h2>Game Over!</h2>
+            <p>Score: ${this.score}</p>
+            <p>Kills: ${this.kills}</p>
+            <p>Time: ${gameTime}s</p>
+            <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+            <button id="submitScoreBtn">Submit Score</button>
+            <button id="skipScoreBtn">Skip</button>
+        `;
+        document.body.appendChild(modal);
+
+        // AMÃ‰LIORATION : On attache les Ã©vÃ©nements ici, c'est plus propre que "onclick"
+        document.getElementById('submitScoreBtn').addEventListener('click', () => this.submitScore());
+        document.getElementById('skipScoreBtn').addEventListener('click', () => this.skipScore());
+    },
+
+    async submitScore() {
+        // 1. CORRECTION DE L'ID
+        const playerNameInput = document.getElementById('playerName');
+
+        // Bonne pratique : on vÃ©rifie que l'Ã©lÃ©ment existe bien
+        if (!playerNameInput) {
+            console.error("L'Ã©lÃ©ment 'playerName' est introuvable dans le modal.");
+            return;
+        }
+
+        const playerName = playerNameInput.value;
+
+        if (!playerName) {
+            alert("Veuillez entrer un nom !");
+            return;
+        }
+
+        // 2. UTILISATION DES VRAIES DONNÃ‰ES
+        const finalScore = this.score;
+        const finalKills = this.kills;
+        const finalTime = Math.floor((Date.now() - this.startTime) / 1000); // Temps en secondes
+
+        try {
+            console.log("Connexion de l'utilisateur...");
+            const user = await getCurrentUser();
+            console.log("Utilisateur connectÃ© avec l'ID :", user.uid);
+
+            const success = await saveScore(user, playerName, finalScore, `${finalTime}s`, finalKills);
+
+            if (success) {
+                alert("Score sauvegardÃ© !");
+                this.skipScore(); // On ferme le modal et on retourne au menu
+            } else {
+                alert("La sauvegarde du score a Ã©chouÃ©.");
+            }
+
+        } catch (error) {
+            console.error("Erreur d'authentification ou de sauvegarde :", error);
+            alert("Une erreur est survenue. Impossible de sauvegarder le score.");
+        }
+    },
+
+    skipScore() {
+        // On s'assure que le modal existe avant de le supprimer
+        const modal = document.querySelector('.game-over-modal');
+        if (modal) {
+            modal.remove();
+        }
+        this.returnToMenu();
+    },
+
+    
     completeDeathSequence() {
         // Restaurer la vitesse normale
         this.timeScale = 1.0;
@@ -266,28 +373,28 @@ const Game = {
                 UI.showReviveScreen();
             } else {
                 this.state = 'gameOver';
-                document.getElementById('gameOver').style.display = 'block';
+                this.showGameOverModal();
             }
         } else {
-            // Trouver une position sûre pour réapparaître
+            // Trouver une position sï¿½re pour rï¿½apparaï¿½tre
             const safeLocation = Player.findSafeSpawnLocation();
             
-            // Passer en état "teleporting"
+            // Passer en ï¿½tat "teleporting"
             this.state = 'teleporting';
             
-            // Démarrer la téléportation de la caméra vers la nouvelle position
+            // Dï¿½marrer la tï¿½lï¿½portation de la camï¿½ra vers la nouvelle position
             Camera.startTeleportation(safeLocation.x, safeLocation.y);
             
-            // Zoom arrière pour dévoiler la scène (plus fluide)
+            // Zoom arriï¿½re pour dï¿½voiler la scï¿½ne (plus fluide)
             Camera.setTargetZoom(Math.max(1.0, (CONFIG.CAMERA.ZOOM || 1) * 0.75));
             
-            // Déclencher l'effet procédural de téléportation avec durée plus longue
+            // Dï¿½clencher l'effet procï¿½dural de tï¿½lï¿½portation avec durï¿½e plus longue
             TeleportFX.create(safeLocation.x, safeLocation.y, { duration: 100, maxRadius: 140 });
             
-            // Jouer le son de téléportation
+            // Jouer le son de tï¿½lï¿½portation
             Audio.playSoundEffect('teleport');
             
-            // Attendre pour apprécier l'effet, puis téléporter
+            // Attendre pour apprï¿½cier l'effet, puis tï¿½lï¿½porter
             setTimeout(() => {
                 Player.data.x = safeLocation.x;
                 Player.data.y = safeLocation.y;
@@ -295,20 +402,25 @@ const Game = {
                 // Nettoyer les ennemis proches
                 Enemy.clearNearby(Player.data.x, Player.data.y, 150);
                 
-                // Invulnérabilité temporaire
+                // Invulnï¿½rabilitï¿½ temporaire
                 Player.data.invulnerable = true;
                 Player.data.invulnerableTime = 150; // un peu plus long
                 
-                // Zoom avant pour revenir au zoom par défaut (plus progressif)
+                // Zoom avant pour revenir au zoom par dï¿½faut (plus progressif)
                 Camera.setTargetZoom(CONFIG.CAMERA.ZOOM || 1);
                 
-                // Terminer la téléportation de caméra et reprendre le suivi normal
+                // Terminer la tï¿½lï¿½portation de camï¿½ra et reprendre le suivi normal
                 setTimeout(() => {
                     Camera.finishTeleportation();
                     this.state = 'playing';
                 }, 400); // Plus de temps pour la transition
             }, 1000); // augmente l'attente
         }
+    },
+    
+    // Mï¿½thode pour incrï¿½menter le compteur de kills
+    addKill() {
+        this.kills++;
     },
     
     updateUI() {
@@ -329,7 +441,7 @@ const Game = {
         document.getElementById('movementMode').textContent = 
             Player.data && Player.data.followMouse ? 'MODE: MOUSE' : 'MODE: WASD';
         
-        // Vérifier si on peut faire une upgrade
+        // Vï¿½rifier si on peut faire une upgrade
         if (this.gems >= this.gemsForUpgrade && this.state === 'playing') {
             this.state = 'upgrade';
             Upgrades.generateOptions(); // Utiliser le module Upgrades existant
@@ -343,7 +455,7 @@ const Game = {
     }
 };
 
-// Créer un module UI pour les écrans spéciaux
+// Crï¿½er un module UI pour les ï¿½crans spï¿½ciaux
 const UI = {
     showReviveScreen() {
         document.getElementById('reviveScreen').style.display = 'block';
@@ -360,7 +472,7 @@ const UI = {
             `;
         }
 
-        // Activer la sélection par clic de souris
+        // Activer la sï¿½lection par clic de souris
         const items = optionsDiv.querySelectorAll('.revive-option');
         items.forEach(el => {
             el.addEventListener('click', () => {
@@ -371,7 +483,13 @@ const UI = {
     }
 };
 
-// Démarrer le jeu quand la page est chargée
+// Exporter le module Game
+export { Game };
+
+// L'exposer aussi sur window pour la compatibilitÃ©
+window.Game = Game;
+
+// Initialiser le jeu quand la page est chargÃ©e
 window.addEventListener('load', () => {
     Game.init();
 });
