@@ -93,6 +93,17 @@ const Renderer = {
         this.ctx.translate(screen.x, screen.y);
         this.ctx.scale(zoom, zoom);
         
+        // === CERCLE DE PORTÉE DU MAGNET ===
+        if (Player.data.magnetRange > 50) { // Afficher seulement si amélioré
+            this.ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([8, 4]);
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, Player.data.magnetRange, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]); // Réinitialiser le style de ligne
+        }
+        
         // Effet d'invulnérabilité
         if (Player.data.invulnerable) {
             const flash = Math.sin(Date.now() * 0.02) > 0;
@@ -158,26 +169,227 @@ const Renderer = {
             
             if (!Camera.isVisible(bullet.x, bullet.y, 20)) return;
             
-            this.ctx.strokeStyle = bullet.color;
-            this.ctx.shadowColor = bullet.color;
-            this.ctx.shadowBlur = 8;
-            this.ctx.lineWidth = bullet.radius * zoom;
-            this.ctx.lineCap = 'round';
-            
-            const angle = Math.atan2(bullet.vy, bullet.vx);
-            const length = bullet.length * zoom;
-            
-            const startX = screen.x - Math.cos(angle) * length / 2;
-            const startY = screen.y - Math.sin(angle) * length / 2;
-            const endX = screen.x + Math.cos(angle) * length / 2;
-            const endY = screen.y + Math.sin(angle) * length / 2;
-            
-            this.ctx.beginPath();
-            this.ctx.moveTo(startX, startY);
-            this.ctx.lineTo(endX, endY);
-            this.ctx.stroke();
-            this.ctx.shadowBlur = 0;
+            // Rendu spécialisé selon le type de projectile
+            this.drawBulletByType(bullet, screen, zoom);
         });
+    },
+    
+    drawBulletByType(bullet, screen, zoom) {
+        this.ctx.save();
+        
+        switch(bullet.type) {
+            case 'homing':
+                this.drawHomingMissile(bullet, screen, zoom);
+                break;
+            case 'explosive':
+                this.drawExplosiveBullet(bullet, screen, zoom);
+                break;
+            case 'orb':
+                this.drawOrbBullet(bullet, screen, zoom);
+                break;
+            case 'pellet':
+                this.drawPellet(bullet, screen, zoom);
+                break;
+            default:
+                this.drawBasicBullet(bullet, screen, zoom);
+        }
+        
+        this.ctx.restore();
+    },
+    
+    drawHomingMissile(bullet, screen, zoom) {
+        // Traînée du missile
+        if (bullet.trail && bullet.trail.length > 1) {
+            this.ctx.strokeStyle = bullet.color + '60';
+            this.ctx.lineWidth = 3 * zoom;
+            this.ctx.lineCap = 'round';
+            this.ctx.beginPath();
+            
+            for (let i = 0; i < bullet.trail.length; i++) {
+                const trailPoint = Camera.worldToScreen(bullet.trail[i].x, bullet.trail[i].y);
+                if (i === 0) this.ctx.moveTo(trailPoint.x, trailPoint.y);
+                else this.ctx.lineTo(trailPoint.x, trailPoint.y);
+            }
+            this.ctx.stroke();
+        }
+        
+        // Corps du missile
+        this.ctx.fillStyle = bullet.color;
+        this.ctx.shadowColor = bullet.color;
+        this.ctx.shadowBlur = 10;
+        
+        const angle = Math.atan2(bullet.vy, bullet.vx);
+        const length = bullet.length * zoom;
+        
+        this.ctx.save();
+        this.ctx.translate(screen.x, screen.y);
+        this.ctx.rotate(angle);
+        this.ctx.fillRect(-length/2, -bullet.radius * zoom, length, bullet.radius * 2 * zoom);
+        this.ctx.restore();
+    },
+    
+    drawExplosiveBullet(bullet, screen, zoom) {
+        const time = Date.now() * 0.01;
+        const angle = Math.atan2(bullet.vy, bullet.vx);
+        
+        this.ctx.save();
+        this.ctx.translate(screen.x, screen.y);
+        this.ctx.rotate(angle);
+        
+        // === CORPS PRINCIPAL DU PROJECTILE ===
+        const length = bullet.length * zoom;
+        const width = bullet.radius * 2 * zoom;
+        
+        // Gradient pour le corps principal (aspect métallique)
+        const gradient = this.ctx.createLinearGradient(-length/2, -width/2, -length/2, width/2);
+        gradient.addColorStop(0, '#ff8844');
+        gradient.addColorStop(0.3, '#ff4400');
+        gradient.addColorStop(0.7, '#cc2200');
+        gradient.addColorStop(1, '#ff8844');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(-length/2, -width/2, length, width);
+        
+        // === OGIVE POINTUE ===
+        this.ctx.fillStyle = '#ffaa66';
+        this.ctx.beginPath();
+        this.ctx.moveTo(length/2, 0);
+        this.ctx.lineTo(length/2 - width, -width/2);
+        this.ctx.lineTo(length/2 - width, width/2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // === AILETTES STABILISATRICES ===
+        this.ctx.fillStyle = '#ff6622';
+        // Ailette supérieure
+        this.ctx.beginPath();
+        this.ctx.moveTo(-length/2, -width/2);
+        this.ctx.lineTo(-length/2 - width*0.8, -width*1.2);
+        this.ctx.lineTo(-length/2 + width*0.3, -width/2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Ailette inférieure
+        this.ctx.beginPath();
+        this.ctx.moveTo(-length/2, width/2);
+        this.ctx.lineTo(-length/2 - width*0.8, width*1.2);
+        this.ctx.lineTo(-length/2 + width*0.3, width/2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // === BANDES DE MARQUAGE EXPLOSIF ===
+        this.ctx.fillStyle = '#ffff00';
+        for (let i = 0; i < 3; i++) {
+            const x = -length/2 + (i + 1) * (length / 5);
+            this.ctx.fillRect(x, -width/4, width/8, width/2);
+        }
+        
+        // === LUEUR DANGEREUSE PULSANTE ===
+        const pulseIntensity = Math.sin(time * 8) * 0.4 + 0.6;
+        this.ctx.shadowColor = '#ff4400';
+        this.ctx.shadowBlur = 20 * pulseIntensity * zoom;
+        this.ctx.strokeStyle = '#ff6600';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(-length/2, -width/2, length, width);
+        
+        this.ctx.restore();
+        
+        // === EFFETS AUTOUR DU PROJECTILE ===
+        
+        // Traînée de fumée chaude
+        if (Math.random() < 0.6) {
+            const trailX = bullet.x - Math.cos(angle) * (length/2 + 10);
+            const trailY = bullet.y - Math.sin(angle) * (length/2 + 10);
+            Particle.createExplosion(trailX, trailY, '#ff8844', 2);
+        }
+        
+        // Étincelles qui s'échappent
+        if (Math.random() < 0.4) {
+            const sparkAngle = angle + (Math.random() - 0.5) * 0.8;
+            const sparkDistance = 8 + Math.random() * 12;
+            const sparkX = bullet.x + Math.cos(sparkAngle) * sparkDistance;
+            const sparkY = bullet.y + Math.sin(sparkAngle) * sparkDistance;
+            Particle.createExplosion(sparkX, sparkY, '#ffaa00', 1);
+        }
+        
+        // Aura d'énergie explosive (cercle pulsant)
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.3 * pulseIntensity;
+        this.ctx.strokeStyle = '#ff4400';
+        this.ctx.lineWidth = 3 * zoom;
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, (bullet.radius + 8) * zoom * pulseIntensity, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.restore();
+        
+        // Distorsion de l'air (effet de chaleur)
+        if (Math.random() < 0.3) {
+            this.ctx.save();
+            this.ctx.globalAlpha = 0.2;
+            this.ctx.fillStyle = '#ff6600';
+            const heatRadius = (bullet.radius + 5) * zoom;
+            this.ctx.beginPath();
+            this.ctx.arc(screen.x + (Math.random() - 0.5) * 6, 
+                        screen.y + (Math.random() - 0.5) * 6, 
+                        heatRadius * (0.8 + Math.random() * 0.4), 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        }
+        
+        // Points d'énergie clignotants sur l'ogive
+        if (Math.sin(time * 12) > 0.5) {
+            this.ctx.save();
+            this.ctx.translate(screen.x, screen.y);
+            this.ctx.rotate(angle);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.shadowColor = '#ffffff';
+            this.ctx.shadowBlur = 10;
+            this.ctx.beginPath();
+            this.ctx.arc(length/2 - width/3, 0, 2 * zoom, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        }
+    },
+    
+    drawOrbBullet(bullet, screen, zoom) {
+        // Projectile d'orbe plus petit et brillant
+        this.ctx.fillStyle = bullet.color;
+        this.ctx.shadowColor = bullet.color;
+        this.ctx.shadowBlur = 8;
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, bullet.radius * zoom, 0, Math.PI * 2);
+        this.ctx.fill();
+    },
+    
+    drawPellet(bullet, screen, zoom) {
+        // Petits projectiles de shotgun
+        this.ctx.fillStyle = bullet.color;
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, bullet.radius * zoom, 0, Math.PI * 2);
+        this.ctx.fill();
+    },
+    
+    drawBasicBullet(bullet, screen, zoom) {
+        // Projectile de base (code original)
+        this.ctx.strokeStyle = bullet.color;
+        this.ctx.shadowColor = bullet.color;
+        this.ctx.shadowBlur = 8;
+        this.ctx.lineWidth = bullet.radius * zoom;
+        this.ctx.lineCap = 'round';
+        
+        const angle = Math.atan2(bullet.vy, bullet.vx);
+        const length = bullet.length * zoom;
+        
+        const startX = screen.x - Math.cos(angle) * length / 2;
+        const startY = screen.y - Math.sin(angle) * length / 2;
+        const endX = screen.x + Math.cos(angle) * length / 2;
+        const endY = screen.y + Math.sin(angle) * length / 2;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(startX, startY);
+        this.ctx.lineTo(endX, endY);
+        this.ctx.stroke();
+        this.ctx.shadowBlur = 0;
     },
     
     drawEnemies() {
@@ -216,8 +428,26 @@ const Renderer = {
         const baseColor = enemy.color;
         const pulseIntensity = Math.sin(enemy.pulsePhase) * 0.3 + 0.7;
         
-        this.ctx.shadowColor = baseColor;
-        this.ctx.shadowBlur = 12 * pulseIntensity;
+        // === EFFET DE SPAWN ===
+        if (enemy.spawning) {
+            // Effet de matérialisation progressive
+            this.ctx.save();
+            this.ctx.scale(enemy.spawnScale, enemy.spawnScale);
+            
+            // Lueur intense pendant le spawn
+            this.ctx.shadowColor = baseColor;
+            this.ctx.shadowBlur = 25 * (1 - enemy.spawnScale);
+            
+            // Transparence progressive
+            this.ctx.globalAlpha = 0.3 + enemy.spawnScale * 0.7;
+            
+            // Couleur plus brillante pendant le spawn
+            const spawnGlow = Math.sin(Date.now() * 0.02) * 0.3 + 0.7;
+            this.ctx.fillStyle = this.lightenColor(baseColor, spawnGlow);
+        } else {
+            this.ctx.shadowColor = baseColor;
+            this.ctx.shadowBlur = 12 * pulseIntensity;
+        }
         
         switch(enemy.shape) {
             case 'scout':
@@ -237,7 +467,26 @@ const Renderer = {
                 this.drawBasicShape(enemy, baseColor);
         }
         
+        if (enemy.spawning) {
+            this.ctx.restore();
+        }
+        
         this.ctx.shadowBlur = 0;
+        this.ctx.globalAlpha = 1;
+    },
+    
+    // Utilitaire pour éclaircir une couleur pendant le spawn
+    lightenColor(color, intensity) {
+        // Convertit #f0f en couleur plus brillante
+        const r = parseInt(color.substr(1,1), 16) * 16;
+        const g = parseInt(color.substr(2,1), 16) * 16;
+        const b = parseInt(color.substr(3,1), 16) * 16;
+        
+        const newR = Math.min(255, Math.floor(r + (255 - r) * intensity * 0.5));
+        const newG = Math.min(255, Math.floor(g + (255 - g) * intensity * 0.5));
+        const newB = Math.min(255, Math.floor(b + (255 - b) * intensity * 0.5));
+        
+        return `rgb(${newR}, ${newG}, ${newB})`;
     },
     
     drawScout(enemy, baseColor, pulseIntensity) {
@@ -484,6 +733,13 @@ const Renderer = {
     },
     
     drawGoldCoin(drop) {
+        // === RENDU SPÉCIAL POUR LES LOOT BOXES ===
+        if (drop.type === 'lootbox') {
+            this.drawLootBox(drop);
+            return;
+        }
+        
+        // === RENDU NORMAL POUR LES GEMS ===
         const radius = drop.radius;
         const spin = drop.spinAngle;
         
@@ -565,6 +821,103 @@ const Renderer = {
             this.ctx.stroke();
             this.ctx.shadowBlur = 0;
         }
+    },
+    
+    // Nouveau rendu pour les loot boxes
+    drawLootBox(lootBox) {
+        const radius = lootBox.radius;
+        const spin = lootBox.spinAngle;
+        const floatOffset = Math.sin(lootBox.bobOffset) * 3;
+        const glowIntensity = lootBox.glowIntensity || 1.0;
+        
+        this.ctx.save();
+        this.ctx.translate(0, floatOffset);
+        this.ctx.rotate(spin * 0.3); // Rotation plus lente
+        
+        // === LUEUR INTENSIVE ===
+        this.ctx.shadowColor = lootBox.colors.BRIGHT;
+        this.ctx.shadowBlur = 20 * glowIntensity;
+        
+        // === CORPS PRINCIPAL DE LA LOOT BOX ===
+        // Forme de coffre/cube 3D
+        this.ctx.fillStyle = lootBox.colors.MEDIUM;
+        this.ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
+        
+        // Face supérieure (effet 3D)
+        this.ctx.fillStyle = lootBox.colors.BRIGHT;
+        this.ctx.beginPath();
+        this.ctx.moveTo(-radius, -radius);
+        this.ctx.lineTo(-radius + 4, -radius - 4);
+        this.ctx.lineTo(radius + 4, -radius - 4);
+        this.ctx.lineTo(radius, -radius);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Face droite (effet 3D)
+        this.ctx.fillStyle = lootBox.colors.DARK;
+        this.ctx.beginPath();
+        this.ctx.moveTo(radius, -radius);
+        this.ctx.lineTo(radius + 4, -radius - 4);
+        this.ctx.lineTo(radius + 4, radius - 4);
+        this.ctx.lineTo(radius, radius);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // === SYMBOLE SELON LE TYPE ===
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        let symbol = '?';
+        switch(lootBox.lootType) {
+            case 'TREASURE':
+                symbol = '$';
+                break;
+            case 'WEAPON':
+                symbol = '?';
+                break;
+            case 'NUKE':
+                symbol = '??';
+                break;
+            case 'MAGNET':
+                symbol = '??';
+                break;
+            case 'ORB_SHIELD':
+                symbol = '??';
+                break;
+            case 'ORB_UPGRADE':
+                symbol = '?';
+                break;
+            case 'UTILITY':
+                symbol = '??';
+                break;
+        }
+        
+        this.ctx.fillText(symbol, 0, 0);
+        
+        // === CONTOUR BRILLANT ===
+        this.ctx.strokeStyle = lootBox.colors.BRIGHT;
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(-radius, -radius, radius * 2, radius * 2);
+        
+        // === ÉTINCELLES AUTOUR ===
+        if (Math.random() < 0.3) {
+            for (let i = 0; i < 3; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = radius + 5 + Math.random() * 10;
+                const sx = Math.cos(angle) * distance;
+                const sy = Math.sin(angle) * distance;
+                
+                this.ctx.fillStyle = lootBox.colors.BRIGHT;
+                this.ctx.beginPath();
+                this.ctx.arc(sx, sy, 1 + Math.random() * 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+        }
+        
+        this.ctx.restore();
+        this.ctx.shadowBlur = 0;
     },
     
     drawOrbs() {
@@ -664,6 +1017,251 @@ const Renderer = {
         this.ctx.fillText('Press 1, 2, 3 or click to choose', this.canvas.width / 2, this.canvas.height - 50);
     },
     
+    drawWaveAnnouncement() {
+        if (Game.state !== 'waveAnnouncement') return;
+        
+        // Fond semi-transparent
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Animation de pulsation
+        const pulseIntensity = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+        
+        // Titre principal
+        this.ctx.fillStyle = `rgba(255, 215, 0, ${pulseIntensity})`;
+        this.ctx.font = 'bold 48px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.strokeStyle = '#FFA500';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeText(`WAVE ${Game.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
+        this.ctx.fillText(`WAVE ${Game.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
+        
+        // Sous-titre
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = '24px Courier New';
+        this.ctx.fillText('INCOMING HOSTILES', this.canvas.width / 2, this.canvas.height / 2 + 20);
+        
+        // Informations de progression
+        const enemyCount = Enemy.maxEnemiesPerWave || Math.min(15 + Game.wave * 2.5, 40);
+        const difficultyText = Game.wave <= 3 ? 'EASY' : Game.wave <= 6 ? 'MEDIUM' : Game.wave <= 10 ? 'HARD' : 'EXTREME';
+        
+        this.ctx.fillStyle = '#FFFF88';
+        this.ctx.font = '18px Courier New';
+        this.ctx.fillText(`Enemies: ${Math.floor(enemyCount)} | Difficulty: ${difficultyText}`, this.canvas.width / 2, this.canvas.height / 2 + 60);
+        
+        // Barre de progression du timer
+        const progress = (180 - Game.waveAnnouncementTimer) / 180;
+        const barWidth = 300;
+        const barHeight = 6;
+        const barX = this.canvas.width / 2 - barWidth / 2;
+        const barY = this.canvas.height / 2 + 100;
+        
+        this.ctx.fillStyle = '#444';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+    },
+    
+    drawOffscreenEnemyIndicators() {
+        if (!Player.data || Enemy.list.length === 0) return;
+        
+        const margin = 20; // Distance du bord de l'écran
+        const indicatorSize = 8; // Taille des indicateurs
+        
+        Enemy.list.forEach(enemy => {
+            // Vérifier si l'ennemi est hors écran
+            if (Camera.isVisible(enemy.x, enemy.y, 50)) return;
+            
+            // Calculer la direction de l'ennemi par rapport au joueur
+            const playerScreen = Camera.worldToScreen(Player.data.x, Player.data.y);
+            const enemyScreen = Camera.worldToScreen(enemy.x, enemy.y);
+            
+            // Vecteur du joueur vers l'ennemi
+            const dx = enemyScreen.x - playerScreen.x;
+            const dy = enemyScreen.y - playerScreen.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance === 0) return;
+            
+            // Normaliser la direction
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+            
+            // Calculer l'intersection avec les bords de l'écran
+            let indicatorX, indicatorY;
+            
+            // Limites de l'écran avec marge
+            const minX = margin;
+            const maxX = this.canvas.width - margin;
+            const minY = margin;
+            const maxY = this.canvas.height - margin;
+            
+            // Trouver l'intersection avec le bord de l'écran
+            const centerX = this.canvas.width / 2;
+            const centerY = this.canvas.height / 2;
+            
+            // Échelle pour aller du centre vers les bords
+            const scaleX = dirX !== 0 ? Math.abs((dirX > 0 ? maxX : minX) - centerX) / Math.abs(dirX) : Infinity;
+            const scaleY = dirY !== 0 ? Math.abs((dirY > 0 ? maxY : minY) - centerY) / Math.abs(dirY) : Infinity;
+            
+            const scale = Math.min(scaleX, scaleY);
+            
+            indicatorX = centerX + dirX * scale;
+            indicatorY = centerY + dirY * scale;
+            
+            // S'assurer que l'indicateur reste dans les limites
+            indicatorX = Math.max(minX, Math.min(maxX, indicatorX));
+            indicatorY = Math.max(minY, Math.min(maxY, indicatorY));
+            
+            // Dessiner l'indicateur
+            this.drawEnemyIndicator(indicatorX, indicatorY, enemy, dirX, dirY);
+        });
+    },
+    
+    drawEnemyIndicator(x, y, enemy, dirX, dirY) {
+        this.ctx.save();
+        
+        // Couleur selon le type d'ennemi
+        let indicatorColor = enemy.color;
+        let pulseIntensity = Math.sin(Date.now() * 0.008) * 0.4 + 0.6;
+        
+        // Effet de pulsation plus intense pour les ennemis dangereux
+        if (enemy.type === 'tank' || enemy.type === 'splitter') {
+            pulseIntensity = Math.sin(Date.now() * 0.012) * 0.6 + 0.4;
+            indicatorColor = enemy.color;
+        }
+        
+        // Triangle pointant vers l'ennemi
+        const size = 8;
+        const angle = Math.atan2(dirY, dirX);
+        
+        this.ctx.translate(x, y);
+        this.ctx.rotate(angle);
+        
+        // Ombre pour la visibilité
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.shadowBlur = 4;
+        this.ctx.shadowOffsetX = 1;
+        this.ctx.shadowOffsetY = 1;
+        
+        // Corps de l'indicateur (triangle)
+        this.ctx.fillStyle = indicatorColor;
+        this.ctx.globalAlpha = pulseIntensity;
+        this.ctx.beginPath();
+        this.ctx.moveTo(size, 0);
+        this.ctx.lineTo(-size * 0.6, -size * 0.7);
+        this.ctx.lineTo(-size * 0.6, size * 0.7);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Contour pour la visibilité
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 1;
+        this.ctx.globalAlpha = pulseIntensity * 0.8;
+        this.ctx.stroke();
+        
+        // Point central selon le type d'ennemi
+        this.ctx.fillStyle = enemy.type === 'tank' ? '#fff' : 
+                           enemy.type === 'splitter' ? '#ff0' : 
+                           enemy.type === 'fast' ? '#f00' : '#fff';
+        this.ctx.globalAlpha = 1;
+        this.ctx.beginPath();
+        this.ctx.arc(-1, 0, 2, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.restore();
+    },
+    
+    drawMiniRadar() {
+        if (!Player.data || Enemy.list.length === 0) return;
+        
+        const radarSize = 80;
+        const radarX = this.canvas.width - radarSize - 15;
+        const radarY = 15;
+        const radarRadius = radarSize / 2;
+        
+        // Fond du radar
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.fillStyle = 'rgba(0, 40, 40, 0.8)';
+        this.ctx.beginPath();
+        this.ctx.arc(radarX + radarRadius, radarY + radarRadius, radarRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Contour du radar
+        this.ctx.strokeStyle = '#0ff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        
+        // Lignes de grille
+        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        // Lignes croisées
+        this.ctx.moveTo(radarX, radarY + radarRadius);
+        this.ctx.lineTo(radarX + radarSize, radarY + radarRadius);
+        this.ctx.moveTo(radarX + radarRadius, radarY);
+        this.ctx.lineTo(radarX + radarRadius, radarY + radarSize);
+        this.ctx.stroke();
+        
+        // Cercles concentriques
+        this.ctx.beginPath();
+        this.ctx.arc(radarX + radarRadius, radarY + radarRadius, radarRadius * 0.5, 0, Math.PI * 2);
+        this.ctx.stroke();
+        
+        // Joueur au centre
+        this.ctx.fillStyle = '#0ff';
+        this.ctx.beginPath();
+        this.ctx.arc(radarX + radarRadius, radarY + radarRadius, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Ennemis sur le radar
+        const radarRange = 600; // Portée du radar en unités monde
+        const scale = radarRadius / radarRange;
+        
+        Enemy.list.forEach(enemy => {
+            const dx = enemy.x - Player.data.x;
+            const dy = enemy.y - Player.data.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > radarRange) return;
+            
+            const enemyRadarX = radarX + radarRadius + dx * scale;
+            const enemyRadarY = radarY + radarRadius + dy * scale;
+            
+            // Couleur selon le type et la distance
+            let enemyColor = enemy.color;
+            let enemySize = 2;
+            
+            if (enemy.type === 'tank') {
+                enemySize = 3;
+                enemyColor = '#84f';
+            } else if (enemy.type === 'splitter') {
+                enemySize = 2.5;
+                enemyColor = '#f80';
+            } else if (enemy.type === 'fast') {
+                enemySize = 1.5;
+                enemyColor = '#f44';
+            }
+            
+            // Pulsation pour les ennemis proches
+            if (distance < 150) {
+                const pulse = Math.sin(Date.now() * 0.02) * 0.5 + 0.5;
+                enemySize += pulse;
+                this.ctx.globalAlpha = 0.8 + pulse * 0.2;
+            } else {
+                this.ctx.globalAlpha = 0.6;
+            }
+            
+            this.ctx.fillStyle = enemyColor;
+            this.ctx.beginPath();
+            this.ctx.arc(enemyRadarX, enemyRadarY, enemySize, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+        
+        this.ctx.restore();
+    },
+    
     render() {
         this.clear();
         Camera.update();
@@ -682,6 +1280,14 @@ const Renderer = {
         this.drawCurrency();
         this.drawOrbs();
         this.drawParticles();
+        
+        // Indicateurs d'ennemis hors écran
+        this.drawOffscreenEnemyIndicators();
+        
+        // Mini radar en haut à droite
+        this.drawMiniRadar();
+        
         this.drawUpgradeScreen();
+        this.drawWaveAnnouncement();
     }
 };

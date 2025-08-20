@@ -23,10 +23,21 @@ const Player = {
             followMouse: true,
             orbCount: 0,
             orbDamage: CONFIG.ORBS.DAMAGE,
+            orbSpeed: 1.0, // Multiplicateur de vitesse des orbes
             invulnerable: false,
             invulnerableTime: 0,
             vampiric: false,
-            flameMode: false
+            flameMode: false,
+            // Nouveaux systèmes d'armes
+            tripleShot: false,
+            homingMissiles: false,
+            explosiveCannon: false,
+            laserBeam: false,
+            shotgunBlast: false,
+            // Cooldowns pour armes spéciales
+            missileCooldown: 0,
+            cannonCooldown: 0,
+            laserEnergy: 100
         };
         this.bulletCooldown = 0;
     },
@@ -140,7 +151,9 @@ const Player = {
         this.createDeathExplosion();
         
         Game.lives--;
-        Audio.playSoundEffect('playerHit');
+        
+        // Jouer le son de mort dramatique au lieu du simple playerHit
+        Audio.playSoundEffect('playerDeath');
         
         // Démarrer la séquence de ralenti dramatique
         Game.startDeathSequence();
@@ -151,21 +164,21 @@ const Player = {
     createTeleportationEffect(targetX, targetY) {
         // Effet de téléportation optimisé et plus fluide
         
-        // 1. Portal d'ouverture simplifié (réduit de 25 à 15 particules)
+        // 1. Portal d'ouverture simplifié (réduite de 25 à 15 particules)
         Particle.createExplosion(targetX, targetY, '#00ffff', 15);
         
         // 2. Anneaux énergétiques concentriques (3 au lieu de 5)
         for (let ring = 0; ring < 3; ring++) {
             setTimeout(() => {
                 const radius = 25 + ring * 20;
-                const particleCount = 8 + ring; // Réduit: 8, 9, 10 particules
+                const particleCount = 8 + ring; // Réduite: 8, 9, 10 particules
                 
                 for (let i = 0; i < particleCount; i++) {
                     const angle = (i * Math.PI * 2) / particleCount;
                     const x = targetX + Math.cos(angle) * radius;
                     const y = targetY + Math.sin(angle) * radius;
                     
-                    Particle.createExplosion(x, y, '#44ffff', 4); // Réduit de 8 à 4
+                    Particle.createExplosion(x, y, '#44ffff', 4); // Réduite de 8 à 4
                 }
             }, ring * 100);
         }
@@ -182,7 +195,7 @@ const Player = {
                     
                     const colors = ['#00ffff', '#44ffff', '#88ffff'];
                     const color = colors[Math.floor(progress * colors.length)];
-                    Particle.createExplosion(x, y, color, 3); // Réduit de 6 à 3
+                    Particle.createExplosion(x, y, color, 3); // Réduite de 6 à 3
                 }, spiral * 60 + i * 25);
             }
         }
@@ -198,7 +211,7 @@ const Player = {
                     setTimeout(() => {
                         const x = baseX + (Math.random() - 0.5) * 8;
                         const y = baseY + (Math.random() - 0.5) * 8;
-                        Particle.createExplosion(x, y, '#66ffff', 6); // Réduit de 10 à 6
+                        Particle.createExplosion(x, y, '#66ffff', 6); // Réduite de 10 à 6
                     }, height * 40);
                 }
             }, col * 80);
@@ -206,7 +219,7 @@ const Player = {
         
         // 5. Explosion finale de matérialisation (réduite)
         setTimeout(() => {
-            Particle.createExplosion(targetX, targetY, '#ffffff', 25); // Réduit de 40 à 25
+            Particle.createExplosion(targetX, targetY, '#ffffff', 25); // Réduite de 40 à 25
         }, 400); // Plus tôt: 400ms au lieu de 500ms
         
         // 6. Ondes de choc simplifiées (2 au lieu de 3)
@@ -214,14 +227,14 @@ const Player = {
             for (let wave = 0; wave < 2; wave++) {
                 setTimeout(() => {
                     const radius = 50 + wave * 30;
-                    const particleCount = 12; // Réduit de 16 à 12
+                    const particleCount = 12; // Réduite de 16 à 12
                     
                     for (let i = 0; i < particleCount; i++) {
                         const angle = (i * Math.PI * 2) / particleCount;
                         const x = targetX + Math.cos(angle) * radius;
                         const y = targetY + Math.sin(angle) * radius;
                         
-                        Particle.createExplosion(x, y, '#00ccff', 3); // Réduit de 5 à 3
+                        Particle.createExplosion(x, y, '#00ccff', 3); // Réduite de 5 à 3
                     }
                 }, wave * 120);
             }
@@ -231,13 +244,13 @@ const Player = {
         for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 60; // Réduit de 80 à 60
+                const distance = Math.random() * 60; // Réduite de 80 à 60
                 const x = targetX + Math.cos(angle) * distance;
                 const y = targetY + Math.sin(angle) * distance;
                 
                 const floatColors = ['#88ffff', '#aaffff'];
                 const color = floatColors[Math.floor(Math.random() * floatColors.length)];
-                Particle.createExplosion(x, y, color, 2); // Réduit de 4 à 2
+                Particle.createExplosion(x, y, color, 2); // Réduite de 4 à 2
             }, 300 + Math.random() * 400); // Durée réduite
         }
         
@@ -255,7 +268,7 @@ const Player = {
                     const y = targetY + (endY - targetY) * progress + (Math.random() - 0.5) * 15;
                     
                     setTimeout(() => {
-                        Particle.createExplosion(x, y, '#ffff88', 2); // Réduit de 3 à 2
+                        Particle.createExplosion(x, y, '#ffff88', 2); // Réduite de 3 à 2
                     }, segment * 15);
                 }
             }
@@ -387,7 +400,10 @@ const Player = {
     upgrade(type, value) {
         switch(type) {
             case 'fireRate':
-                this.data.fireRate = Math.max(6, this.data.fireRate - value);
+                const newFireRate = this.data.fireRate - value;
+                // Limite minimum plus basse pour permettre plus d'améliorations
+                this.data.fireRate = Math.max(3, newFireRate);
+                console.log(`Fire rate upgraded: ${this.data.fireRate} (reduced by ${value})`);
                 break;
             case 'speed':
                 this.data.speed += value;
@@ -401,6 +417,38 @@ const Player = {
             case 'orbCount':
                 this.data.orbCount++;
                 Orb.create();
+                break;
+            case 'orbSpeed':
+                this.data.orbSpeed += value;
+                console.log(`Orb speed upgraded: ${this.data.orbSpeed.toFixed(2)}x`);
+                break;
+            case 'orbShooting':
+                Orb.enableShooting();
+                console.log('Orbs now equipped with weapons!');
+                break;
+            case 'tripleShot':
+                this.data.tripleShot = true;
+                console.log('Triple shot enabled!');
+                break;
+            case 'homingMissiles':
+                this.data.homingMissiles = true;
+                console.log('Homing missiles enabled!');
+                break;
+            case 'explosiveCannon':
+                this.data.explosiveCannon = true;
+                console.log('Explosive cannon enabled!');
+                break;
+            case 'laserBeam':
+                this.data.laserBeam = true;
+                console.log('Laser beam enabled!');
+                break;
+            case 'shotgunBlast':
+                this.data.shotgunBlast = true;
+                console.log('Shotgun blast enabled!');
+                break;
+            case 'magnetRange':
+                this.data.magnetRange += value;
+                console.log(`Magnet range upgraded: ${this.data.magnetRange} pixels`);
                 break;
             case 'invulnerability':
                 this.data.invulnerable = true;

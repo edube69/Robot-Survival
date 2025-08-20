@@ -4,19 +4,37 @@ const Camera = {
     y: 0,
     zoom: null,
     targetZoom: null,
+    targetX: null,
+    targetY: null,
+    teleporting: false,
 
     init() {
         this.zoom = CONFIG.CAMERA.ZOOM || 1;
         this.targetZoom = this.zoom;
+        this.teleporting = false;
         // Initialiser la position de la caméra sur le joueur
         if (Player.data) {
             this.x = Player.data.x - (CONFIG.CANVAS.WIDTH / 2) / this.zoom;
             this.y = Player.data.y - (CONFIG.CANVAS.HEIGHT / 2) / this.zoom;
+            this.targetX = this.x;
+            this.targetY = this.y;
         }
     },
     
     setTargetZoom(value) {
         this.targetZoom = Math.max(0.6, Math.min(3, value));
+    },
+
+    startTeleportation(targetX, targetY) {
+        this.teleporting = true;
+        this.targetX = targetX;
+        this.targetY = targetY;
+    },
+
+    finishTeleportation() {
+        this.teleporting = false;
+        this.targetX = null;
+        this.targetY = null;
     },
 
     getZoom() {
@@ -36,16 +54,39 @@ const Camera = {
         const visibleW = Math.floor(viewW / zoom);
         const visibleH = Math.floor(viewH / zoom);
         
-        // Calculer la position cible de la caméra (centrer le joueur à l'écran)
-        const targetX = Player.data.x - visibleW / 2;
-        const targetY = Player.data.y - visibleH / 2;
+        // Déterminer la cible de position selon le contexte
+        let finalTargetX, finalTargetY;
         
-        // Suivre le joueur avec du lissage
-        this.x += (targetX - this.x) * CONFIG.CAMERA.FOLLOW_SPEED;
-        this.y += (targetY - this.y) * CONFIG.CAMERA.FOLLOW_SPEED;
+        if (this.teleporting && this.targetX !== null && this.targetY !== null) {
+            // Pendant la téléportation, centrer sur la position de téléportation
+            finalTargetX = this.targetX - visibleW / 2;
+            finalTargetY = this.targetY - visibleH / 2;
+        } else {
+            // Suivi normal du joueur
+            finalTargetX = Player.data.x - visibleW / 2;
+            finalTargetY = Player.data.y - visibleH / 2;
+        }
         
-        // Interpolation du zoom vers la cible (lissage)
-        this.zoom += (this.targetZoom - this.zoom) * 0.08; // easing
+        // Vitesse de suivi adaptative selon le contexte
+        let followSpeed = CONFIG.CAMERA.FOLLOW_SPEED;
+        if (this.teleporting) {
+            // Mouvement plus fluide pendant la téléportation
+            followSpeed = 0.04; // Plus lent pour plus de fluidité
+        } else if (Math.abs(this.targetZoom - this.zoom) > 0.1) {
+            // Suivi légèrement plus rapide pendant les changements de zoom
+            followSpeed = CONFIG.CAMERA.FOLLOW_SPEED * 1.5;
+        }
+        
+        // Appliquer le lissage de position
+        this.x += (finalTargetX - this.x) * followSpeed;
+        this.y += (finalTargetY - this.y) * followSpeed;
+        
+        // Interpolation du zoom avec vitesse adaptative
+        let zoomSpeed = 0.08;
+        if (this.teleporting) {
+            zoomSpeed = 0.06; // Zoom plus fluide pendant téléportation
+        }
+        this.zoom += (this.targetZoom - this.zoom) * zoomSpeed;
         
         // Garder la caméra dans les limites du monde
         this.x = Math.max(0, Math.min(CONFIG.WORLD.WIDTH - visibleW, this.x));

@@ -9,6 +9,9 @@ const Game = {
     resurrections: 0,
     timeScale: 1.0, // Facteur de ralenti global
     deathSequenceTimer: 0, // Timer pour la séquence de mort
+    waveAnnouncementTimer: 0, // Timer pour l'annonce de vague
+    upgradesThisWave: 0, // Compteur d'upgrades dans cette vague
+    upgradeOptions: [], // Options d'upgrade disponibles
     
     init() {
         // Initialiser tous les modules
@@ -48,11 +51,13 @@ const Game = {
         this.resurrections = 0;
         this.timeScale = 1.0;
         this.deathSequenceTimer = 0;
+        this.waveAnnouncementTimer = 0; // Initialiser le timer d'annonce
+        this.upgradesThisWave = 0; // Réinitialiser le compteur d'upgrades
         
         // Réinitialiser tous les modules
         Player.reset();
         Camera.init(); // Réinitialiser la caméra après le joueur
-        Enemy.init();
+        Enemy.init(); // Ceci initialise waveEnemiesSpawned = 0 et setWaveLimit()
         Bullet.init();
         Particle.init();
         Currency.init();
@@ -63,9 +68,16 @@ const Game = {
         document.getElementById('gameOver').style.display = 'none';
         document.getElementById('reviveScreen').style.display = 'none';
         
-        // Spawn initial d'ennemis
-        for (let i = 0; i < 6; i++) {
-            setTimeout(() => Enemy.create(), i * 200);
+        console.log('Game restarted - Wave 1 begins');
+        
+        // Spawn initial d'ennemis plus important pour la vague 1
+        const initialSpawn = 10; // Augmenté de 6 à 10
+        for (let i = 0; i < initialSpawn; i++) {
+            setTimeout(() => {
+                Enemy.create();
+                Enemy.waveEnemiesSpawned++;
+                console.log(`Initial spawn ${Enemy.waveEnemiesSpawned}/${Enemy.maxEnemiesPerWave}`);
+            }, i * 200);
         }
     },
     
@@ -77,7 +89,115 @@ const Game = {
         this.deathSequenceTimer = 0;
     },
     
+    announceNewWave() {
+        // Ne pas incrémenter si c'est la première vague (déjà à 1)
+        if (Game.wave > 0) {
+            this.wave++;
+        }
+        
+        // Réinitialiser le compteur d'upgrades pour la nouvelle vague
+        this.upgradesThisWave = 0;
+        
+        this.state = 'waveAnnouncement';
+        this.waveAnnouncementTimer = 180; // 3 secondes
+        
+        console.log(`Starting Wave ${this.wave}`); // Debug
+        
+        // Réinitialiser le système d'ennemis pour la nouvelle vague (important!)
+        Enemy.waveEnemiesSpawned = 0;
+        Enemy.bonusWaveActive = false; // S'assurer que la vague bonus est désactivée
+        Enemy.bonusWaveSpawned = 0;
+        Enemy.bonusWaveTarget = 0;
+        Enemy.setWaveLimit();
+        
+        // Effets visuels de nouvelle vague
+        this.createWaveAnnouncementEffects();
+        
+        // Son d'annonce de vague
+        Audio.playSoundEffect('newWave');
+        
+        // Spawn des ennemis après l'annonce (spawn initial plus important)
+        setTimeout(() => {
+            console.log(`Spawning initial enemies for Wave ${this.wave}`); // Debug
+            const initialSpawn = Math.min(8 + Math.floor(this.wave * 1.2), 15); // Spawn initial plus important
+            for (let i = 0; i < initialSpawn; i++) {
+                setTimeout(() => {
+                    Enemy.create();
+                    Enemy.waveEnemiesSpawned++;
+                }, i * 250); // Légèrement plus rapide
+            }
+            this.state = 'playing';
+            console.log(`State changed back to playing. Initial spawn: ${initialSpawn}`); // Debug
+        }, 2000);
+    },
+    
+    // Méthode appelée quand le joueur fait une upgrade
+    onUpgrade() {
+        this.upgradesThisWave++;
+        console.log(`Upgrade ${this.upgradesThisWave} acquired this wave`);
+    },
+    
+    createWaveAnnouncementEffects() {
+        // Effets de particules pour l'annonce
+        const centerX = Player.data.x;
+        const centerY = Player.data.y;
+        
+        // Explosion centrale dorée
+        Particle.createExplosion(centerX, centerY, '#FFD700', 40);
+        
+        // Anneaux d'énergie qui s'expandent
+        for (let ring = 0; ring < 5; ring++) {
+            setTimeout(() => {
+                const radius = 50 + ring * 30;
+                const particleCount = 16;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = (i * Math.PI * 2) / particleCount;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    
+                    Particle.createExplosion(x, y, '#FFD700', 6);
+                }
+            }, ring * 200);
+        }
+        
+        // Étoiles qui tombent du ciel
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                const x = centerX + (Math.random() - 0.5) * 400;
+                const y = centerY - 200 - Math.random() * 100;
+                
+                Particle.createExplosion(x, y, '#FFFF00', 8);
+            }, Math.random() * 1500);
+        }
+    },
+    
     update() {
+        // Gestion des inputs pour les upgrades
+        if (this.state === 'upgrade') {
+            // Touches 1, 2, 3 pour sélectionner les upgrades
+            if (Input.isKeyPressed('1')) {
+                Upgrades.select(0);
+            } else if (Input.isKeyPressed('2')) {
+                Upgrades.select(1);
+            } else if (Input.isKeyPressed('3')) {
+                Upgrades.select(2);
+            }
+            return;
+        }
+        
+        // Gestion de l'annonces de vague
+        if (this.state === 'waveAnnouncement') {
+            this.waveAnnouncementTimer--;
+            if (this.waveAnnouncementTimer <= 0) {
+                this.state = 'playing';
+            }
+            // Continue à mettre à jour les particules et effets
+            Particle.update();
+            TeleportFX.update();
+            return;
+        }
+        
         // Gestion de la séquence de mort
         if (this.state === 'deathSequence') {
             this.deathSequenceTimer--;
@@ -155,8 +275,11 @@ const Game = {
             // Passer en état "teleporting"
             this.state = 'teleporting';
             
-            // Zoom arrière pour dévoiler la scène
-            Camera.setTargetZoom(Math.max(1.0, (CONFIG.CAMERA.ZOOM || 1) * 0.7));
+            // Démarrer la téléportation de la caméra vers la nouvelle position
+            Camera.startTeleportation(safeLocation.x, safeLocation.y);
+            
+            // Zoom arrière pour dévoiler la scène (plus fluide)
+            Camera.setTargetZoom(Math.max(1.0, (CONFIG.CAMERA.ZOOM || 1) * 0.75));
             
             // Déclencher l'effet procédural de téléportation avec durée plus longue
             TeleportFX.create(safeLocation.x, safeLocation.y, { duration: 100, maxRadius: 140 });
@@ -176,13 +299,14 @@ const Game = {
                 Player.data.invulnerable = true;
                 Player.data.invulnerableTime = 150; // un peu plus long
                 
-                // Zoom avant pour revenir au zoom par défaut
+                // Zoom avant pour revenir au zoom par défaut (plus progressif)
                 Camera.setTargetZoom(CONFIG.CAMERA.ZOOM || 1);
                 
-                // Reprendre le jeu après un court délai pour laisser le zoom se recaler légèrement
+                // Terminer la téléportation de caméra et reprendre le suivi normal
                 setTimeout(() => {
+                    Camera.finishTeleportation();
                     this.state = 'playing';
-                }, 250);
+                }, 400); // Plus de temps pour la transition
             }, 1000); // augmente l'attente
         }
     },
@@ -191,11 +315,25 @@ const Game = {
         document.getElementById('score').textContent = this.score;
         document.getElementById('wave').textContent = this.wave;
         document.getElementById('lives').textContent = this.lives;
-        document.getElementById('gems').textContent = this.gems;
+        
+        // === NOUVEAU : Afficher le multiplicateur de gems ===
+        const gemMultiplier = Player.data && Player.data.gemMultiplier ? Player.data.gemMultiplier : 1;
+        if (gemMultiplier > 1) {
+            document.getElementById('gems').textContent = `${this.gems} (x${gemMultiplier})`;
+        } else {
+            document.getElementById('gems').textContent = this.gems;
+        }
+        
         document.getElementById('nextUpgrade').textContent = Math.max(0, this.gemsForUpgrade - this.gems);
         document.getElementById('resurrections').textContent = this.resurrections;
         document.getElementById('movementMode').textContent = 
             Player.data && Player.data.followMouse ? 'MODE: MOUSE' : 'MODE: WASD';
+        
+        // Vérifier si on peut faire une upgrade
+        if (this.gems >= this.gemsForUpgrade && this.state === 'playing') {
+            this.state = 'upgrade';
+            Upgrades.generateOptions(); // Utiliser le module Upgrades existant
+        }
     },
     
     gameLoop() {
