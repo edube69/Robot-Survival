@@ -347,13 +347,18 @@ const Upgrades = {
                 apply: () => {
                     // Amélioration significative mais équilibrée du taux de tir
                     const currentFireRate = Player.data.fireRate;
-                    const fireRateBoost = Math.min(Math.floor(currentFireRate * 0.4), 15); // Max 15 frames de réduction
-                    Player.upgrade('fireRate', -fireRateBoost);
-                    
+                    const minFireRate = 8;
+                    let fireRateBoost = Math.min(Math.floor(currentFireRate * 0.4), 15); // Max 15 frames de réduction
+                    let newFireRate = Math.max(minFireRate, currentFireRate - fireRateBoost);
+                    let actualBoost = currentFireRate - newFireRate;
+                    if (actualBoost > 0) {
+                        Player.upgrade('fireRate', -actualBoost);
+                        console.log(`?? PHOENIX PROTOCOL! Fire rate boosted by ${actualBoost} frames, bullet speed +3!`);
+                    } else {
+                        console.log("?? PHOENIX PROTOCOL! Fire rate already at minimum, only bullet speed boosted!");
+                    }
                     // Boost de vitesse des balles
                     Player.upgrade('bulletSpeed', 3);
-                    
-                    console.log(`?? PHOENIX PROTOCOL! Fire rate boosted by ${fireRateBoost} frames, bullet speed +3!`);
                 }
             },
             { 

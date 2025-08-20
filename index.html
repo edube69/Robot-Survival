@@ -40,56 +40,21 @@
     
     <!-- Game Screen -->
     <div id="gameScreen">
-        <!-- HUD Outside Arena -->
-        <div id="gameHUD">
-            <div class="hud-section">
-                <div class="hud-item">
-                    <label>SCORE</label>
-                    <span id="score">0</span>
-                </div>
-                <div class="hud-item">
-                    <label>WAVE</label>
-                    <span id="wave">1</span>
-                </div>
-                <div class="hud-item">
-                    <label>LIVES</label>
-                    <span id="lives">3</span>
-                </div>
-            </div>
-            
-            <div class="hud-section">
-                <div class="hud-item">
-                    <label>GEMS</label>
-                    <span id="gems">0</span>
-                </div>
-                <div class="hud-item">
-                    <label>NEXT UPGRADE</label>
-                    <span id="nextUpgrade">75</span>
-                </div>
-                <div class="hud-item">
-                    <label>RESURRECTIONS</label>
-                    <span id="resurrections">0</span>
-                </div>
-            </div>
-            
-            <div class="hud-section">
-                <div class="hud-item" id="movementMode">
-                    MODE: MOUSE
-                </div>
-            </div>
-        </div>
-        
-        <!-- Game Arena -->
         <div id="gameContainer">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div id="ui">
+                <div>SCORE: <span id="score">0</span></div>
+                <div>WAVE: <span id="wave">1</span></div>
+                <div>LIVES: <span id="lives">3</span></div>
+                <div>GEMS: <span id="gems">0</span></div>
+                <div>NEXT UPGRADE: <span id="nextUpgrade">75</span></div>
+                <div id="movementMode" style="color: #ff0;">MODE: WASD</div>
+                <div>RESURRECTIONS: <span id="resurrections">0</span></div>
+            </div>
             
             <div id="gameOver">
                 <div class="glow">MISSION FAILED</div>
                 <div style="font-size: 16px; margin-top: 10px;">Press SPACE to restart or ESC for main menu</div>
-                <div id="gameOverActions">
-                    <div class="go-option" data-action="restart">Restart Mission</div>
-                    <div class="go-option" data-action="menu">Return to Main Menu</div>
-                </div>
             </div>
             
             <div id="reviveScreen">
@@ -119,7 +84,6 @@
     <script src="js/currency.js"></script>
     <script src="js/orb.js"></script>
     <script src="js/upgrades.js"></script>
-    <script src="js/teleportfx.js"></script>
     <script src="js/renderer.js"></script>
     <script src="js/game.js"></script>
 </body>
