@@ -335,6 +335,10 @@ const Game = {
             const success = await saveScore(user, playerName, finalScore, `${finalTime}s`, finalKills);
 
             if (success) {
+                // mémorise pour la page des scores
+                sessionStorage.setItem('lastScore', JSON.stringify({
+                    name: playerName, score: finalScore, kills: finalKills, time: finalTime
+                }));
                 alert("Score sauvegardé !");
                 this.skipScore(); // On ferme le modal et on retourne au menu
             } else {

@@ -633,3 +633,236 @@ canvas {
     text-shadow: 0 0 18px rgba(0,255,255,.35);
 }
 
+/* Effet "CRT scanlines" discret sur la page des scores */
+.page-highscores::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient( to bottom, rgba(255,255,255,.03), rgba(255,255,255,.03) 1px, transparent 2px, transparent 3px );
+    opacity: .08;
+}
+
+/* Titre rétro cyan + flash quand le top change */
+.leaderboard-title {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #0ff;
+    text-shadow: 0 0 18px rgba(0,255,255,.35);
+    letter-spacing: .06em;
+    animation: glowPulse 2.8s ease-in-out infinite;
+}
+
+    .leaderboard-title.flash {
+        animation: flashOnce .7s linear 1;
+    }
+
+@keyframes glowPulse {
+    0%,100% {
+        text-shadow: 0 0 10px rgba(0,255,255,.25);
+    }
+
+    50% {
+        text-shadow: 0 0 26px rgba(0,255,255,.55);
+    }
+}
+
+@keyframes flashOnce {
+    0% {
+        filter: brightness(1);
+    }
+
+    40% {
+        filter: brightness(1.6);
+    }
+
+    100% {
+        filter: brightness(1);
+    }
+}
+
+/* Barre de contrôle musique */
+.leaderboard-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: center;
+    margin: .5rem 0 1rem;
+}
+
+.chip-btn {
+    padding: 10px 16px;
+    border: 2px solid #0f0;
+    background: transparent;
+    color: #0f0;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    cursor: pointer;
+    transition: transform .05s, box-shadow .2s, background .2s;
+    border-radius: 8px;
+    font-weight: 800;
+}
+
+    .chip-btn:hover {
+        background: rgba(0,255,0,.08);
+        box-shadow: 0 0 16px rgba(0,255,0,.35);
+        transform: translateY(-1px);
+    }
+
+.vol {
+    font-size: .85rem;
+    color: #9fe29f;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+    .vol input[type="range"] {
+        width: 160px;
+    }
+
+/* Apparition douce des lignes */
+.appear {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: slideUp .35s ease forwards;
+}
+
+@keyframes slideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mettre en valeur la 1re place */
+.score-entry.is-top {
+    border-color: rgba(255,215,0,0.45);
+    box-shadow: 0 0 22px rgba(255,215,0,.22);
+}
+
+    .score-entry.is-top .rank {
+        color: #ffd700;
+        text-shadow: 0 0 12px rgba(255,215,0,.6);
+    }
+
+.score-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 18px rgba(0,255,0,0.18);
+}
+
+/* canvases de fond */
+#bgCanvas, #fxCanvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.highscores-container {
+    position: relative;
+    z-index: 2;
+}
+
+/* Titre rétro cyan + flash quand le top change */
+.leaderboard-title {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #0ff;
+    text-shadow: 0 0 18px rgba(0,255,255,.35);
+    letter-spacing: .06em;
+    animation: glowPulse 2.8s ease-in-out infinite;
+}
+
+    .leaderboard-title.flash {
+        animation: flashOnce .7s linear 1;
+    }
+
+@keyframes glowPulse {
+    0%,100% {
+        text-shadow: 0 0 10px rgba(0,255,255,.25)
+    }
+
+    50% {
+        text-shadow: 0 0 26px rgba(0,255,255,.55)
+    }
+}
+
+@keyframes flashOnce {
+    0% {
+        filter: brightness(1)
+    }
+
+    40% {
+        filter: brightness(1.6)
+    }
+
+    100% {
+        filter: brightness(1)
+    }
+}
+
+/* Barre de contrôle */
+.leaderboard-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: center;
+    margin: .5rem 0 1rem;
+}
+
+.chip-btn {
+    padding: 10px 16px;
+    border: 2px solid #0f0;
+    background: transparent;
+    color: #0f0;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 800;
+    transition: transform .05s, box-shadow .2s, background .2s;
+}
+
+    .chip-btn:hover {
+        background: rgba(0,255,0,.08);
+        box-shadow: 0 0 16px rgba(0,255,0,.35);
+        transform: translateY(-1px);
+    }
+
+.vol {
+    font-size: .85rem;
+    color: #9fe29f;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+    .vol input[type="range"] {
+        width: 160px;
+    }
+
+.stats {
+    color: #aaf;
+    font-size: .9rem;
+}
+
+/* Apparition douce des lignes + top highlight (tu as déjà une base) */
+.appear {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: slideUp .35s ease forwards;
+}
+
+@keyframes slideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.score-entry.is-top {
+    border-color: rgba(255,215,0,0.45);
+    box-shadow: 0 0 22px rgba(255,215,0,.22);
+}
+
