@@ -416,3 +416,220 @@ canvas {
         font-size: 14px;
     }
 }
+
+/* ============================
+   High Scores - UI polish
+   ============================ */
+
+/* 1) Bouton "View High Scores" = comme Start */
+.highscores-button {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-family: 'Courier New', monospace;
+    background: transparent;
+    border: 3px solid #0f0;
+    color: #0f0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 1.25rem;
+}
+
+    .highscores-button:hover {
+        background: rgba(0, 255, 0, 0.1);
+        box-shadow: 0 0 30px #0f0;
+        transform: scale(1.05);
+    }
+
+/* 2) Formulaire de high score (Game Over) - verre dépoli + néon */
+#gameOver .score-form {
+    margin-top: 20px;
+    padding: 16px 18px;
+    max-width: 520px;
+    width: 90%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "label label"
+        "input button";
+    gap: 12px 12px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,0,0,0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px rgba(255,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+    #gameOver .score-form label {
+        grid-area: label;
+        justify-self: center;
+        color: #ffecec;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        text-shadow: 0 0 12px rgba(255,0,0,0.5);
+        font-size: 14px;
+    }
+
+    /* Champ nom utilisateur */
+    #gameOver .score-form .username-input {
+        grid-area: input;
+        width: min(320px, 56vw);
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 2px solid rgba(0,255,0,0.35);
+        background: rgba(0,0,0,0.55);
+        color: #eaffea;
+        outline: none;
+        transition: box-shadow .2s, transform .04s, border-color .2s, background .2s;
+        font-weight: 600;
+        letter-spacing: .02em;
+        caret-color: #0f0;
+    }
+
+        #gameOver .score-form .username-input::placeholder {
+            color: rgba(255,255,255,.45);
+        }
+
+        #gameOver .score-form .username-input:focus {
+            border-color: #0f0;
+            box-shadow: 0 0 0 3px rgba(0,255,0,0.25), 0 0 24px rgba(0,255,0,0.25);
+            transform: translateY(-1px);
+            background: rgba(0,0,0,0.65);
+        }
+
+    /* Bouton Submit = cohérent avec Start */
+    #gameOver .score-form .submit-button {
+        grid-area: button;
+        align-self: stretch;
+        padding: 12px 16px;
+        border: 3px solid #0f0;
+        background: transparent;
+        color: #dfd;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        border-radius: 8px;
+        font-weight: 800;
+    }
+
+        #gameOver .score-form .submit-button:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 24px rgba(0,255,0,0.35);
+            transform: translateY(-1px);
+        }
+
+        #gameOver .score-form .submit-button:active {
+            transform: translateY(0);
+            box-shadow: 0 0 14px rgba(0,255,0,0.25);
+        }
+
+/* Mobile: empiler proprement */
+@media (max-width: 560px) {
+    #gameOver .score-form {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "label"
+            "input"
+            "button";
+        padding: 14px;
+        gap: 10px;
+    }
+
+        #gameOver .score-form .submit-button {
+            width: 100%;
+        }
+}
+
+
+
+/* 3) Highscores list - rendu plus premium et cohérent */
+.highscores-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1.25rem;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(0,255,0,0.3);
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0,255,0,0.15);
+    backdrop-filter: blur(5px);
+}
+
+.score-entry {
+    display: grid;
+    grid-template-columns: 60px 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: .75rem 1rem;
+    margin: .5rem 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border: 1px solid rgba(0,255,0,0.2);
+    border-radius: 8px;
+    transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+    .score-entry:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 18px rgba(0,255,0,0.18);
+        border-color: rgba(0,255,0,0.35);
+    }
+
+.rank {
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+.name {
+    color: #fff;
+    font-weight: 700;
+}
+
+.score {
+    color: #0f0;
+    text-shadow: 0 0 8px rgba(0,255,0,0.45);
+}
+
+@media (max-width: 720px) {
+    .score-entry {
+        grid-template-columns: 44px 1fr 1fr;
+    }
+
+        .score-entry > :nth-child(4),
+        .score-entry > :nth-child(5) {
+            display: none; /* compacter sur mobile */
+        }
+}
+
+/* Screen High Scores = même gabarit que le start */
+#highscoresScreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none; /* sera mis à flex via JS */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
+    z-index: 1000;
+}
+
+.highscores-button {
+    display: inline-block;
+    text-decoration: none; /* pas de soulignement */
+}
+
+.page-highscores {
+    overflow: auto;
+}
+
+.highscores-container h1 {
+    margin-bottom: 1rem;
+    text-align: center;
+    color: #0ff;
+    text-shadow: 0 0 18px rgba(0,255,255,.35);
+}
+

@@ -55,9 +55,6 @@ const Game = {
         
         // Event listeners
         document.getElementById('startButton').addEventListener('click', () => this.start());
-        document.getElementById('highscoresButton').addEventListener('click', () => {
-            window.location.href = 'highscores.html';
-        });
         document.getElementById('submitScore').addEventListener('click', () => this.submitScore());
         
         // Commencer la boucle de jeu
@@ -287,12 +284,12 @@ const Game = {
         this.deathSequenceTimer = 180; // 3 secondes en 60 FPS
     },
     
+    // showGameOverModal()
     async showGameOverModal() {
+        Input.suspend(); // ⬅️ important
         const gameTime = Math.floor((Date.now() - this.startTime) / 1000);
         const modal = document.createElement('div');
         modal.className = 'game-over-modal';
-
-        // On donne des ID aux boutons pour pouvoir y attacher des écouteurs d'événements
         modal.innerHTML = `
             <h2>Game Over!</h2>
             <p>Score: ${this.score}</p>
@@ -301,10 +298,9 @@ const Game = {
             <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
             <button id="submitScoreBtn">Submit Score</button>
             <button id="skipScoreBtn">Skip</button>
-        `;
+          `;
         document.body.appendChild(modal);
 
-        // AMÉLIORATION : On attache les événements ici, c'est plus propre que "onclick"
         document.getElementById('submitScoreBtn').addEventListener('click', () => this.submitScore());
         document.getElementById('skipScoreBtn').addEventListener('click', () => this.skipScore());
     },
@@ -352,11 +348,9 @@ const Game = {
     },
 
     skipScore() {
-        // On s'assure que le modal existe avant de le supprimer
         const modal = document.querySelector('.game-over-modal');
-        if (modal) {
-            modal.remove();
-        }
+        if (modal) modal.remove();
+        Input.resume();            // ⬅️ réactiver les inputs
         this.returnToMenu();
     },
 

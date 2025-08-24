@@ -11,9 +11,9 @@
     <div id="startScreen">
         <h1 class="title">ROBOTRON</h1>
         <p class="subtitle">Retro Survival Arena</p>
-        
+
         <button id="startButton" class="start-button">Start Mission</button>
-        
+
         <div class="features">
             <div class="feature-grid">
                 <div class="feature">
@@ -34,8 +34,9 @@
                 </div>
             </div>
         </div>
-        
-        <button id="highscoresButton" class="highscores-button">View High Scores</button>
+
+        <a href="./highscores.html" id="highscoresButton" class="highscores-button">View High Scores</a>
+
     </div>
     
     <!-- Game Screen -->
@@ -62,7 +63,12 @@
                 <div class="game-over-prompt">Press SPACE to restart or ESC for main menu</div>
                 <div class="score-form">
                     <label for="username">Enter your name for the leaderboard:</label>
-                    <input type="text" id="username" class="username-input" maxlength="10">
+                    <input type="text"
+                           id="username"
+                           class="username-input"
+                           maxlength="10"
+                           placeholder="Ton nom (max 10)"
+                           autocomplete="username" />
                     <button id="submitScore" class="submit-button">Submit Score</button>
                 </div>
             </div>
