@@ -1,89 +1,68 @@
-// Import des fonctions Firebase nécessaires
+ï»¿// js/firebase-config.js
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import {
+    getFirestore, collection, addDoc, query, orderBy,
+    limit as fsLimit, getDocs, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import {
+    getAuth, signInAnonymously, onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-
-// On importe la configuration depuis le fichier secret (non versionné)
 import { firebaseConfig } from './firebase-secrets.js';
 
+export const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 
-// Initialisation de Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-
-// NOUVEAU : Fonction pour connecter l'utilisateur anonymement
-// Elle retourne une promesse avec l'objet "user" une fois connecté.
+// Connexion anonyme (retourne l'utilisateur)
 export function getCurrentUser() {
     return new Promise((resolve, reject) => {
-        // onAuthStateChanged est un écouteur qui se déclenche dès que l'état de connexion change.
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            unsubscribe(); // On se désabonne pour ne pas l'appeler plusieurs fois
+        const unsub = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // L'utilisateur est déjà connecté ou vient de l'être
+                unsub();
                 resolve(user);
             } else {
-                // L'utilisateur n'est pas connecté, on le connecte
                 signInAnonymously(auth)
-                    .then(userCredential => {
-                        resolve(userCredential.user);
-                    })
-                    .catch(error => {
-                        reject(error);
-                    });
+                    .then(cred => { unsub(); resolve(cred.user); })
+                    .catch(reject);
             }
-        });
+        }, reject);
     });
 }
 
-// Fonction pour sauvegarder un score
-export async function saveScore(playerName, score, time, kills) {
-    if (!user) {
-        console.error("Tentative de sauvegarde sans utilisateur authentifié.");
-        return false;
-    }
-
+// >>> NOTE: signature attend 'user' (comme dans game.js)
+export async function saveScore(user, playerName, score, time, kills) {
     try {
-        const docRef = await addDoc(collection(db, "highscores"), {
-            userId: user.uid, // On ajoute l'ID unique de l'utilisateur
-            playerName: playerName,
-            score: score,
-            time: time,
-            kills: kills,
-            timestamp: new Date()
+        if (!user || !user.uid) throw new Error('User not authenticated');
+
+        await addDoc(collection(db, 'highscores'), {
+            userId: user.uid,
+            playerName,
+            score,
+            time,       // ex.: "123s" si tu veux lâ€™afficher tel quel
+            kills,
+            timestamp: serverTimestamp()
         });
-        console.log("Score saved with ID: ", docRef.id);
         return true;
     } catch (e) {
-        console.error("Error saving score: ", e);
+        console.error('Error saving score: ', e);
         return false;
     }
 }
 
-// Fonction pour récupérer les meilleurs scores
-export async function getHighScores(limit = 10) {
+// top = nombre dâ€™entrÃ©es Ã  retourner
+export async function getHighScores(top = 10) {
     try {
         const q = query(
-            collection(db, "highscores"), 
-            orderBy("score", "desc"),
-            limit(limit)
+            collection(db, 'highscores'),
+            orderBy('score', 'desc'),
+            fsLimit(top) // â† pas de collision de nom
         );
-        
-        const querySnapshot = await getDocs(q);
-        const scores = [];
-        
-        querySnapshot.forEach((doc) => {
-            scores.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
-        
-        return scores;
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (e) {
-        console.error("Error getting high scores: ", e);
+        console.error('Error getting high scores: ', e);
         return [];
     }
 }
