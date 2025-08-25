@@ -1,0 +1,12 @@
+// CE FICHIER EST IGNORÉ PAR GIT.
+// Il contient les clés et la configuration secrètes.
+
+export const firebaseConfig = {
+    apiKey: "AIzaSyAQWKPbN3XPUgTc8oxx9YLvbYrmymEOFu8", 
+    authDomain: "robot-survival-scores.firebaseapp.com",
+    projectId: "robot-survival-scores",
+    storageBucket: "robot-survival-scores.firebasestorage.app",
+    messagingSenderId: "646139241806",
+    appId: "1:646139241806:web:60661345b4734df48dea1f",
+    measurementId: "G-FVXPX4DLMP"
+};
