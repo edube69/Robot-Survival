@@ -9,14 +9,20 @@ export const Camera = {
     targetZoom: CONFIG.CAMERA.ZOOM || 1,
     smoothing: 0.1,
     
-    // État de téléportation
+    // État de téléportation amélioré
     teleporting: false,
     teleportTarget: null,
     teleportProgress: 0,
+    teleportSpeed: 0.015, // Vitesse plus lente pour plus de fluidité
+    originalPosition: null,
     
     init() {
         this.x = Player.data.x;
         this.y = Player.data.y;
+        this.teleporting = false;
+        this.teleportTarget = null;
+        this.teleportProgress = 0;
+        this.originalPosition = null;
     },
     
     update() {
@@ -40,27 +46,42 @@ export const Camera = {
     startTeleportation(targetX, targetY) {
         this.teleporting = true;
         this.teleportTarget = { x: targetX, y: targetY };
+        this.originalPosition = { x: this.x, y: this.y };
         this.teleportProgress = 0;
+        console.log(`Starting camera teleportation from (${this.x.toFixed(1)}, ${this.y.toFixed(1)}) to (${targetX}, ${targetY})`);
     },
     
     updateTeleport() {
-        if (!this.teleporting || !this.teleportTarget) return;
+        if (!this.teleporting || !this.teleportTarget || !this.originalPosition) return;
         
-        this.teleportProgress += 0.02;
+        this.teleportProgress += this.teleportSpeed;
         
-        // Interpolation entre la position actuelle et la cible
-        this.x = this.x + (this.teleportTarget.x - this.x) * this.teleportProgress;
-        this.y = this.y + (this.teleportTarget.y - this.y) * this.teleportProgress;
+        // Utiliser une courbe d'easing smooth (ease-in-out cubic)
+        const t = this.teleportProgress;
+        const smoothT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        
+        // Interpolation fluide entre la position originale et la cible
+        this.x = this.originalPosition.x + (this.teleportTarget.x - this.originalPosition.x) * smoothT;
+        this.y = this.originalPosition.y + (this.teleportTarget.y - this.originalPosition.y) * smoothT;
         
         if (this.teleportProgress >= 1) {
+            console.log(`Camera teleportation completed at (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
             this.finishTeleportation();
         }
     },
     
     finishTeleportation() {
+        if (this.teleportTarget) {
+            // S'assurer que la position finale est exactement la cible
+            this.x = this.teleportTarget.x;
+            this.y = this.teleportTarget.y;
+        }
+        
         this.teleporting = false;
         this.teleportTarget = null;
         this.teleportProgress = 0;
+        this.originalPosition = null;
+        console.log(`Camera teleportation finished, position: (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
     },
     
     setTargetZoom(value) {

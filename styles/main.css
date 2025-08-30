@@ -721,6 +721,11 @@ canvas {
         width: 160px;
     }
 
+.stats {
+    color: #aaf;
+    font-size: .9rem;
+}
+
 /* Apparition douce des lignes */
 .appear {
     opacity: 0;
@@ -864,5 +869,89 @@ canvas {
 .score-entry.is-top {
     border-color: rgba(255,215,0,0.45);
     box-shadow: 0 0 22px rgba(255,215,0,.22);
+}
+
+/* Bouton retour au jeu centré et stylé */
+.back-button {
+    --border-clr: #0f0;
+    --glow: 0 0 18px rgba(0,255,0,.4);
+    display: flex; /* était inline-flex -> permet aux marges auto de centrer */
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    padding: 14px 42px;
+    margin: 1.75rem auto 0; /* centré horizontalement */
+    font-size: 1.1rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    color: #cfffcc;
+    background: linear-gradient(145deg, rgba(0,40,0,.55), rgba(0,90,0,.25));
+    border: 3px solid var(--border-clr);
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background .25s ease, transform .15s ease, box-shadow .25s ease, border-color .3s ease;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 4px 18px -4px rgba(0,255,70,.35);
+    width: max-content; /* rétrécit au contenu et permet le centrage */
+}
+
+.back-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(0,255,120,.18), transparent 70%);
+    opacity: .65;
+    mix-blend-mode: screen;
+    transition: opacity .4s ease;
+    pointer-events: none;
+}
+
+.back-button::after {
+    content: "";
+    position: absolute;
+    left: -20%;
+    top: 0;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent, rgba(255,255,255,.3), transparent);
+    transform: translateX(-120%) skewX(-18deg);
+    transition: transform .9s ease;
+    pointer-events: none;
+}
+
+.back-button:hover::after {
+    transform: translateX(320%) skewX(-18deg);
+}
+
+.back-button:hover {
+    background: linear-gradient(145deg, rgba(0,60,0,.65), rgba(0,120,0,.28));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 0 22px rgba(0,255,90,.5), 0 10px 34px -4px rgba(0,255,70,.35);
+    transform: translateY(-3px);
+}
+
+.back-button:active {
+    transform: translateY(-1px) scale(.97);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 16px rgba(0,255,90,.4);
+}
+
+.back-button .back-icon {
+    font-size: 1.2em;
+    filter: drop-shadow(0 0 6px rgba(0,255,0,.5));
+}
+
+.back-button .back-text { 
+    background: linear-gradient(90deg, #0f0, #b6ffb6);
+    -webkit-background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 12px rgba(0,255,0,.35);
+}
+
+.back-button:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px #fff, 0 0 0 6px #0f0, 0 0 24px #0f0;
 }
 

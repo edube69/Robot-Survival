@@ -288,21 +288,87 @@ const Game = {
     async showGameOverModal() {
         Input.suspend(); // ⬅️ important
         const gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+        
+        // Supprimer toute modal existante
+        const existingModal = document.querySelector('.game-over-modal');
+        if (existingModal) existingModal.remove();
+        
         const modal = document.createElement('div');
         modal.className = 'game-over-modal';
         modal.innerHTML = `
-            <h2>Game Over!</h2>
-            <p>Score: ${this.score}</p>
-            <p>Kills: ${this.kills}</p>
-            <p>Time: ${gameTime}s</p>
-            <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
-            <button id="submitScoreBtn">Submit Score</button>
-            <button id="skipScoreBtn">Skip</button>
-          `;
+            <div class="modal-header">
+                <h2 class="modal-title">MISSION FAILED</h2>
+                <div class="mission-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Final Score:</span>
+                        <span class="stat-value">${this.score.toLocaleString()}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Enemies Destroyed:</span>
+                        <span class="stat-value">${this.kills}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Mission Duration:</span>
+                        <span class="stat-value">${Math.floor(gameTime / 60)}:${(gameTime % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Wave Reached:</span>
+                        <span class="stat-value">${this.wave}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-content">
+                <div class="leaderboard-prompt">
+                    <p class="prompt-text">Enter the leaderboard, warrior!</p>
+                    <div class="input-section">
+                        <input type="text" 
+                               id="playerName" 
+                               class="player-name-input" 
+                               placeholder="Your Call Sign" 
+                               maxlength="15"
+                               autocomplete="off">
+                        <div class="modal-actions">
+                            <button id="submitScoreBtn" class="action-btn primary">
+                                <span class="btn-icon">🏆</span>
+                                <span class="btn-text">Submit Score</span>
+                            </button>
+                            <button id="skipScoreBtn" class="action-btn secondary">
+                                <span class="btn-icon">⏭️</span>
+                                <span class="btn-text">Skip</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <p class="footer-text">Press ESC to return to main menu</p>
+                </div>
+            </div>
+        `;
         document.body.appendChild(modal);
 
+        // Animation d'apparition
+        setTimeout(() => modal.classList.add('show'), 50);
+
+        // Event listeners
         document.getElementById('submitScoreBtn').addEventListener('click', () => this.submitScore());
         document.getElementById('skipScoreBtn').addEventListener('click', () => this.skipScore());
+        
+        // Enter pour submit
+        document.getElementById('playerName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.submitScore();
+        });
+        
+        // ESC pour skip
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.skipScore();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        // Focus sur l'input
+        setTimeout(() => document.getElementById('playerName').focus(), 100);
     },
 
     async submitScore() {
@@ -315,12 +381,24 @@ const Game = {
             return;
         }
 
-        const playerName = playerNameInput.value;
+        const playerName = playerNameInput.value.trim();
 
         if (!playerName) {
-            alert("Veuillez entrer un nom !");
+            // Ajouter un feedback visuel
+            playerNameInput.classList.add('error');
+            playerNameInput.placeholder = "Name required!";
+            setTimeout(() => {
+                playerNameInput.classList.remove('error');
+                playerNameInput.placeholder = "Your Call Sign";
+            }, 2000);
             return;
         }
+
+        // Désactiver le bouton pendant le processing
+        const submitBtn = document.getElementById('submitScoreBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Submitting...</span>';
+        submitBtn.disabled = true;
 
         // 2. UTILISATION DES VRAIES DONNÉES
         const finalScore = this.score;
@@ -335,29 +413,50 @@ const Game = {
             const success = await saveScore(user, playerName, finalScore, `${finalTime}s`, finalKills);
 
             if (success) {
-                // mémorise pour la page des scores
+                // === AMÉLIORÉ : mémoriser aussi la date pour l'affichage immédiat ===
                 sessionStorage.setItem('lastScore', JSON.stringify({
-                    name: playerName, score: finalScore, kills: finalKills, time: finalTime
+                    name: playerName, 
+                    score: finalScore, 
+                    kills: finalKills, 
+                    time: finalTime,
+                    timestamp: Date.now() // Ajouter la date locale pour l'affichage immédiat
                 }));
-                alert("Score sauvegardé !");
-                this.skipScore(); // On ferme le modal et on retourne au menu
+                
+                // Feedback de succès
+                submitBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">Score Saved!</span>';
+                submitBtn.classList.add('success');
+                
+                setTimeout(() => {
+                    this.skipScore(); // On ferme le modal et on retourne au menu
+                }, 1500);
             } else {
-                alert("La sauvegarde du score a échoué.");
+                throw new Error("Failed to save score");
             }
 
         } catch (error) {
             console.error("Erreur d'authentification ou de sauvegarde :", error);
-            alert("Une erreur est survenue. Impossible de sauvegarder le score.");
+            
+            // Feedback d'erreur
+            submitBtn.innerHTML = '<span class="btn-icon">❌</span><span class="btn-text">Error - Try Again</span>';
+            submitBtn.classList.add('error');
+            submitBtn.disabled = false;
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.classList.remove('error');
+            }, 3000);
         }
     },
 
     skipScore() {
         const modal = document.querySelector('.game-over-modal');
-        if (modal) modal.remove();
+        if (modal) {
+            modal.classList.add('hide');
+            setTimeout(() => modal.remove(), 300);
+        }
         Input.resume();            // ⬅️ réactiver les inputs
         this.returnToMenu();
     },
-
     
     completeDeathSequence() {
         // Restaurer la vitesse normale
@@ -374,45 +473,58 @@ const Game = {
                 this.showGameOverModal();
             }
         } else {
-            // Trouver une position s�re pour r�appara�tre
+            // Trouver une position sûre pour réapparaître
             const safeLocation = Player.findSafeSpawnLocation();
             
-            // Passer en �tat "teleporting"
+            console.log(`Player death completed, teleporting to safe location: (${safeLocation.x}, ${safeLocation.y})`);
+            
+            // Passer en état "teleporting" pour éviter les mises à jour normales
             this.state = 'teleporting';
             
-            // D�marrer la t�l�portation de la cam�ra vers la nouvelle position
+            // Zoom arrière progressif pour montrer la zone de téléportation
+            Camera.setTargetZoom(Math.max(0.8, (CONFIG.CAMERA.ZOOM || 1) * 0.6));
+            
+            // Démarrer la téléportation fluide de la caméra vers la nouvelle position
             Camera.startTeleportation(safeLocation.x, safeLocation.y);
             
-            // Zoom arri�re pour d�voiler la sc�ne (plus fluide)
-            Camera.setTargetZoom(Math.max(1.0, (CONFIG.CAMERA.ZOOM || 1) * 0.75));
+            // Déclencher l'effet procédural de téléportation avec durée plus longue
+            TeleportFX.create(safeLocation.x, safeLocation.y, { duration: 120, maxRadius: 160 });
             
-            // D�clencher l'effet proc�dural de t�l�portation avec dur�e plus longue
-            TeleportFX.create(safeLocation.x, safeLocation.y, { duration: 100, maxRadius: 140 });
-            
-            // Jouer le son de t�l�portation
+            // Jouer le son de téléportation
             Audio.playSoundEffect('teleport');
             
-            // Attendre pour appr�cier l'effet, puis t�l�porter
+            // Attendre que l'effet de téléportation soit bien visible avant de déplacer le joueur
             setTimeout(() => {
+                console.log(`Moving player to safe location: (${safeLocation.x}, ${safeLocation.y})`);
+                
+                // Téléporter le joueur
                 Player.data.x = safeLocation.x;
                 Player.data.y = safeLocation.y;
                 
                 // Nettoyer les ennemis proches
-                Enemy.clearNearby(Player.data.x, Player.data.y, 150);
+                Enemy.clearNearby(Player.data.x, Player.data.y, 180);
                 
-                // Invuln�rabilit� temporaire
+                // Invulnérabilité temporaire
                 Player.data.invulnerable = true;
-                Player.data.invulnerableTime = 150; // un peu plus long
+                Player.data.invulnerableTime = 180; // 3 secondes
                 
-                // Zoom avant pour revenir au zoom par d�faut (plus progressif)
+                console.log(`Player teleported, starting zoom back to normal`);
+                
+                // Zoom avant progressif pour revenir au zoom par défaut
                 Camera.setTargetZoom(CONFIG.CAMERA.ZOOM || 1);
                 
-                // Terminer la t�l�portation de cam�ra et reprendre le suivi normal
+                // Attendre que la téléportation de caméra soit terminée avant de reprendre le jeu
                 setTimeout(() => {
+                    console.log(`Teleportation sequence complete, resuming game`);
+                    
+                    // Terminer la téléportation de caméra et reprendre le suivi normal
                     Camera.finishTeleportation();
+                    
+                    // Reprendre le jeu
                     this.state = 'playing';
-                }, 400); // Plus de temps pour la transition
-            }, 1000); // augmente l'attente
+                }, 800); // Plus de temps pour la transition complète
+                
+            }, 1200); // Plus d'attente pour apprécier l'effet
         }
     },
     

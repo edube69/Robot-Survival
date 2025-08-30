@@ -302,8 +302,19 @@ export const Currency = {
         // Effets visuels spectaculaires
         Particle.createExplosion(lootBox.x, lootBox.y, lootBox.colors.BRIGHT, 25);
         
+        // Stocker les informations de la loot box avant suppression
+        const lootInfo = {
+            type: lootBox.lootType,
+            x: lootBox.x,
+            y: lootBox.y,
+            color: lootBox.colors.BRIGHT
+        };
+        
         // Appliquer l'effet selon le type
         this.applyLootBoxEffect(lootBox);
+        
+        // === NOUVELLE FONCTIONNALITÉ : Animation de notification ===
+        this.showLootBoxNotification(lootInfo);
         
         // Supprimer
         this.list.splice(index, 1);
@@ -312,7 +323,723 @@ export const Currency = {
         Audio.playSoundEffect('lootBoxCollect');
     },
     
-    // Appliquer l'effet de la loot box
+    // === NOUVELLE MÉTHODE : Afficher une notification animée pour les loot boxes ===
+    showLootBoxNotification(lootInfo) {
+        // Obtenir les détails de la loot box
+        const lootDetails = this.getLootBoxNotificationDetails(lootInfo.type);
+        
+        // Créer l'élément de notification
+        const notification = document.createElement('div');
+        notification.className = 'lootbox-notification';
+        notification.innerHTML = `
+            <div class="lootbox-notification-inner">
+                <div class="loot-icon" style="color: ${lootInfo.color}; text-shadow: 0 0 20px ${lootInfo.color};">
+                    ${lootDetails.icon}
+                </div>
+                <div class="loot-content">
+                    <div class="loot-title">${lootDetails.title}</div>
+                    <div class="loot-description">${lootDetails.description}</div>
+                    <div class="loot-benefits">
+                        ${lootDetails.benefits.map(benefit => `<div class="benefit-item">• ${benefit}</div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Ajouter au DOM
+        document.body.appendChild(notification);
+        
+        // Animation d'apparition
+        setTimeout(() => notification.classList.add('show'), 50);
+        
+        // Supprimer après 4 secondes
+        setTimeout(() => {
+            notification.classList.add('hide');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 4000);
+        
+        // Effet de particules à l'écran
+        this.createScreenParticleEffect(lootInfo.color, lootDetails.icon);
+    },
+    
+    // === NOUVELLE MÉTHODE : Obtenir les détails pour la notification ===
+    getLootBoxNotificationDetails(lootType) {
+        const details = {
+            'TREASURE': {
+                icon: '💎',
+                title: 'TREASURE CACHE',
+                description: 'Massive gem windfall discovered!',
+                benefits: ['15-35 gems bonus', 'Multiplier applied', 'Golden particle rain']
+            },
+            'WEAPON': {
+                icon: '🚀',
+                title: 'WEAPON UNLOCK',
+                description: 'Advanced arsenal acquired!',
+                benefits: ['New weapon system', 'Enhanced firepower', 'Tactical advantage']
+            },
+            'NUKE': {
+                icon: '💥',
+                title: 'NUCLEAR STRIKE',
+                description: 'Orbital bombardment activated!',
+                benefits: ['All enemies eliminated', 'Massive score bonus', 'Screen cleared']
+            },
+            'MAGNET': {
+                icon: '🧲',
+                title: 'MAGNETIC PULSE',
+                description: 'Gravitational field deployed!',
+                benefits: ['All gems collected', 'Instant gathering', 'Area effect']
+            },
+            'ORB_SHIELD': {
+                icon: '🛡️',
+                title: 'ORBITAL DEFENSE',
+                description: 'Shield satellites deployed!',
+                benefits: ['1-2 orbital defenders', 'Autonomous protection', 'Rotating shields']
+            },
+            'ORB_UPGRADE': {
+                icon: '⚡',
+                title: 'ORB ENHANCEMENT',
+                description: 'Satellite systems upgraded!',
+                benefits: ['Increased orb speed', 'Enhanced abilities', 'Armed orbs unlocked']
+            },
+            'UTILITY': {
+                icon: '🔧',
+                title: 'SYSTEM UPGRADE',
+                description: 'Core systems enhanced!',
+                benefits: ['Movement speed+', 'Magnet range+', 'Fire rate+', 'Weapon range+']
+            }
+        };
+        
+        return details[lootType] || details['TREASURE'];
+    },
+    
+    // === NOUVELLE MÉTHODE : Effet de particules à l'écran ===
+    createScreenParticleEffect(color, icon) {
+        // Créer plusieurs particules qui traversent l'écran
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                const particle = document.createElement('div');
+                particle.className = 'screen-particle';
+                particle.textContent = icon;
+                particle.style.cssText = `
+                    position: fixed;
+                    font-size: ${20 + Math.random() * 20}px;
+                    color: ${color};
+                    text-shadow: 0 0 20px ${color};
+                    pointer-events: none;
+                    z-index: 9999;
+                    left: ${Math.random() * 100}vw;
+                    top: ${Math.random() * 100}vh;
+                    animation: floatAway 3s ease-out forwards;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 3000);
+                
+            }, i * 100);
+        }
+    },
+    
+    update() {
+        if (!Player.data) return;
+        
+        for (let i = this.list.length - 1; i >= 0; i--) {
+            const drop = this.list[i];
+            
+            // V�rification de s�curit� : s'assurer que drop existe
+            if (!drop || drop.x === undefined || drop.y === undefined) {
+                this.list.splice(i, 1);
+                continue;
+            }
+            
+            const dx = Player.data.x - drop.x;
+            const dy = Player.data.y - drop.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // === GESTION SP�CIALE POUR LES LOOT BOXES ===
+            if (drop.type === 'lootbox') {
+                this.updateLootBox(drop, dx, dy, distance, i);
+                continue;
+            }
+            
+            // === GESTION NORMALE POUR LES GEMS ===
+            // Magn�tisme
+            if (distance < Player.data.magnetRange && !drop.magnetized) {
+                drop.magnetized = true;
+            }
+            
+            if (drop.magnetized) {
+                const speed = CONFIG.CURRENCY.MAGNET_SPEED;
+                drop.vx = (dx / distance) * speed;
+                drop.vy = (dy / distance) * speed;
+            } else {
+                drop.vx *= 0.95;
+                drop.vy *= 0.95;
+            }
+            
+            drop.x += drop.vx;
+            drop.y += drop.vy;
+            
+            // Collection
+            if (distance < drop.radius + Player.data.radius) {
+                // === NOUVEAU : Appliquer le multiplicateur de gems ===
+                const gemMultiplier = Player.data.gemMultiplier || 1;
+                const finalValue = Math.floor(drop.value * gemMultiplier);
+                Game.gems += finalValue;
+                
+                // V�rifier que drop.colors existe avant de l'utiliser
+                if (drop.colors && drop.colors.BRIGHT) {
+                    Particle.createExplosion(drop.x, drop.y, drop.colors.BRIGHT, 4);
+                } else {
+                    // Fallback couleur par d�faut si colors est undefined
+                    Particle.createExplosion(drop.x, drop.y, '#FFD700', 4);
+                }
+                
+                this.list.splice(i, 1);
+                Audio.playSoundEffect('gemCollect');
+                
+                // === NOUVEAU : Afficher le multiplicateur dans les logs ===
+                if (gemMultiplier > 1) {
+                    console.log(`Collected ${drop.value} x${gemMultiplier} = ${finalValue} gems! Total: ${Game.gems}/${Game.gemsForUpgrade}`);
+                } else {
+                    console.log(`Collected ${finalValue} gems! Total: ${Game.gems}/${Game.gemsForUpgrade}`);
+                }
+                continue; // ? AJOUT: �viter l'animation si l'objet est supprim�>
+            }
+            
+            // Animation: bobbing et rotation (seulement si l'objet n'a pas �t� collect�)
+            if (drop.bobOffset !== undefined && drop.spinAngle !== undefined) {
+                drop.bobOffset += 0.1;
+                drop.spinAngle += CONFIG.CURRENCY.SPIN_SPEED || 0.08;
+            }
+        }
+    },
+    
+    // Mise � jour sp�ciale pour les loot boxes
+    updateLootBox(lootBox, dx, dy, distance, index) {
+        // === NOUVEAU : MAGN�TISME POUR LES LOOT BOXES ===
+        // Les loot boxes sont attir�es par le magnet mais plus lentement et � plus courte port�e
+        const lootBoxMagnetRange = Player.data.magnetRange * 0.7; // 70% de la port�e normale
+        
+        if (distance < lootBoxMagnetRange && !lootBox.magnetized) {
+            lootBox.magnetized = true;
+            // Effet visuel sp�cial quand une loot box est magn�tis�e
+            Particle.createExplosion(lootBox.x, lootBox.y, lootBox.colors.BRIGHT, 6);
+        }
+        
+        if (lootBox.magnetized) {
+            // Vitesse d'attraction plus lente pour les loot boxes (plus lourdes)
+            const lootBoxMagnetSpeed = CONFIG.CURRENCY.MAGNET_SPEED * 0.6; // 60% de la vitesse normale
+            const attractionForce = lootBoxMagnetSpeed * (lootBoxMagnetRange / Math.max(distance, 1));
+            
+            lootBox.vx += (dx / distance) * attractionForce * 0.3; // Attraction progressive
+            lootBox.vy += (dy / distance) * attractionForce * 0.3;
+            
+            // Limite la vitesse maximale pour �viter que les loot boxes aillent trop vite
+            const maxSpeed = 4;
+            const currentSpeed = Math.sqrt(lootBox.vx * lootBox.vx + lootBox.vy * lootBox.vy);
+            if (currentSpeed > maxSpeed) {
+                lootBox.vx = (lootBox.vx / currentSpeed) * maxSpeed;
+                lootBox.vy = (lootBox.vy / currentSpeed) * maxSpeed;
+            }
+        } else {
+            // Physique normale pour les loot boxes non-magn�tis�es
+            lootBox.vx *= 0.95;
+            lootBox.vy *= 0.95;
+        }
+        
+        lootBox.x += lootBox.vx;
+        lootBox.y += lootBox.vy;
+        
+        // Animation sp�ciale
+        lootBox.bobOffset += 0.08; // Plus lent que les gems
+        lootBox.spinAngle += 0.03; // Plus lent
+        lootBox.pulsePhase += 0.1;
+        
+        // Effet de pulsation
+        lootBox.glowIntensity = 0.7 + Math.sin(lootBox.pulsePhase) * 0.3;
+        
+        // Effet sp�cial si magn�tis� : pulsation plus intense
+        if (lootBox.magnetized) {
+            lootBox.glowIntensity += Math.sin(lootBox.pulsePhase * 2) * 0.2;
+        }
+        
+        // �tincelles occasionnelles
+        lootBox.sparkleTimer++;
+        if (lootBox.sparkleTimer > 30 && Math.random() < 0.4) {
+            lootBox.sparkleTimer = 0;
+            this.createLootBoxSparkles(lootBox);
+        }
+        
+        // �tincelles magn�tiques suppl�mentaires quand magn�tis�
+        if (lootBox.magnetized && Math.random() < 0.3) {
+            this.createMagneticSparkles(lootBox);
+        }
+        
+        // Collection
+        if (distance < lootBox.radius + Player.data.radius) {
+            this.collectLootBox(lootBox, index);
+        }
+    },
+    
+    // Cr�er des �tincelles autour de la loot box
+    createLootBoxSparkles(lootBox) {
+        const sparkleCount = 4;
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 10 + Math.random() * 15;
+            const sx = lootBox.x + Math.cos(angle) * distance;
+            const sy = lootBox.y + Math.sin(angle) * distance;
+            
+            Particle.createExplosion(sx, sy, lootBox.colors.BRIGHT, 2);
+        }
+    },
+    
+    // === NOUVELLE M�THODE : �tincelles magn�tiques pour loot boxes ===
+    createMagneticSparkles(lootBox) {
+        const sparkleCount = 2;
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 15 + Math.random() * 10;
+            const sx = lootBox.x + Math.cos(angle) * distance;
+            const sy = lootBox.y + Math.sin(angle) * distance;
+            
+            // �tincelles bleues pour indiquer l'effet magn�tique
+            Particle.createExplosion(sx, sy, '#88BBFF', 1);
+        }
+        
+        // Tra�n�e magn�tique vers le joueur
+        if (Player.data && Math.random() < 0.5) {
+            const dx = Player.data.x - lootBox.x;
+            const dy = Player.data.y - lootBox.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 0) {
+                const trailX = lootBox.x + (dx / distance) * 20;
+                const trailY = lootBox.y + (dy / distance) * 20;
+                Particle.createExplosion(trailX, trailY, '#4499FF', 1);
+            }
+        }
+    },
+    
+    // Collecter une loot box
+    collectLootBox(lootBox, index) {
+        // Effets visuels spectaculaires
+        Particle.createExplosion(lootBox.x, lootBox.y, lootBox.colors.BRIGHT, 25);
+        
+        // Stocker les informations de la loot box avant suppression
+        const lootInfo = {
+            type: lootBox.lootType,
+            x: lootBox.x,
+            y: lootBox.y,
+            color: lootBox.colors.BRIGHT
+        };
+        
+        // Appliquer l'effet selon le type
+        this.applyLootBoxEffect(lootBox);
+        
+        // === NOUVELLE FONCTIONNALITÉ : Animation de notification ===
+        this.showLootBoxNotification(lootInfo);
+        
+        // Supprimer
+        this.list.splice(index, 1);
+        
+        // Son de collection
+        Audio.playSoundEffect('lootBoxCollect');
+    },
+    
+    // === NOUVELLE MÉTHODE : Afficher une notification animée pour les loot boxes ===
+    showLootBoxNotification(lootInfo) {
+        // Obtenir les détails de la loot box
+        const lootDetails = this.getLootBoxNotificationDetails(lootInfo.type);
+        
+        // Créer l'élément de notification
+        const notification = document.createElement('div');
+        notification.className = 'lootbox-notification';
+        notification.innerHTML = `
+            <div class="lootbox-notification-inner">
+                <div class="loot-icon" style="color: ${lootInfo.color}; text-shadow: 0 0 20px ${lootInfo.color};">
+                    ${lootDetails.icon}
+                </div>
+                <div class="loot-content">
+                    <div class="loot-title">${lootDetails.title}</div>
+                    <div class="loot-description">${lootDetails.description}</div>
+                    <div class="loot-benefits">
+                        ${lootDetails.benefits.map(benefit => `<div class="benefit-item">• ${benefit}</div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Ajouter au DOM
+        document.body.appendChild(notification);
+        
+        // Animation d'apparition
+        setTimeout(() => notification.classList.add('show'), 50);
+        
+        // Supprimer après 4 secondes
+        setTimeout(() => {
+            notification.classList.add('hide');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 4000);
+        
+        // Effet de particules à l'écran
+        this.createScreenParticleEffect(lootInfo.color, lootDetails.icon);
+    },
+    
+    // === NOUVELLE MÉTHODE : Obtenir les détails pour la notification ===
+    getLootBoxNotificationDetails(lootType) {
+        const details = {
+            'TREASURE': {
+                icon: '💎',
+                title: 'TREASURE CACHE',
+                description: 'Massive gem windfall discovered!',
+                benefits: ['15-35 gems bonus', 'Multiplier applied', 'Golden particle rain']
+            },
+            'WEAPON': {
+                icon: '🚀',
+                title: 'WEAPON UNLOCK',
+                description: 'Advanced arsenal acquired!',
+                benefits: ['New weapon system', 'Enhanced firepower', 'Tactical advantage']
+            },
+            'NUKE': {
+                icon: '💥',
+                title: 'NUCLEAR STRIKE',
+                description: 'Orbital bombardment activated!',
+                benefits: ['All enemies eliminated', 'Massive score bonus', 'Screen cleared']
+            },
+            'MAGNET': {
+                icon: '🧲',
+                title: 'MAGNETIC PULSE',
+                description: 'Gravitational field deployed!',
+                benefits: ['All gems collected', 'Instant gathering', 'Area effect']
+            },
+            'ORB_SHIELD': {
+                icon: '🛡️',
+                title: 'ORBITAL DEFENSE',
+                description: 'Shield satellites deployed!',
+                benefits: ['1-2 orbital defenders', 'Autonomous protection', 'Rotating shields']
+            },
+            'ORB_UPGRADE': {
+                icon: '⚡',
+                title: 'ORB ENHANCEMENT',
+                description: 'Satellite systems upgraded!',
+                benefits: ['Increased orb speed', 'Enhanced abilities', 'Armed orbs unlocked']
+            },
+            'UTILITY': {
+                icon: '🔧',
+                title: 'SYSTEM UPGRADE',
+                description: 'Core systems enhanced!',
+                benefits: ['Movement speed+', 'Magnet range+', 'Fire rate+', 'Weapon range+']
+            }
+        };
+        
+        return details[lootType] || details['TREASURE'];
+    },
+    
+    // === NOUVELLE MÉTHODE : Effet de particules à l'écran ===
+    createScreenParticleEffect(color, icon) {
+        // Créer plusieurs particules qui traversent l'écran
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                const particle = document.createElement('div');
+                particle.className = 'screen-particle';
+                particle.textContent = icon;
+                particle.style.cssText = `
+                    position: fixed;
+                    font-size: ${20 + Math.random() * 20}px;
+                    color: ${color};
+                    text-shadow: 0 0 20px ${color};
+                    pointer-events: none;
+                    z-index: 9999;
+                    left: ${Math.random() * 100}vw;
+                    top: ${Math.random() * 100}vh;
+                    animation: floatAway 3s ease-out forwards;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 3000);
+                
+            }, i * 100);
+        }
+    },
+    
+    // Mise � jour sp�ciale pour les loot boxes
+    updateLootBox(lootBox, dx, dy, distance, index) {
+        // === NOUVEAU : MAGN�TISME POUR LES LOOT BOXES ===
+        // Les loot boxes sont attir�es par le magnet mais plus lentement et � plus courte port�e
+        const lootBoxMagnetRange = Player.data.magnetRange * 0.7; // 70% de la port�e normale
+        
+        if (distance < lootBoxMagnetRange && !lootBox.magnetized) {
+            lootBox.magnetized = true;
+            // Effet visuel sp�cial quand une loot box est magn�tis�e
+            Particle.createExplosion(lootBox.x, lootBox.y, lootBox.colors.BRIGHT, 6);
+        }
+        
+        if (lootBox.magnetized) {
+            // Vitesse d'attraction plus lente pour les loot boxes (plus lourdes)
+            const lootBoxMagnetSpeed = CONFIG.CURRENCY.MAGNET_SPEED * 0.6; // 60% de la vitesse normale
+            const attractionForce = lootBoxMagnetSpeed * (lootBoxMagnetRange / Math.max(distance, 1));
+            
+            lootBox.vx += (dx / distance) * attractionForce * 0.3; // Attraction progressive
+            lootBox.vy += (dy / distance) * attractionForce * 0.3;
+            
+            // Limite la vitesse maximale pour �viter que les loot boxes aillent trop vite
+            const maxSpeed = 4;
+            const currentSpeed = Math.sqrt(lootBox.vx * lootBox.vx + lootBox.vy * lootBox.vy);
+            if (currentSpeed > maxSpeed) {
+                lootBox.vx = (lootBox.vx / currentSpeed) * maxSpeed;
+                lootBox.vy = (lootBox.vy / currentSpeed) * maxSpeed;
+            }
+        } else {
+            // Physique normale pour les loot boxes non-magn�tis�es
+            lootBox.vx *= 0.95;
+            lootBox.vy *= 0.95;
+        }
+        
+        lootBox.x += lootBox.vx;
+        lootBox.y += lootBox.vy;
+        
+        // Animation sp�ciale
+        lootBox.bobOffset += 0.08; // Plus lent que les gems
+        lootBox.spinAngle += 0.03; // Plus lent
+        lootBox.pulsePhase += 0.1;
+        
+        // Effet de pulsation
+        lootBox.glowIntensity = 0.7 + Math.sin(lootBox.pulsePhase) * 0.3;
+        
+        // Effet sp�cial si magn�tis� : pulsation plus intense
+        if (lootBox.magnetized) {
+            lootBox.glowIntensity += Math.sin(lootBox.pulsePhase * 2) * 0.2;
+        }
+        
+        // �tincelles occasionnelles
+        lootBox.sparkleTimer++;
+        if (lootBox.sparkleTimer > 30 && Math.random() < 0.4) {
+            lootBox.sparkleTimer = 0;
+            this.createLootBoxSparkles(lootBox);
+        }
+        
+        // �tincelles magn�tiques suppl�mentaires quand magn�tis�
+        if (lootBox.magnetized && Math.random() < 0.3) {
+            this.createMagneticSparkles(lootBox);
+        }
+        
+        // Collection
+        if (distance < lootBox.radius + Player.data.radius) {
+            this.collectLootBox(lootBox, index);
+        }
+    },
+    
+    // Cr�er des �tincelles autour de la loot box
+    createLootBoxSparkles(lootBox) {
+        const sparkleCount = 4;
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 10 + Math.random() * 15;
+            const sx = lootBox.x + Math.cos(angle) * distance;
+            const sy = lootBox.y + Math.sin(angle) * distance;
+            
+            Particle.createExplosion(sx, sy, lootBox.colors.BRIGHT, 2);
+        }
+    },
+    
+    // === NOUVELLE M�THODE : �tincelles magn�tiques pour loot boxes ===
+    createMagneticSparkles(lootBox) {
+        const sparkleCount = 2;
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 15 + Math.random() * 10;
+            const sx = lootBox.x + Math.cos(angle) * distance;
+            const sy = lootBox.y + Math.sin(angle) * distance;
+            
+            // �tincelles bleues pour indiquer l'effet magn�tique
+            Particle.createExplosion(sx, sy, '#88BBFF', 1);
+        }
+        
+        // Tra�n�e magn�tique vers le joueur
+        if (Player.data && Math.random() < 0.5) {
+            const dx = Player.data.x - lootBox.x;
+            const dy = Player.data.y - lootBox.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 0) {
+                const trailX = lootBox.x + (dx / distance) * 20;
+                const trailY = lootBox.y + (dy / distance) * 20;
+                Particle.createExplosion(trailX, trailY, '#4499FF', 1);
+            }
+        }
+    },
+    
+    // Collecter une loot box
+    collectLootBox(lootBox, index) {
+        // Effets visuels spectaculaires
+        Particle.createExplosion(lootBox.x, lootBox.y, lootBox.colors.BRIGHT, 25);
+        
+        // Stocker les informations de la loot box avant suppression
+        const lootInfo = {
+            type: lootBox.lootType,
+            x: lootBox.x,
+            y: lootBox.y,
+            color: lootBox.colors.BRIGHT
+        };
+        
+        // Appliquer l'effet selon le type
+        this.applyLootBoxEffect(lootBox);
+        
+        // === NOUVELLE FONCTIONNALITÉ : Animation de notification ===
+        this.showLootBoxNotification(lootInfo);
+        
+        // Supprimer
+        this.list.splice(index, 1);
+        
+        // Son de collection
+        Audio.playSoundEffect('lootBoxCollect');
+    },
+    
+    // === NOUVELLE MÉTHODE : Afficher une notification animée pour les loot boxes ===
+    showLootBoxNotification(lootInfo) {
+        // Obtenir les détails de la loot box
+        const lootDetails = this.getLootBoxNotificationDetails(lootInfo.type);
+        
+        // Créer l'élément de notification
+        const notification = document.createElement('div');
+        notification.className = 'lootbox-notification';
+        notification.innerHTML = `
+            <div class="lootbox-notification-inner">
+                <div class="loot-icon" style="color: ${lootInfo.color}; text-shadow: 0 0 20px ${lootInfo.color};">
+                    ${lootDetails.icon}
+                </div>
+                <div class="loot-content">
+                    <div class="loot-title">${lootDetails.title}</div>
+                    <div class="loot-description">${lootDetails.description}</div>
+                    <div class="loot-benefits">
+                        ${lootDetails.benefits.map(benefit => `<div class="benefit-item">• ${benefit}</div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Ajouter au DOM
+        document.body.appendChild(notification);
+        
+        // Animation d'apparition
+        setTimeout(() => notification.classList.add('show'), 50);
+        
+        // Supprimer après 4 secondes
+        setTimeout(() => {
+            notification.classList.add('hide');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 4000);
+        
+        // Effet de particules à l'écran
+        this.createScreenParticleEffect(lootInfo.color, lootDetails.icon);
+    },
+    
+    // === NOUVELLE MÉTHODE : Obtenir les détails pour la notification ===
+    getLootBoxNotificationDetails(lootType) {
+        const details = {
+            'TREASURE': {
+                icon: '💎',
+                title: 'TREASURE CACHE',
+                description: 'Massive gem windfall discovered!',
+                benefits: ['15-35 gems bonus', 'Multiplier applied', 'Golden particle rain']
+            },
+            'WEAPON': {
+                icon: '🚀',
+                title: 'WEAPON UNLOCK',
+                description: 'Advanced arsenal acquired!',
+                benefits: ['New weapon system', 'Enhanced firepower', 'Tactical advantage']
+            },
+            'NUKE': {
+                icon: '💥',
+                title: 'NUCLEAR STRIKE',
+                description: 'Orbital bombardment activated!',
+                benefits: ['All enemies eliminated', 'Massive score bonus', 'Screen cleared']
+            },
+            'MAGNET': {
+                icon: '🧲',
+                title: 'MAGNETIC PULSE',
+                description: 'Gravitational field deployed!',
+                benefits: ['All gems collected', 'Instant gathering', 'Area effect']
+            },
+            'ORB_SHIELD': {
+                icon: '🛡️',
+                title: 'ORBITAL DEFENSE',
+                description: 'Shield satellites deployed!',
+                benefits: ['1-2 orbital defenders', 'Autonomous protection', 'Rotating shields']
+            },
+            'ORB_UPGRADE': {
+                icon: '⚡',
+                title: 'ORB ENHANCEMENT',
+                description: 'Satellite systems upgraded!',
+                benefits: ['Increased orb speed', 'Enhanced abilities', 'Armed orbs unlocked']
+            },
+            'UTILITY': {
+                icon: '🔧',
+                title: 'SYSTEM UPGRADE',
+                description: 'Core systems enhanced!',
+                benefits: ['Movement speed+', 'Magnet range+', 'Fire rate+', 'Weapon range+']
+            }
+        };
+        
+        return details[lootType] || details['TREASURE'];
+    },
+    
+    // === NOUVELLE MÉTHODE : Effet de particules à l'écran ===
+    createScreenParticleEffect(color, icon) {
+        // Créer plusieurs particules qui traversent l'écran
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                const particle = document.createElement('div');
+                particle.className = 'screen-particle';
+                particle.textContent = icon;
+                particle.style.cssText = `
+                    position: fixed;
+                    font-size: ${20 + Math.random() * 20}px;
+                    color: ${color};
+                    text-shadow: 0 0 20px ${color};
+                    pointer-events: none;
+                    z-index: 9999;
+                    left: ${Math.random() * 100}vw;
+                    top: ${Math.random() * 100}vh;
+                    animation: floatAway 3s ease-out forwards;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 3000);
+                
+            }, i * 100);
+        }
+    },
+    
+    // D�finition des nouvelles r�actions aux buffs des loot boxes
     applyLootBoxEffect(lootBox) {
         switch(lootBox.lootType) {
             case 'TREASURE':

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test High Scores Layout</title>
+    <style>
+        /* Test styles pour vérifier le layout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow: hidden;
+        }
+
+        body.page-highscores {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
+            font-family: 'Courier New', monospace;
+            color: #0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .highscores-container {
+            position: relative;
+            z-index: 2;
+            max-width: 90vw;
+            max-height: 85vh;
+            width: 900px;
+            margin: 0 auto;
+            padding: 1.25rem;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid rgba(0,255,0,0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,255,0,0.15);
+            backdrop-filter: blur(5px);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .leaderboard-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #0ff;
+            text-shadow: 0 0 18px rgba(0,255,255,.35);
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .test-content {
+            color: #fff;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .start-button {
+            padding: 12px 24px;
+            margin-top: 1rem;
+            background: transparent;
+            border: 3px solid #0f0;
+            color: #0f0;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .start-button:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="page-highscores">
+    <!-- Canvas de fond étoilé -->
+    <canvas id="bgCanvas"></canvas>
+    
+    <div class="highscores-container">
+        <h1 class="leaderboard-title">High Scores Test</h1>
+        
+        <div class="test-content">
+            <p>? Si vous voyez ce contenu centré sans barres de défilement, le layout est corrigé !</p>
+            <p>? Le fond étoilé devrait être visible derrière cette boîte</p>
+            <p>? Aucune barre de défilement horizontale ou verticale ne devrait être visible</p>
+            <p>? Le contenu devrait être centré verticalement et horizontalement</p>
+            
+            <br><br>
+            
+            <div style="height: 200px; overflow-y: auto; border: 1px solid #0f0; padding: 10px; margin: 20px 0;">
+                <h3>Test de scroll interne (devrait avoir sa propre scrollbar) :</h3>
+                <p>Ligne 1 de contenu...</p>
+                <p>Ligne 2 de contenu...</p>
+                <p>Ligne 3 de contenu...</p>
+                <p>Ligne 4 de contenu...</p>
+                <p>Ligne 5 de contenu...</p>
+                <p>Ligne 6 de contenu...</p>
+                <p>Ligne 7 de contenu...</p>
+                <p>Ligne 8 de contenu...</p>
+                <p>Ligne 9 de contenu...</p>
+                <p>Ligne 10 de contenu...</p>
+                <p>Ligne 11 de contenu...</p>
+                <p>Ligne 12 de contenu...</p>
+            </div>
+        </div>
+        
+        <a href="./index.html" class="start-button">RETOUR AU JEU</a>
+    </div>
+
+    <script>
+        // Simple starfield test
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            stars = Array.from({ length: 100 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                z: Math.random() * 2 + 0.5,
+                s: Math.random() * 2 + 1
+            }));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => {
+                star.y += star.z * 0.5;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+                
+                ctx.globalAlpha = 0.6;
+                ctx.fillStyle = '#9fffd9';
+                ctx.fillRect(star.x, star.y, star.s, star.s);
+            });
+            
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+    </script>
+</body>
+</html>
