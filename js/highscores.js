@@ -11,6 +11,7 @@ const recordEl = document.getElementById('worldRecord');
 const musicToggle = document.getElementById('musicToggle');
 const volumeRange = document.getElementById('volume');
 const bgm = document.getElementById('bgm');
+const FRCA = 'fr-CA';
 
 const q = query(
     collection(db, 'highscores'),
@@ -73,6 +74,31 @@ function makeChipPlayer() {
         setVolume(v) { gain.gain.value = v; },
         get playing() { return playing; }
     };
+}
+
+// --- utils date ---
+function formatDate(value) {
+    try {
+        if (!value) return "—";
+        // Accepte {seconds:number} (Firebase), timestamp number, ou string ISO
+        let d;
+        if (typeof value === "object" && typeof value.seconds === "number") {
+            d = new Date(value.seconds * 1000);
+        } else if (typeof value === "number") {
+            d = new Date(value);
+        } else {
+            d = new Date(value);
+        }
+        if (isNaN(d.getTime())) return "—";
+
+        // Format court AAAA-MM-JJ (ou fr-CA locale)
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    } catch {
+        return "—";
+    }
 }
 
 function useMp3Engine() {
@@ -139,7 +165,7 @@ onSnapshot(q, (snap) => {
         row.style.animationDelay = `${i * 40}ms`;
     });
 
-    recordEl.textContent = (currentTop ?? 0).toLocaleString();
+    recordEl.textContent = (currentTop ?? 0).toLocaleString(FRCA);
 
     // Confetti si tu viens de battre le high score (via sessionStorage)
     const last = safeParse(sessionStorage.getItem('lastScore')); // {score, name, time, kills}
@@ -162,27 +188,31 @@ onSnapshot(q, (snap) => {
 
 // compteur total (toutes entrées)
 getCountFromServer(collection(db, 'highscores')).then((snap) => {
-    totalEl.textContent = snap.data().count.toLocaleString();
+    totalEl.textContent = snap.data().count.toLocaleString(FRCA);
 }).catch(() => { });
 
 // ====== RENDER ==============================================================
 function renderRow(rank, d) {
     const name = esc((d.playerName ?? '???').toString().slice(0, 16));
-    const score = Number(d.score ?? 0).toLocaleString();
+    const score = Number(d.score ?? 0).toLocaleString(FRCA);
     const kills = esc(String(d.kills ?? '-'));
     const time = typeof d.time === 'string'
         ? esc(d.time)
         : (d.time?.seconds ? `${Math.round(d.time.seconds)}s` : '');
 
+    // Affiche la date du doc (Firestore Timestamp ou autre)
+    const dateText = formatDate(d.timestamp ?? d.createdAt);
+
     return `
-    <div class="score-entry appear${rank === 1 ? ' is-top' : ''}">
-      <span class="rank">#${rank}</span>
-      <span class="name">${name}</span>
-      <span class="score">Score: ${score}</span>
-      <span class="kills">Kills: ${kills}</span>
-      <span class="time">Temps: ${time}</span>
-    </div>
-  `;
+  <div class="score-entry appear${rank === 1 ? ' is-top' : ''}" data-rank="${rank}">
+    <span class="rank">#${rank}</span>
+    <span class="name">${name}</span>
+    <span class="score">${score}</span>
+    <span class="kills">${kills}</span>
+    <span class="time">${time}</span>
+    <span class="date">${dateText}</span>
+  </div>
+`;
 }
 
 function esc(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }

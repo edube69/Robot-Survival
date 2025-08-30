@@ -12,77 +12,98 @@ export const Camera = {
     // État de téléportation amélioré
     teleporting: false,
     teleportTarget: null,
+    teleportStart: 0,
+    teleportDuration: 600,  
     teleportProgress: 0,
     teleportSpeed: 0.015, // Vitesse plus lente pour plus de fluidité
     originalPosition: null,
-    
+
+    // Verrou de suivi (empêche de suivre le joueur)
+    followLocked: false,
+
+    originalPosition: null,
+
+
     init() {
         this.x = Player.data.x;
         this.y = Player.data.y;
         this.teleporting = false;
         this.teleportTarget = null;
+        this.teleportStart = 0;
+        this.teleportDuration = 600;
         this.teleportProgress = 0;
+        this.followLocked = false;
         this.originalPosition = null;
     },
     
     update() {
+        // Zoom lissé en permanence
+        if (this.zoom !== this.targetZoom) {
+            this.zoom += (this.targetZoom - this.zoom) * 0.1;
+        }
+
+        // Téléportation: interpolation vers la cible + on ignore le joueur
         if (this.teleporting) {
             this.updateTeleport();
             return;
         }
-        
-        // Mise à jour progressive vers la position du joueur
+
+        // Verrou de suivi actif (ex.: juste après la TP, en attendant que Game déplace le joueur)
+        if (this.followLocked) return;
+
+        // Suivi normal du joueur
         if (Player.data) {
             this.x += (Player.data.x - this.x) * this.smoothing;
             this.y += (Player.data.y - this.y) * this.smoothing;
-            
-            // Mise à jour progressive du zoom
-            if (this.zoom !== this.targetZoom) {
-                this.zoom += (this.targetZoom - this.zoom) * 0.1;
-            }
         }
     },
+
     
-    startTeleportation(targetX, targetY) {
+    startTeleportation(targetX, targetY, durationMs = 600) {
         this.teleporting = true;
+        this.followLocked = true; // ← empêche le suivi du joueur
         this.teleportTarget = { x: targetX, y: targetY };
         this.originalPosition = { x: this.x, y: this.y };
+        this.teleportStart = performance.now();
+        this.teleportDuration = Math.max(100, durationMs);
         this.teleportProgress = 0;
-        console.log(`Starting camera teleportation from (${this.x.toFixed(1)}, ${this.y.toFixed(1)}) to (${targetX}, ${targetY})`);
+        // (optionnel) léger zoom-out déjà géré par Game via setTargetZoom
     },
     
     updateTeleport() {
         if (!this.teleporting || !this.teleportTarget || !this.originalPosition) return;
-        
-        this.teleportProgress += this.teleportSpeed;
-        
-        // Utiliser une courbe d'easing smooth (ease-in-out cubic)
-        const t = this.teleportProgress;
-        const smoothT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        
-        // Interpolation fluide entre la position originale et la cible
+
+        const now = performance.now();
+        const t = Math.min(1, (now - this.teleportStart) / this.teleportDuration);
+        this.teleportProgress = t;
+
+        // easing: easeInOutCubic
+        const smoothT = (t < 0.5) ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
         this.x = this.originalPosition.x + (this.teleportTarget.x - this.originalPosition.x) * smoothT;
         this.y = this.originalPosition.y + (this.teleportTarget.y - this.originalPosition.y) * smoothT;
-        
-        if (this.teleportProgress >= 1) {
-            console.log(`Camera teleportation completed at (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
+
+        if (t >= 1) {
             this.finishTeleportation();
         }
     },
+
     
     finishTeleportation() {
         if (this.teleportTarget) {
-            // S'assurer que la position finale est exactement la cible
             this.x = this.teleportTarget.x;
             this.y = this.teleportTarget.y;
         }
-        
         this.teleporting = false;
         this.teleportTarget = null;
-        this.teleportProgress = 0;
         this.originalPosition = null;
-        console.log(`Camera teleportation finished, position: (${this.x.toFixed(1)}, ${this.y.toFixed(1)})`);
+        this.teleportStart = 0;
+        this.teleportDuration = 600;
+        this.teleportProgress = 1;
+        // IMPORTANT: followLocked RESTE TRUE.
+        // Game appellera Camera.releaseFollow() quand le joueur aura été déplacé.
     },
+
     
     setTargetZoom(value) {
         this.targetZoom = value;
@@ -119,5 +140,11 @@ export const Camera = {
             screenY >= -margin &&
             screenY <= canvas.height + margin
         );
-    }
+    },
+
+    releaseFollow() { this.followLocked = false; },
+    isTeleporting() { return this.teleporting; },
+    getTeleportProgress() { return this.teleportProgress; },
+    getZoom() { return this.zoom; },
+
 };
