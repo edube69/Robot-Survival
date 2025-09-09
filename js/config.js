@@ -28,7 +28,7 @@ export const CONFIG = {
     // Configuration de la cam�ra
     CAMERA: {
         FOLLOW_SPEED: 0.08, // L�g�rement plus rapide pour r�duire la latence
-        ZOOM: 1.8 // Zoom > 1 rapproche la cam�ra (tout appara�t plus gros)
+        ZOOM: 1.25 // Zoom > 1 rapproche la cam�ra (tout appara�t plus gros)
     },
     
     // Sol / motif du fond

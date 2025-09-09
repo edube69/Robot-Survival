@@ -21,7 +21,7 @@ const Game = {
     lives: 3,
     gems: 0,
     gemsForUpgrade: CONFIG.UPGRADES.BASE_COST,
-    resurrections: 0,
+    resurrections: 2,
     timeScale: 1.0, // Facteur de ralenti global
     deathSequenceTimer: 0, // Timer pour la s�quence de mort
     waveAnnouncementTimer: 0, // Timer pour l'annonce de vague
