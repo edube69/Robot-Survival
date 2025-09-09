@@ -116,24 +116,15 @@ export const Renderer = {
             this.ctx.setLineDash([]); // R�initialiser le style de ligne
         }
         
-        // Effet d'invuln�rabilit�
-        if (Player.data.invulnerable) {
-            const flash = Math.sin(Date.now() * 0.02) > 0;
-            if (flash) {
-                this.ctx.shadowColor = '#fff';
-                this.ctx.shadowBlur = 25;
-            } else {
-                this.ctx.shadowColor = Player.data.color;
-                this.ctx.shadowBlur = 15;
-            }
-        } else {
-            this.ctx.shadowColor = Player.data.color;
-            this.ctx.shadowBlur = 15;
-        }
+        // Couleurs de base (plus de flash rouge santé, instant-kill)
+        const invul = Player.data.invulnerable;
+        const pulse = invul && Math.sin(Date.now()*0.02)>0;
+        const robotColor = pulse? '#fff':'#0ff';
+        const bodyColor = pulse? '#fff':'#0dd';
+        const detailColor = pulse? '#fff':'#0aa';
         
-        const robotColor = Player.data.invulnerable && Math.sin(Date.now() * 0.02) > 0 ? '#fff' : '#0ff';
-        const bodyColor = Player.data.invulnerable && Math.sin(Date.now() * 0.02) > 0 ? '#fff' : '#0dd';
-        const detailColor = Player.data.invulnerable && Math.sin(Date.now() * 0.02) > 0 ? '#fff' : '#0aa';
+        this.ctx.shadowColor = robotColor;
+        this.ctx.shadowBlur = 15;
         
         // Corps du robot
         this.ctx.fillStyle = robotColor;
@@ -1274,6 +1265,26 @@ export const Renderer = {
         this.ctx.restore();
     },
     
+    drawDeathFlash() {
+        if (Game.state !== 'deathSequence') return;
+        const t = Game.deathSequenceTimer / 180; // 0..1
+        const alpha = Math.min(0.8, 1 - t); // plus opaque au début
+        const grd = this.ctx.createRadialGradient(
+            this.canvas.width/2, this.canvas.height/2, 50,
+            this.canvas.width/2, this.canvas.height/2, Math.max(this.canvas.width,this.canvas.height)/1.2
+        );
+        grd.addColorStop(0, `rgba(255,0,40,${alpha*0.55})`);
+        grd.addColorStop(1, 'rgba(0,0,0,0)');
+        this.ctx.fillStyle = grd;
+        this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+        // flash blanc court frame initiale
+        if (Game.deathSequenceTimer > 150) {
+            const f = (Game.deathSequenceTimer-150)/30; // 1 -> 0
+            this.ctx.fillStyle = `rgba(255,255,255,${f*0.6})`;
+            this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+        }
+    },
+    
     render() {
         this.clear();
         Camera.update();
@@ -1292,14 +1303,10 @@ export const Renderer = {
         this.drawCurrency();
         this.drawOrbs();
         this.drawParticles();
-        
-        // Indicateurs d'ennemis hors �cran
-        this.drawOffscreenEnemyIndicators();
-        
-        // Mini radar en haut � droite
-        this.drawMiniRadar();
-        
+        this.drawOffscreenEnemyIndicators?.();
+        this.drawMiniRadar?.();
         this.drawUpgradeScreen();
         this.drawWaveAnnouncement();
+        this.drawDeathFlash();
     }
 };

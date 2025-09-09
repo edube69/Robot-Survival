@@ -9,6 +9,8 @@ export const Enemy = {
     list: [],
     waveEnemiesSpawned: 0, // Compteur d'ennemis g�n�r�s pour cette vague
     maxEnemiesPerWave: 0, // Maximum d'ennemis � g�n�rer pour cette vague
+    targetedId: null, // id de l'ennemi actuellement visé pour halo
+    _nextId: 1,
     
     init() {
         this.list = [];
@@ -17,6 +19,7 @@ export const Enemy = {
         this.bonusWaveSpawned = 0; // Compteur d'ennemis de la vague bonus
         this.bonusWaveTarget = 0; // Objectif d'ennemis pour la vague bonus
         this.setWaveLimit();
+        this.targetedId = null;
     },
     
     setWaveLimit() {
@@ -110,6 +113,7 @@ export const Enemy = {
         const healthBonus = Math.floor((Game.wave - 1) / 3); // +1 HP toutes les 3 vagues
         
         const enemy = {
+            id: this._nextId++,
             x, y,
             radius: enemyData.radius,
             speed: (enemyData.speedBase + Math.random() * enemyData.speedVariation) * speedMultiplier,
@@ -271,6 +275,9 @@ export const Enemy = {
                 }
             }
         }
+        // mettre à jour le ciblage pour halo (nearest)
+        const nearest = this.findNearest();
+        this.targetedId = nearest ? nearest.enemy.id : null;
     },
     
     findNearest() {
@@ -298,6 +305,10 @@ export const Enemy = {
             // Increment kill counter
             Game.addKill();
 
+            // Score avec combo multiplier
+            Game.applyScore(enemy.points);
+            Game.updateCombo(1); // kill -> feed combo
+
             // Effets sp�cialis�s par type d'ennemi
             this.createEnemyDeathEffects(enemy);
             
@@ -322,7 +333,6 @@ export const Enemy = {
             if (index > -1) {
                 this.list.splice(index, 1);
             }
-            Game.score += enemy.points;
             return true;
         } else {
             // Effet de d�g�t selon le type d'ennemi

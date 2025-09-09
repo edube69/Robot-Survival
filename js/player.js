@@ -7,7 +7,6 @@ import { Bullet } from './bullet.js';
 import { Particle } from './particle.js';
 import { Orb } from './orb.js';
 
-
 // Module du joueur
 export const Player = {
     data: null,
@@ -47,7 +46,8 @@ export const Player = {
             // Cooldowns pour armes sp�ciales
             missileCooldown: 0,
             cannonCooldown: 0,
-            laserEnergy: 100
+            laserEnergy: 100,
+            lastHitTimer: 0 // nouveau pour feedback visuel
         };
         this.bulletCooldown = 0;
     },
@@ -62,6 +62,7 @@ export const Player = {
                 this.data.invulnerable = false;
             }
         }
+        if (this.data.lastHitTimer > 0) this.data.lastHitTimer--;
         
         this.handleMovement();
         this.handleShooting();
@@ -156,6 +157,8 @@ export const Player = {
     
     takeDamage() {
         if (this.data.invulnerable) return false;
+        
+        this.data.lastHitTimer = 30; // active le flash
         
         // D�clencher la s�quence de mort dramatique
         this.createDeathExplosion();
