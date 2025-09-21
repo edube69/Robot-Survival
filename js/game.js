@@ -1,11 +1,11 @@
 // Module principal du jeu
-import { getCurrentUser, saveScore } from './firebase-config.js';
+import { getCurrentUser, saveScore, db } from './firebase-config.js';
 import { CONFIG } from './config.js';
 import { Audio } from './audio.js';
 import { Input } from './input.js';
 import { Renderer } from './renderer.js';
 import { Player } from './player.js';
-import { Camera } from './camera.js';
+import { Camera } from './camera.js'; // <-- parenthèse corrigée
 import { Enemy } from './enemy.js';
 import { Bullet } from './bullet.js';
 import { Particle } from './particle.js';
@@ -13,6 +13,7 @@ import { Currency } from './currency.js';
 import { Orb } from './orb.js';
 import { TeleportFX } from './teleportfx.js';
 import { Upgrades } from './upgrades.js';
+import { collection, query, where, getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const Game = {
     state: 'menu',
@@ -263,79 +264,61 @@ const Game = {
         setTimeout(()=>nameInput.focus(),50);
     },
     async submitScore() {
-        // 1. CORRECTION DE L'ID
         const playerNameInput = document.getElementById('playerName');
-
-        // Bonne pratique : on vérifie que l'élément existe bien
-        if (!playerNameInput) {
-            console.error("L'élément 'playerName' est introuvable dans le modal.");
-            return;
-        }
-
+        if (!playerNameInput) { console.error("playerName input introuvable"); return; }
         const playerName = playerNameInput.value.trim();
-
         if (!playerName) {
-            // Ajouter un feedback visuel
             playerNameInput.classList.add('error');
             playerNameInput.placeholder = "Name required!";
-            setTimeout(() => {
-                playerNameInput.classList.remove('error');
-                playerNameInput.placeholder = "Your Call Sign";
-            }, 2000);
+            setTimeout(()=>{ playerNameInput.classList.remove('error'); playerNameInput.placeholder='Your Call Sign'; },2000);
             return;
         }
-
-        // Désactiver le bouton pendant le processing
         const submitBtn = document.getElementById('submitScoreBtn');
         const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Submitting...</span>';
         submitBtn.disabled = true;
 
-        // 2. UTILISATION DES VRAIES DONNÉES
         const finalScore = this.score;
         const finalKills = this.kills;
-        const finalTime = Math.floor((Date.now() - this.startTime) / 1000); // Temps en secondes
+        const finalTime = Math.floor((Date.now() - this.startTime) / 1000);
 
         try {
-            console.log("Connexion de l'utilisateur...");
             const user = await getCurrentUser();
-            console.log("Utilisateur connecté avec l'ID :", user.uid);
-
             const success = await saveScore(user, playerName, finalScore, `${finalTime}s`, finalKills);
-
             if (success) {
-                // === AMÉLIORÉ : mémoriser aussi la date pour l'affichage immédiat ===
+                // Calcul du rang (nombre de scores strictement supérieurs + 1)
+                let rank = null;
+                try {
+                    const rankQ = query(collection(db,'highscores'), where('score','>', finalScore));
+                    const snap = await getCountFromServer(rankQ);
+                    rank = (snap.data().count || 0) + 1;
+                } catch(e){ console.warn('Rank calc failed', e); }
+
                 sessionStorage.setItem('lastScore', JSON.stringify({
                     name: playerName,
                     score: finalScore,
                     kills: finalKills,
                     time: finalTime,
-                    timestamp: Date.now() // Ajouter la date locale pour l'affichage immédiat
+                    timestamp: Date.now(),
+                    rank
                 }));
 
-                // Feedback de succès
-                submitBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">Score Saved!</span>';
+                submitBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">Saved!</span>';
                 submitBtn.classList.add('success');
 
-                setTimeout(() => {
-                    this.skipScore(); // On ferme le modal et on retourne au menu
-                }, 1500);
+                // Redirection rapide vers la page des highscores pour montrer le rang
+                setTimeout(()=>{
+                    window.location.href = 'highscores.html';
+                }, 900);
             } else {
-                throw new Error("Failed to save score");
+                throw new Error('Failed to save score');
             }
-
         } catch (error) {
-            console.error("Erreur d'authentification ou de sauvegarde :", error);
-
-            // Feedback d'erreur
-            submitBtn.innerHTML = '<span class="btn-icon">❌</span><span class="btn-text">Error - Try Again</span>';
+            console.error('Erreur sauvegarde score:', error);
+            submitBtn.innerHTML = '<span class="btn-icon">❌</span><span class="btn-text">Error - Retry</span>';
             submitBtn.classList.add('error');
             submitBtn.disabled = false;
-
-            setTimeout(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.classList.remove('error');
-            }, 3000);
+            setTimeout(()=>{ submitBtn.innerHTML = originalText; submitBtn.classList.remove('error'); }, 2600);
         }
     },
 

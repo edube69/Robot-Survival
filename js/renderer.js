@@ -77,7 +77,7 @@ export const Renderer = {
             this.ctx.stroke();
         }
 
-        // Points aux intersections (l�ger motif)
+        // Points aux intersections
         const dotSize = CONFIG.FLOOR.DOT_SIZE;
         this.ctx.fillStyle = CONFIG.FLOOR.DOT_COLOR;
         for (let x = startWorldX; x <= endWorldX; x += tile) {
@@ -93,6 +93,83 @@ export const Renderer = {
                 this.ctx.fill();
             }
         }
+    },
+    
+    drawWorldBoundaries() {
+        const zoom = Camera.getZoom ? Camera.getZoom() : (CONFIG.CAMERA.ZOOM || 1);
+        const wallThickness = 16; // monde
+        const warnDist = 120;
+        const t = Date.now()*0.006;
+        const pulse = (Math.sin(t*4)*0.5+0.5);
+
+        // Convertir bords monde -> écran via worldToScreen sur points extrêmes
+        const topLeft = Camera.worldToScreen(0,0);
+        const topRight = Camera.worldToScreen(CONFIG.WORLD.WIDTH,0);
+        const bottomLeft = Camera.worldToScreen(0,CONFIG.WORLD.HEIGHT);
+
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'lighter';
+
+        const player = Player.data;
+        const nearLeft = player && player.x < warnDist;
+        const nearRight = player && (CONFIG.WORLD.WIDTH - player.x) < warnDist;
+        const nearTop = player && player.y < warnDist;
+        const nearBottom = player && (CONFIG.WORLD.HEIGHT - player.y) < warnDist;
+
+        const baseColor = '#027bff';
+        const warnColor = `rgba(255,80,0,${0.55+0.45*pulse})`;
+        const normalColor = `rgba(0,170,255,0.55)`;
+
+        // Mur gauche
+        if (topLeft.x < this.canvas.width && topRight.x > 0) {
+            this.ctx.fillStyle = nearLeft? warnColor: normalColor;
+            this.ctx.fillRect(topLeft.x - wallThickness*zoom, 0, wallThickness*zoom, this.canvas.height);
+            this.strokeWallLines(topLeft.x - wallThickness*zoom,0,wallThickness*zoom,this.canvas.height,'v');
+        }
+        // Mur droit
+        if (topRight.x >= -wallThickness*zoom && topRight.x <= this.canvas.width + wallThickness*zoom) {
+            this.ctx.fillStyle = nearRight? warnColor: normalColor;
+            this.ctx.fillRect(topRight.x,0, wallThickness*zoom, this.canvas.height);
+            this.strokeWallLines(topRight.x,0,wallThickness*zoom,this.canvas.height,'v');
+        }
+        // Mur haut
+        if (topLeft.y < this.canvas.height && bottomLeft.y > 0) {
+            this.ctx.fillStyle = nearTop? warnColor: normalColor;
+            this.ctx.fillRect(0, topLeft.y - wallThickness*zoom, this.canvas.width, wallThickness*zoom);
+            this.strokeWallLines(0, topLeft.y - wallThickness*zoom, this.canvas.width, wallThickness*zoom,'h');
+        }
+        // Mur bas
+        if (bottomLeft.y >= -wallThickness*zoom && bottomLeft.y <= this.canvas.height + wallThickness*zoom) {
+            this.ctx.fillStyle = nearBottom? warnColor: normalColor;
+            this.ctx.fillRect(0, bottomLeft.y, this.canvas.width, wallThickness*zoom);
+            this.strokeWallLines(0, bottomLeft.y, this.canvas.width, wallThickness*zoom,'h');
+        }
+
+        this.ctx.restore();
+    },
+
+    strokeWallLines(x,y,w,h,dir){
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.45;
+        this.ctx.strokeStyle = '#ffffff22';
+        this.ctx.lineWidth = 1;
+        const step = 10;
+        if (dir==='v') {
+            for (let yy = y+4; yy < y+h-4; yy+=step){
+                this.ctx.beginPath();
+                this.ctx.moveTo(x+3,yy);
+                this.ctx.lineTo(x+w-3,yy+2);
+                this.ctx.stroke();
+            }
+        } else {
+            for (let xx = x+4; xx < x+w-4; xx+=step){
+                this.ctx.beginPath();
+                this.ctx.moveTo(xx,y+3);
+                this.ctx.lineTo(xx+2,y+h-3);
+                this.ctx.stroke();
+            }
+        }
+        this.ctx.restore();
     },
     
     drawPlayer() {
@@ -1297,6 +1374,7 @@ export const Renderer = {
         // Dessiner le sol avant les entit�s
         this.drawFloor();
         
+        this.drawWorldBoundaries(); // Nouveau: dessiner les murs après le sol
         this.drawPlayer();
         this.drawBullets();
         this.drawEnemies();

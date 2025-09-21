@@ -947,6 +947,17 @@ canvas {
     transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
+/* Compactage des lignes highscore */
+.page-highscores .score-entry { padding: 0.55rem 0.75rem !important; margin: 0.35rem 0 !important; }
+.page-highscores .score-entry.header { padding: 0.55rem 0.75rem !important; }
+.page-highscores .score-entry .rank, 
+.page-highscores .score-entry .name, 
+.page-highscores .score-entry .score, 
+.page-highscores .score-entry .kills, 
+.page-highscores .score-entry .time, 
+.page-highscores .score-entry .date { line-height:1.1; }
+.page-highscores .score-entry.player-rank { margin-top:0.5rem !important; }
+
 /* alternance subtile */
 #highscores-list > .score-entry:nth-of-type(odd) {
     background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
@@ -1481,3 +1492,12 @@ a.back-button, a.back-button:visited {
         font-size: 2rem;
     }
 }
+
+/* Highscore page adjustments: no internal scroll, show only top 10 normally */
+.page-highscores body, body.page-highscores { overflow:hidden; }
+.highscores-container { max-height:none; overflow:visible; }
+.score-entry.ellipsis { text-align:center; font-weight:700; letter-spacing:.3em; color:#0ff; background:rgba(0,0,0,.4); }
+.score-entry.player-rank { border-color:rgba(255,215,0,.6); box-shadow:0 0 18px rgba(255,215,0,.35); position:relative; }
+.score-entry.player-rank::after { content:'YOU'; position:absolute; top:-8px; right:12px; font-size:.6rem; padding:3px 6px; background:#ff0; color:#000; border-radius:4px; font-weight:900; box-shadow:0 0 8px #ff0; }
+.collapse-out { animation: collapseFade .55s ease forwards; }
+@keyframes collapseFade { to { opacity:0; transform:translateY(-6px) scale(.9); } }

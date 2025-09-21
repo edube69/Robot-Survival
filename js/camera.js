@@ -36,6 +36,28 @@ export const Camera = {
         this.originalPosition = null;
     },
     
+    clampToWorld() {
+        const canvas = document.getElementById('gameCanvas');
+        if (!canvas) return;
+        const halfW = (canvas.width / this.zoom) / 2;
+        const halfH = (canvas.height / this.zoom) / 2;
+        const minX = halfW;
+        const maxX = CONFIG.WORLD.WIDTH - halfW;
+        const minY = halfH;
+        const maxY = CONFIG.WORLD.HEIGHT - halfH;
+        // Si le monde est plus petit que la vue, centrer
+        if (minX > maxX) {
+            this.x = CONFIG.WORLD.WIDTH / 2;
+        } else {
+            this.x = Math.min(Math.max(this.x, minX), maxX);
+        }
+        if (minY > maxY) {
+            this.y = CONFIG.WORLD.HEIGHT / 2;
+        } else {
+            this.y = Math.min(Math.max(this.y, minY), maxY);
+        }
+    },
+    
     update() {
         // Zoom lissé en permanence
         if (this.zoom !== this.targetZoom) {
@@ -45,6 +67,7 @@ export const Camera = {
         // Téléportation: interpolation vers la cible + on ignore le joueur
         if (this.teleporting) {
             this.updateTeleport();
+            this.clampToWorld();
             return;
         }
 
@@ -56,6 +79,7 @@ export const Camera = {
             this.x += (Player.data.x - this.x) * this.smoothing;
             this.y += (Player.data.y - this.y) * this.smoothing;
         }
+        this.clampToWorld();
     },
 
     
@@ -100,6 +124,7 @@ export const Camera = {
         this.teleportStart = 0;
         this.teleportDuration = 600;
         this.teleportProgress = 1;
+        this.clampToWorld();
         // IMPORTANT: followLocked RESTE TRUE.
         // Game appellera Camera.releaseFollow() quand le joueur aura été déplacé.
     },
