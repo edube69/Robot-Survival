@@ -18,13 +18,13 @@ export const Renderer = {
     init() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        // Adapter � la taille de la fen�tre au chargement
+        // Adapter à la taille de la fenêtre au chargement
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
     },
     
     resizeCanvas() {
-        // Garde un ratio max tout en remplissant une bonne partie de l'�cran
+        // Garde un ratio max tout en remplissant une bonne partie de l'écran
         const maxWidth = Math.min(window.innerWidth - 80, CONFIG.WORLD.WIDTH);
         const maxHeight = Math.min(window.innerHeight - 160, CONFIG.WORLD.HEIGHT);
         const aspect = CONFIG.CANVAS.WIDTH / CONFIG.CANVAS.HEIGHT; // 4:3
@@ -84,8 +84,7 @@ export const Renderer = {
             for (let y = startWorldY; y <= endWorldY; y += tile) {
                 const idx = Math.floor(x / tile);
                 const idy = Math.floor(y / tile);
-                // Pour all�ger, ne dessiner des points que sur une sous-grille (ex: un sur deux)
-                if ((idx + idy) % 2 !== 0) continue;
+                if ((idx + idy) % 2 !== 0) continue; // allègement
                 const sx = (x - Camera.x) * zoom;
                 const sy = (y - Camera.y) * zoom;
                 this.ctx.beginPath();
@@ -95,57 +94,115 @@ export const Renderer = {
         }
     },
     
+    // === NOUVEAU RENDU DES MURS : couleur fixe + arcs électriques optionnels ===
     drawWorldBoundaries() {
         const zoom = Camera.getZoom ? Camera.getZoom() : (CONFIG.CAMERA.ZOOM || 1);
-        const wallThickness = 16; // monde
-        const warnDist = 120;
-        const t = Date.now()*0.006;
-        const pulse = (Math.sin(t*4)*0.5+0.5);
+        const wallThicknessWorld = 16;
+        const wt = wallThicknessWorld * zoom;
+        const topLeft = Camera.worldToScreen(0, 0);
+        const topRight = Camera.worldToScreen(CONFIG.WORLD.WIDTH, 0);
+        const bottomLeft = Camera.worldToScreen(0, CONFIG.WORLD.HEIGHT);
 
-        // Convertir bords monde -> écran via worldToScreen sur points extrêmes
-        const topLeft = Camera.worldToScreen(0,0);
-        const topRight = Camera.worldToScreen(CONFIG.WORLD.WIDTH,0);
-        const bottomLeft = Camera.worldToScreen(0,CONFIG.WORLD.HEIGHT);
+        // Couleur fixe (modifiable ici)
+        const wallFill = 'rgba(0,180,255,0.35)';
+        const borderGlow = '#4fe4ff'; // utilisé pour l'effet électrique
+        const electric = true; // mettre à false pour désactiver l'effet dynamique
 
         this.ctx.save();
         this.ctx.globalCompositeOperation = 'lighter';
 
-        const player = Player.data;
-        const nearLeft = player && player.x < warnDist;
-        const nearRight = player && (CONFIG.WORLD.WIDTH - player.x) < warnDist;
-        const nearTop = player && player.y < warnDist;
-        const nearBottom = player && (CONFIG.WORLD.HEIGHT - player.y) < warnDist;
-
-        const baseColor = '#027bff';
-        const warnColor = `rgba(255,80,0,${0.55+0.45*pulse})`;
-        const normalColor = `rgba(0,170,255,0.55)`;
-
         // Mur gauche
-        if (topLeft.x < this.canvas.width && topRight.x > 0) {
-            this.ctx.fillStyle = nearLeft? warnColor: normalColor;
-            this.ctx.fillRect(topLeft.x - wallThickness*zoom, 0, wallThickness*zoom, this.canvas.height);
-            this.strokeWallLines(topLeft.x - wallThickness*zoom,0,wallThickness*zoom,this.canvas.height,'v');
+        if (topLeft.x <= this.canvas.width && topRight.x >= 0) {
+            this.ctx.fillStyle = wallFill;
+            this.ctx.fillRect(topLeft.x, 0, wt, this.canvas.height);
+            if (electric) this.drawElectricEdge(topLeft.x + wt, 0, topLeft.x + wt, this.canvas.height, 'v', borderGlow);
         }
         // Mur droit
-        if (topRight.x >= -wallThickness*zoom && topRight.x <= this.canvas.width + wallThickness*zoom) {
-            this.ctx.fillStyle = nearRight? warnColor: normalColor;
-            this.ctx.fillRect(topRight.x,0, wallThickness*zoom, this.canvas.height);
-            this.strokeWallLines(topRight.x,0,wallThickness*zoom,this.canvas.height,'v');
+        if (topRight.x >= -wt && topRight.x <= this.canvas.width + wt) {
+            this.ctx.fillStyle = wallFill;
+            this.ctx.fillRect(topRight.x - wt, 0, wt, this.canvas.height);
+            if (electric) this.drawElectricEdge(topRight.x - wt, 0, topRight.x - wt, this.canvas.height, 'v', borderGlow);
         }
         // Mur haut
-        if (topLeft.y < this.canvas.height && bottomLeft.y > 0) {
-            this.ctx.fillStyle = nearTop? warnColor: normalColor;
-            this.ctx.fillRect(0, topLeft.y - wallThickness*zoom, this.canvas.width, wallThickness*zoom);
-            this.strokeWallLines(0, topLeft.y - wallThickness*zoom, this.canvas.width, wallThickness*zoom,'h');
+        if (topLeft.y <= this.canvas.height && bottomLeft.y >= 0) {
+            this.ctx.fillStyle = wallFill;
+            this.ctx.fillRect(0, topLeft.y, this.canvas.width, wt);
+            if (electric) this.drawElectricEdge(0, topLeft.y + wt, this.canvas.width, topLeft.y + wt, 'h', borderGlow);
         }
         // Mur bas
-        if (bottomLeft.y >= -wallThickness*zoom && bottomLeft.y <= this.canvas.height + wallThickness*zoom) {
-            this.ctx.fillStyle = nearBottom? warnColor: normalColor;
-            this.ctx.fillRect(0, bottomLeft.y, this.canvas.width, wallThickness*zoom);
-            this.strokeWallLines(0, bottomLeft.y, this.canvas.width, wallThickness*zoom,'h');
+        if (bottomLeft.y >= -wt && bottomLeft.y <= this.canvas.height + wt) {
+            this.ctx.fillStyle = wallFill;
+            this.ctx.fillRect(0, bottomLeft.y - wt, this.canvas.width, wt);
+            if (electric) this.drawElectricEdge(0, bottomLeft.y - wt, this.canvas.width, bottomLeft.y - wt, 'h', borderGlow);
         }
 
         this.ctx.restore();
+    },
+
+    // Génération procédurale d'un trait électrique animé le long d'un bord
+    // dir: 'h' ou 'v'
+    drawElectricEdge(x1, y1, x2, y2, dir, color) {
+        const ctx = this.ctx;
+        const t = performance.now() * 0.004; // vitesse d'animation
+        const segments = 20; // nombre de segments (plus => plus détaillé)
+        const amplitude = 8; // écart max (pixels)
+        ctx.save();
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+
+        // Dessiner plusieurs couches pour un effet d'éclair
+        for (let layer = 0; layer < 3; layer++) {
+            const layerAmp = amplitude * (1 - layer * 0.45);
+            ctx.beginPath();
+            for (let i = 0; i <= segments; i++) {
+                const p = i / segments;
+                if (dir === 'h') {
+                    const x = x1 + (x2 - x1) * p;
+                    // bruit pseudo cohérent (combinaison de sin) + léger random impulsif
+                    const wav = Math.sin(p * 18 + t * 2) + 0.5 * Math.sin(p * 34 - t * 3.2);
+                    const jitter = (Math.random() - 0.5) * 0.6; // micro variation pour le côté nerveux
+                    const yOffset = (wav + jitter) * layerAmp;
+                    const y = y1 + yOffset * (layer === 0 ? 1 : 0.7);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                } else { // vertical
+                    const y = y1 + (y2 - y1) * p;
+                    const wav = Math.sin(p * 18 + t * 2.2) + 0.5 * Math.sin(p * 30 - t * 2.4);
+                    const jitter = (Math.random() - 0.5) * 0.6;
+                    const xOffset = (wav + jitter) * layerAmp;
+                    const x = x1 + xOffset * (layer === 0 ? 1 : 0.7);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+            }
+            ctx.lineWidth = 3 - layer; // 3,2,1
+            ctx.strokeStyle = layer === 0 ? color : (layer === 1 ? '#aff6ff' : '#ffffff');
+            ctx.globalAlpha = layer === 0 ? 0.85 : (layer === 1 ? 0.55 : 0.35);
+            ctx.stroke();
+        }
+
+        // Étincelles aléatoires (petits points lumineux qui jaillissent)
+        for (let s = 0; s < 6; s++) {
+            if (Math.random() < 0.3) {
+                ctx.beginPath();
+                if (dir === 'h') {
+                    const px = x1 + Math.random() * (x2 - x1);
+                    const py = y1 + (Math.random() - 0.5) * 18;
+                    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+                } else {
+                    const py = y1 + Math.random() * (y2 - y1);
+                    const px = x1 + (Math.random() - 0.5) * 18;
+                    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+        }
+
+        ctx.restore();
     },
 
     strokeWallLines(x,y,w,h,dir){
@@ -182,18 +239,17 @@ export const Renderer = {
         this.ctx.translate(screen.x, screen.y);
         this.ctx.scale(zoom, zoom);
         
-        // === CERCLE DE PORT�E DU MAGNET ===
-        if (Player.data.magnetRange > 50) { // Afficher seulement si am�lior�
+        // === CERCLE DE PORTÉE DU MAGNET ===
+        if (Player.data.magnetRange > 50) { // Afficher seulement si amélioré
             this.ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
             this.ctx.lineWidth = 2;
             this.ctx.setLineDash([8, 4]);
             this.ctx.beginPath();
             this.ctx.arc(0, 0, Player.data.magnetRange, 0, Math.PI * 2);
             this.ctx.stroke();
-            this.ctx.setLineDash([]); // R�initialiser le style de ligne
+            this.ctx.setLineDash([]); // Réinitialiser le style de ligne
         }
         
-        // Couleurs de base (plus de flash rouge santé, instant-kill)
         const invul = Player.data.invulnerable;
         const pulse = invul && Math.sin(Date.now()*0.02)>0;
         const robotColor = pulse? '#fff':'#0ff';
@@ -203,36 +259,29 @@ export const Renderer = {
         this.ctx.shadowColor = robotColor;
         this.ctx.shadowBlur = 15;
         
-        // Corps du robot
-        this.ctx.fillStyle = robotColor;
+        this.ctx.fillStyle = robotColor; // Corps
         this.ctx.fillRect(-8, -10, 16, 20);
         
-        // T�te
-        this.ctx.fillStyle = bodyColor;
+        this.ctx.fillStyle = bodyColor; // Tête
         this.ctx.fillRect(-6, -14, 12, 6);
         
-        // Yeux
-        this.ctx.fillStyle = '#ff0';
+        this.ctx.fillStyle = '#ff0'; // Yeux
         this.ctx.fillRect(-4, -12, 2, 2);
         this.ctx.fillRect(2, -12, 2, 2);
         
-        // Armes sur les �paules
-        this.ctx.fillStyle = detailColor;
+        this.ctx.fillStyle = detailColor; // Armes épaules
         this.ctx.fillRect(-12, -8, 4, 6);
         this.ctx.fillRect(8, -8, 4, 6);
         
-        // Bras
-        this.ctx.fillStyle = detailColor;
+        this.ctx.fillStyle = detailColor; // Bras
         this.ctx.fillRect(-10, -2, 3, 8);
         this.ctx.fillRect(7, -2, 3, 8);
         
-        // Jambes
-        this.ctx.fillStyle = '#088';
+        this.ctx.fillStyle = '#088'; // Jambes
         this.ctx.fillRect(-6, 6, 4, 8);
         this.ctx.fillRect(2, 6, 4, 8);
         
-        // Flash de tir
-        if (Player.bulletCooldown > Player.data.fireRate - 4) {
+        if (Player.bulletCooldown > Player.data.fireRate - 4) { // Flash tir
             this.ctx.fillStyle = '#ff0';
             this.ctx.fillRect(-15, -7, 4, 2);
             this.ctx.fillRect(11, -7, 4, 2);
@@ -248,59 +297,39 @@ export const Renderer = {
             const screen = Camera.worldToScreen(bullet.x, bullet.y);
             
             if (!Camera.isVisible(bullet.x, bullet.y, 20)) return;
-            
-            // Rendu sp�cialis� selon le type de projectile
             this.drawBulletByType(bullet, screen, zoom);
         });
     },
     
     drawBulletByType(bullet, screen, zoom) {
         this.ctx.save();
-        
         switch(bullet.type) {
-            case 'homing':
-                this.drawHomingMissile(bullet, screen, zoom);
-                break;
-            case 'explosive':
-                this.drawExplosiveBullet(bullet, screen, zoom);
-                break;
-            case 'orb':
-                this.drawOrbBullet(bullet, screen, zoom);
-                break;
-            case 'pellet':
-                this.drawPellet(bullet, screen, zoom);
-                break;
-            default:
-                this.drawBasicBullet(bullet, screen, zoom);
+            case 'homing': this.drawHomingMissile(bullet, screen, zoom); break;
+            case 'explosive': this.drawExplosiveBullet(bullet, screen, zoom); break;
+            case 'orb': this.drawOrbBullet(bullet, screen, zoom); break;
+            case 'pellet': this.drawPellet(bullet, screen, zoom); break;
+            default: this.drawBasicBullet(bullet, screen, zoom);
         }
-        
         this.ctx.restore();
     },
     
     drawHomingMissile(bullet, screen, zoom) {
-        // Tra�n�e du missile
         if (bullet.trail && bullet.trail.length > 1) {
             this.ctx.strokeStyle = bullet.color + '60';
             this.ctx.lineWidth = 3 * zoom;
             this.ctx.lineCap = 'round';
             this.ctx.beginPath();
-            
             for (let i = 0; i < bullet.trail.length; i++) {
                 const trailPoint = Camera.worldToScreen(bullet.trail[i].x, bullet.trail[i].y);
-                if (i === 0) this.ctx.moveTo(trailPoint.x, trailPoint.y);
-                else this.ctx.lineTo(trailPoint.x, trailPoint.y);
+                if (i === 0) this.ctx.moveTo(trailPoint.x, trailPoint.y); else this.ctx.lineTo(trailPoint.x, trailPoint.y);
             }
             this.ctx.stroke();
         }
-        
-        // Corps du missile
         this.ctx.fillStyle = bullet.color;
         this.ctx.shadowColor = bullet.color;
         this.ctx.shadowBlur = 10;
-        
         const angle = Math.atan2(bullet.vy, bullet.vx);
         const length = bullet.length * zoom;
-        
         this.ctx.save();
         this.ctx.translate(screen.x, screen.y);
         this.ctx.rotate(angle);
@@ -311,26 +340,18 @@ export const Renderer = {
     drawExplosiveBullet(bullet, screen, zoom) {
         const time = Date.now() * 0.01;
         const angle = Math.atan2(bullet.vy, bullet.vx);
-        
         this.ctx.save();
         this.ctx.translate(screen.x, screen.y);
         this.ctx.rotate(angle);
-        
-        // === CORPS PRINCIPAL DU PROJECTILE ===
         const length = bullet.length * zoom;
         const width = bullet.radius * 2 * zoom;
-        
-        // Gradient pour le corps principal (aspect m�tallique)
         const gradient = this.ctx.createLinearGradient(-length/2, -width/2, -length/2, width/2);
         gradient.addColorStop(0, '#ff8844');
         gradient.addColorStop(0.3, '#ff4400');
         gradient.addColorStop(0.7, '#cc2200');
         gradient.addColorStop(1, '#ff8844');
-        
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(-length/2, -width/2, length, width);
-        
-        // === OGIVE POINTUE ===
         this.ctx.fillStyle = '#ffaa66';
         this.ctx.beginPath();
         this.ctx.moveTo(length/2, 0);
@@ -338,52 +359,36 @@ export const Renderer = {
         this.ctx.lineTo(length/2 - width, width/2);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // === AILETTES STABILISATRICES ===
         this.ctx.fillStyle = '#ff6622';
-        // Ailette sup�rieure
         this.ctx.beginPath();
         this.ctx.moveTo(-length/2, -width/2);
         this.ctx.lineTo(-length/2 - width*0.8, -width*1.2);
         this.ctx.lineTo(-length/2 + width*0.3, -width/2);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // Ailette inf�rieure
         this.ctx.beginPath();
         this.ctx.moveTo(-length/2, width/2);
         this.ctx.lineTo(-length/2 - width*0.8, width*1.2);
         this.ctx.lineTo(-length/2 + width*0.3, width/2);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // === BANDES DE MARQUAGE EXPLOSIF ===
         this.ctx.fillStyle = '#ffff00';
         for (let i = 0; i < 3; i++) {
             const x = -length/2 + (i + 1) * (length / 5);
             this.ctx.fillRect(x, -width/4, width/8, width/2);
         }
-        
-        // === LUEUR DANGEREUSE PULSANTE ===
         const pulseIntensity = Math.sin(time * 8) * 0.4 + 0.6;
         this.ctx.shadowColor = '#ff4400';
         this.ctx.shadowBlur = 20 * pulseIntensity * zoom;
         this.ctx.strokeStyle = '#ff6600';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(-length/2, -width/2, length, width);
-        
         this.ctx.restore();
-        
-        // === EFFETS AUTOUR DU PROJECTILE ===
-        
-        // Tra�n�e de fum�e chaude
         if (Math.random() < 0.6) {
             const trailX = bullet.x - Math.cos(angle) * (length/2 + 10);
             const trailY = bullet.y - Math.sin(angle) * (length/2 + 10);
             Particle.createExplosion(trailX, trailY, '#ff8844', 2);
         }
-        
-        // �tincelles qui s'�chappent
         if (Math.random() < 0.4) {
             const sparkAngle = angle + (Math.random() - 0.5) * 0.8;
             const sparkDistance = 8 + Math.random() * 12;
@@ -391,8 +396,6 @@ export const Renderer = {
             const sparkY = bullet.y + Math.sin(sparkAngle) * sparkDistance;
             Particle.createExplosion(sparkX, sparkY, '#ffaa00', 1);
         }
-        
-        // Aura d'�nergie explosive (cercle pulsant)
         this.ctx.save();
         this.ctx.globalAlpha = 0.3 * pulseIntensity;
         this.ctx.strokeStyle = '#ff4400';
@@ -401,8 +404,6 @@ export const Renderer = {
         this.ctx.arc(screen.x, screen.y, (bullet.radius + 8) * zoom * pulseIntensity, 0, Math.PI * 2);
         this.ctx.stroke();
         this.ctx.restore();
-        
-        // Distorsion de l'air (effet de chaleur)
         if (Math.random() < 0.3) {
             this.ctx.save();
             this.ctx.globalAlpha = 0.2;
@@ -415,8 +416,6 @@ export const Renderer = {
             this.ctx.fill();
             this.ctx.restore();
         }
-        
-        // Points d'�nergie clignotants sur l'ogive
         if (Math.sin(time * 12) > 0.5) {
             this.ctx.save();
             this.ctx.translate(screen.x, screen.y);
@@ -432,7 +431,6 @@ export const Renderer = {
     },
     
     drawOrbBullet(bullet, screen, zoom) {
-        // Projectile d'orbe plus petit et brillant
         this.ctx.fillStyle = bullet.color;
         this.ctx.shadowColor = bullet.color;
         this.ctx.shadowBlur = 8;
@@ -442,7 +440,6 @@ export const Renderer = {
     },
     
     drawPellet(bullet, screen, zoom) {
-        // Petits projectiles de shotgun
         this.ctx.fillStyle = bullet.color;
         this.ctx.beginPath();
         this.ctx.arc(screen.x, screen.y, bullet.radius * zoom, 0, Math.PI * 2);
@@ -450,21 +447,17 @@ export const Renderer = {
     },
     
     drawBasicBullet(bullet, screen, zoom) {
-        // Projectile de base (code original)
         this.ctx.strokeStyle = bullet.color;
         this.ctx.shadowColor = bullet.color;
         this.ctx.shadowBlur = 8;
         this.ctx.lineWidth = bullet.radius * zoom;
         this.ctx.lineCap = 'round';
-        
         const angle = Math.atan2(bullet.vy, bullet.vx);
         const length = bullet.length * zoom;
-        
         const startX = screen.x - Math.cos(angle) * length / 2;
         const startY = screen.y - Math.sin(angle) * length / 2;
         const endX = screen.x + Math.cos(angle) * length / 2;
         const endY = screen.y + Math.sin(angle) * length / 2;
-        
         this.ctx.beginPath();
         this.ctx.moveTo(startX, startY);
         this.ctx.lineTo(endX, endY);
@@ -476,27 +469,18 @@ export const Renderer = {
         const zoom = Camera.getZoom ? Camera.getZoom() : (CONFIG.CAMERA.ZOOM || 1);
         Enemy.list.forEach(enemy => {
             const screen = Camera.worldToScreen(enemy.x, enemy.y);
-            
             if (!Camera.isVisible(enemy.x, enemy.y, 50)) return;
-            
             this.ctx.save();
             this.ctx.translate(screen.x, screen.y);
             this.ctx.scale(zoom, zoom);
-            
-            // Dessiner l'ennemi selon son type avec des animations
             this.drawEnemyByType(enemy);
-            
             this.ctx.restore();
-            
-            // Barre de vie pour les ennemis multi-HP
             if (enemy.maxHealth > 1) {
                 const barWidth = enemy.radius * 2 * zoom;
                 const barHeight = Math.max(2, 3 * zoom);
                 const barY = screen.y - enemy.radius * zoom - 10;
-                
                 this.ctx.fillStyle = '#444';
                 this.ctx.fillRect(screen.x - barWidth/2, barY, barWidth, barHeight);
-                
                 const healthPercent = enemy.health / enemy.maxHealth;
                 this.ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : '#f80';
                 this.ctx.fillRect(screen.x - barWidth/2, barY, barWidth * healthPercent, barHeight);
@@ -507,72 +491,41 @@ export const Renderer = {
     drawEnemyByType(enemy) {
         const baseColor = enemy.color;
         const pulseIntensity = Math.sin(enemy.pulsePhase) * 0.3 + 0.7;
-        
-        // === EFFET DE SPAWN ===
         if (enemy.spawning) {
-            // Effet de mat�rialisation progressive
             this.ctx.save();
             this.ctx.scale(enemy.spawnScale, enemy.spawnScale);
-            
-            // Lueur intense pendant le spawn
             this.ctx.shadowColor = baseColor;
             this.ctx.shadowBlur = 25 * (1 - enemy.spawnScale);
-            
-            // Transparence progressive
             this.ctx.globalAlpha = 0.3 + enemy.spawnScale * 0.7;
-            
-            // Couleur plus brillante pendant le spawn
             const spawnGlow = Math.sin(Date.now() * 0.02) * 0.3 + 0.7;
             this.ctx.fillStyle = this.lightenColor(baseColor, spawnGlow);
         } else {
             this.ctx.shadowColor = baseColor;
             this.ctx.shadowBlur = 12 * pulseIntensity;
         }
-        
         switch(enemy.shape) {
-            case 'scout':
-                this.drawScout(enemy, baseColor, pulseIntensity);
-                break;
-            case 'interceptor':
-                this.drawInterceptor(enemy, baseColor, pulseIntensity);
-                break;
-            case 'crusher':
-                this.drawCrusher(enemy, baseColor, pulseIntensity);
-                break;
-            case 'shredder':
-                this.drawShredder(enemy, baseColor, pulseIntensity);
-                break;
-            default:
-                // Fallback vers les anciennes formes g�om�triques
-                this.drawBasicShape(enemy, baseColor);
+            case 'scout': this.drawScout(enemy, baseColor, pulseIntensity); break;
+            case 'interceptor': this.drawInterceptor(enemy, baseColor, pulseIntensity); break;
+            case 'crusher': this.drawCrusher(enemy, baseColor, pulseIntensity); break;
+            case 'shredder': this.drawShredder(enemy, baseColor, pulseIntensity); break;
+            default: this.drawBasicShape(enemy, baseColor);
         }
-        
-        if (enemy.spawning) {
-            this.ctx.restore();
-        }
-        
-        this.ctx.shadowBlur = 0;
-        this.ctx.globalAlpha = 1;
+        if (enemy.spawning) { this.ctx.restore(); }
+        this.ctx.shadowBlur = 0; this.ctx.globalAlpha = 1;
     },
     
-    // Utilitaire pour �claircir une couleur pendant le spawn
     lightenColor(color, intensity) {
-        // Convertit #f0f en couleur plus brillante
         const r = parseInt(color.substr(1,1), 16) * 16;
         const g = parseInt(color.substr(2,1), 16) * 16;
         const b = parseInt(color.substr(3,1), 16) * 16;
-        
         const newR = Math.min(255, Math.floor(r + (255 - r) * intensity * 0.5));
         const newG = Math.min(255, Math.floor(g + (255 - g) * intensity * 0.5));
         const newB = Math.min(255, Math.floor(b + (255 - b) * intensity * 0.5));
-        
         return `rgb(${newR}, ${newG}, ${newB})`;
     },
     
     drawScout(enemy, baseColor, pulseIntensity) {
         const r = enemy.radius;
-        
-        // Corps principal triangulaire
         this.ctx.fillStyle = baseColor;
         this.ctx.beginPath();
         this.ctx.moveTo(0, -r);
@@ -580,8 +533,6 @@ export const Renderer = {
         this.ctx.lineTo(r * 0.7, r * 0.5);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // R�acteurs clignotants
         const thrusterGlow = enemy.thrusterFlicker > 0.5 ? '#ff8' : '#f84';
         this.ctx.fillStyle = thrusterGlow;
         this.ctx.beginPath();
@@ -590,8 +541,6 @@ export const Renderer = {
         this.ctx.beginPath();
         this.ctx.arc(r * 0.4, r * 0.3, r * 0.2, 0, Math.PI * 2);
         this.ctx.fill();
-        
-        // D�tecteur avant
         this.ctx.fillStyle = '#0ff';
         this.ctx.beginPath();
         this.ctx.arc(0, -r * 0.5, r * 0.15, 0, Math.PI * 2);
@@ -600,11 +549,8 @@ export const Renderer = {
     
     drawInterceptor(enemy, baseColor, pulseIntensity) {
         const r = enemy.radius;
-        
         this.ctx.save();
         this.ctx.rotate(enemy.rotationAngle);
-        
-        // Corps en losange
         this.ctx.fillStyle = baseColor;
         this.ctx.beginPath();
         this.ctx.moveTo(0, -r);
@@ -613,21 +559,14 @@ export const Renderer = {
         this.ctx.lineTo(-r * 0.6, 0);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // Ailes avec r�acteurs
         this.ctx.fillStyle = '#f66';
         this.ctx.fillRect(-r * 0.9, -r * 0.2, r * 0.4, r * 0.4);
         this.ctx.fillRect(r * 0.5, -r * 0.2, r * 0.4, r * 0.4);
-        
-        // R�acteurs principales (arri�re)
         const mainThruster = enemy.thrusterFlicker > 0.3 ? '#fff' : '#ff4';
         this.ctx.fillStyle = mainThruster;
         this.ctx.fillRect(-r * 0.3, r * 0.8, r * 0.2, r * 0.4);
         this.ctx.fillRect(r * 0.1, r * 0.8, r * 0.2, r * 0.4);
-        
         this.ctx.restore();
-        
-        // Cockpit
         this.ctx.fillStyle = '#4ff';
         this.ctx.beginPath();
         this.ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2);
@@ -637,34 +576,24 @@ export const Renderer = {
     drawCrusher(enemy, baseColor, pulseIntensity) {
         const r = enemy.radius;
         const armor = Math.sin(enemy.animTime * 0.5) * 0.1 + 0.9;
-        
-        // Corps hexagonal blind�
         this.ctx.fillStyle = baseColor;
         this.ctx.beginPath();
         for (let i = 0; i < 6; i++) {
             const angle = (i * Math.PI) / 3;
             const x = Math.cos(angle) * r * armor;
             const y = Math.sin(angle) * r * armor;
-            if (i === 0) this.ctx.moveTo(x, y);
-            else this.ctx.lineTo(x, y);
+            if (i === 0) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
         }
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // Plaques d'armure
         this.ctx.strokeStyle = '#aaf';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        // Tourelle centrale rotative
+        this.ctx.lineWidth = 2; this.ctx.stroke();
         this.ctx.save();
         this.ctx.rotate(enemy.rotationAngle * 0.5);
         this.ctx.fillStyle = '#66f';
         this.ctx.fillRect(-r * 0.6, -r * 0.1, r * 1.2, r * 0.2);
         this.ctx.fillRect(-r * 0.1, -r * 0.6, r * 0.2, r * 1.2);
         this.ctx.restore();
-        
-        // R�acteurs de propulsion
         const engineGlow = Math.sin(enemy.animTime) > 0 ? '#8cf' : '#4af';
         this.ctx.fillStyle = engineGlow;
         for (let i = 0; i < 6; i++) {
@@ -675,8 +604,6 @@ export const Renderer = {
             this.ctx.arc(x, y, r * 0.1, 0, Math.PI * 2);
             this.ctx.fill();
         }
-        
-        // �il central
         this.ctx.fillStyle = '#f84';
         this.ctx.beginPath();
         this.ctx.arc(0, 0, r * 0.2 * pulseIntensity, 0, Math.PI * 2);
@@ -685,11 +612,8 @@ export const Renderer = {
     
     drawShredder(enemy, baseColor, pulseIntensity) {
         const r = enemy.radius;
-        
         this.ctx.save();
         this.ctx.rotate(enemy.rotationAngle * 0.3);
-        
-        // Corps en �toile avec lames rotatives
         this.ctx.fillStyle = baseColor;
         const spikes = 8;
         this.ctx.beginPath();
@@ -698,15 +622,11 @@ export const Renderer = {
             const radiusVariation = i % 2 === 0 ? r : r * 0.6;
             const x = Math.cos(angle) * radiusVariation;
             const y = Math.sin(angle) * radiusVariation;
-            if (i === 0) this.ctx.moveTo(x, y);
-            else this.ctx.lineTo(x, y);
+            if (i === 0) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
         }
         this.ctx.closePath();
         this.ctx.fill();
-        
         this.ctx.restore();
-        
-        // Lames de d�coupe rotatives
         this.ctx.save();
         this.ctx.rotate(-enemy.rotationAngle * 0.8);
         this.ctx.strokeStyle = '#fa4';
@@ -718,15 +638,11 @@ export const Renderer = {
         this.ctx.lineTo(0, r * 0.8);
         this.ctx.stroke();
         this.ctx.restore();
-        
-        // Core �nerg�tique central
         const coreColor = Math.sin(enemy.animTime * 2) > 0 ? '#ff0' : '#f80';
         this.ctx.fillStyle = coreColor;
         this.ctx.beginPath();
         this.ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
         this.ctx.fill();
-        
-        // Indicateurs d'armes multiples
         const weaponGlow = enemy.thrusterFlicker > 0.6 ? '#f44' : '#a22';
         this.ctx.fillStyle = weaponGlow;
         for (let i = 0; i < 4; i++) {
@@ -740,10 +656,8 @@ export const Renderer = {
     },
     
     drawBasicShape(enemy, baseColor) {
-        // Formes g�om�triques de base pour compatibilit�
         this.ctx.fillStyle = baseColor;
         this.ctx.beginPath();
-        
         switch(enemy.shape) {
             case 'triangle':
                 this.ctx.moveTo(0, -enemy.radius);
@@ -763,8 +677,7 @@ export const Renderer = {
                     const angle = (i * Math.PI) / 3;
                     const x = Math.cos(angle) * enemy.radius;
                     const y = Math.sin(angle) * enemy.radius;
-                    if (i === 0) this.ctx.moveTo(x, y);
-                    else this.ctx.lineTo(x, y);
+                    if (i === 0) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
                 }
                 this.ctx.closePath();
                 break;
@@ -775,15 +688,13 @@ export const Renderer = {
                     const radius = i % 2 === 0 ? enemy.radius : enemy.radius * 0.5;
                     const x = Math.cos(angle) * radius;
                     const y = Math.sin(angle) * radius;
-                    if (i === 0) this.ctx.moveTo(x, y);
-                    else this.ctx.lineTo(x, y);
+                    if (i === 0) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
                 }
                 this.ctx.closePath();
                 break;
             default:
                 this.ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
         }
-        
         this.ctx.fill();
     },
     
@@ -792,17 +703,11 @@ export const Renderer = {
         Currency.list.forEach(drop => {
             const screen = Camera.worldToScreen(drop.x, drop.y);
             const bobY = screen.y + Math.sin(drop.bobOffset) * 2;
-            
             this.ctx.save();
             this.ctx.translate(screen.x, bobY);
             this.ctx.scale(zoom, zoom);
-            
-            // Dessiner une pi�ce d'or 3D qui tourne
             this.drawGoldCoin(drop);
-            
             this.ctx.restore();
-            
-            // Afficher la valeur pour les pi�ces de haute valeur
             if (drop.value > 1) {
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = `${Math.floor(10 * zoom)}px Courier New`;
@@ -813,65 +718,28 @@ export const Renderer = {
     },
     
     drawGoldCoin(drop) {
-        // === RENDU SP�CIAL POUR LES LOOT BOXES ===
-        if (drop.type === 'lootbox') {
-            this.drawLootBox(drop);
-            return;
-        }
-        
-        // === RENDU NORMAL POUR LES GEMS ===
+        if (drop.type === 'lootbox') { this.drawLootBox(drop); return; }
         const radius = drop.radius;
         const spin = drop.spinAngle;
-        
-        // Calcul de l'effet 3D: la pi�ce appara�t plus �troite selon l'angle
         const perspective = Math.abs(Math.cos(spin));
         const width = radius * perspective;
-        
-        // Couleurs selon l'orientation de la pi�ce
         let mainColor, edgeColor, highlightColor;
-        if (Math.cos(spin) > 0.3) {
-            // Face visible
-            mainColor = drop.colors.BRIGHT;
-            edgeColor = drop.colors.MEDIUM;
-            highlightColor = '#FFFF88';
-        } else if (Math.cos(spin) < -0.3) {
-            // Dos visible
-            mainColor = drop.colors.MEDIUM;
-            edgeColor = drop.colors.DARK;
-            highlightColor = drop.colors.BRIGHT;
-        } else {
-            // Tranche visible
-            mainColor = drop.colors.DARK;
-            edgeColor = drop.colors.MEDIUM;
-            highlightColor = drop.colors.BRIGHT;
-        }
-        
-        // Ombre port�e
+        if (Math.cos(spin) > 0.3) { mainColor = drop.colors.BRIGHT; edgeColor = drop.colors.MEDIUM; highlightColor = '#FFFF88'; }
+        else if (Math.cos(spin) < -0.3) { mainColor = drop.colors.MEDIUM; edgeColor = drop.colors.DARK; highlightColor = drop.colors.BRIGHT; }
+        else { mainColor = drop.colors.DARK; edgeColor = drop.colors.MEDIUM; highlightColor = drop.colors.BRIGHT; }
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 2;
-        this.ctx.shadowOffsetY = 2;
-        
-        // Corps principal de la pi�ce (ellipse)
+        this.ctx.shadowBlur = 4; this.ctx.shadowOffsetX = 2; this.ctx.shadowOffsetY = 2;
         this.ctx.fillStyle = mainColor;
         this.ctx.beginPath();
         this.ctx.ellipse(0, 0, width, radius, 0, 0, Math.PI * 2);
         this.ctx.fill();
-        
-        // D�sactiver l'ombre pour les d�tails
         this.ctx.shadowColor = 'transparent';
-        this.ctx.shadowBlur = 0;
-        this.ctx.shadowOffsetX = 0;
-        this.ctx.shadowOffsetY = 0;
-        
-        // Bord de la pi�ce
+        this.ctx.shadowBlur = 0; this.ctx.shadowOffsetX = 0; this.ctx.shadowOffsetY = 0;
         this.ctx.strokeStyle = edgeColor;
         this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         this.ctx.ellipse(0, 0, width, radius, 0, 0, Math.PI * 2);
         this.ctx.stroke();
-        
-        // Reflet brillant si la face est visible
         if (Math.cos(spin) > 0.1) {
             this.ctx.fillStyle = highlightColor;
             this.ctx.globalAlpha = 0.6;
@@ -880,50 +748,26 @@ export const Renderer = {
             this.ctx.fill();
             this.ctx.globalAlpha = 1;
         }
-        
-        // Motif central (pour les pi�ces de haute valeur)
         if (drop.value > 1 && Math.abs(Math.cos(spin)) > 0.5) {
-            this.ctx.strokeStyle = edgeColor;
-            this.ctx.lineWidth = 1;
-            this.ctx.beginPath();
-            this.ctx.ellipse(0, 0, width * 0.6, radius * 0.6, 0, 0, Math.PI * 2);
-            this.ctx.stroke();
+            this.ctx.strokeStyle = edgeColor; this.ctx.lineWidth = 1; this.ctx.beginPath(); this.ctx.ellipse(0,0,width*0.6,radius*0.6,0,0,Math.PI*2); this.ctx.stroke();
         }
-        
-        // Effet de lueur si magn�tis�
         if (drop.magnetized) {
-            this.ctx.shadowColor = mainColor;
-            this.ctx.shadowBlur = 15;
-            this.ctx.strokeStyle = mainColor;
-            this.ctx.lineWidth = 2;
-            this.ctx.beginPath();
-            this.ctx.ellipse(0, 0, width, radius, 0, 0, Math.PI * 2);
-            this.ctx.stroke();
-            this.ctx.shadowBlur = 0;
+            this.ctx.shadowColor = mainColor; this.ctx.shadowBlur = 15; this.ctx.strokeStyle = mainColor; this.ctx.lineWidth = 2; this.ctx.beginPath(); this.ctx.ellipse(0,0,width,radius,0,0,Math.PI*2); this.ctx.stroke(); this.ctx.shadowBlur = 0;
         }
     },
     
-    // Nouveau rendu pour les loot boxes
     drawLootBox(lootBox) {
         const radius = lootBox.radius;
         const spin = lootBox.spinAngle;
         const floatOffset = Math.sin(lootBox.bobOffset) * 3;
         const glowIntensity = lootBox.glowIntensity || 1.0;
-        
         this.ctx.save();
         this.ctx.translate(0, floatOffset);
-        this.ctx.rotate(spin * 0.3); // Rotation plus lente
-        
-        // === LUEUR INTENSIVE ===
+        this.ctx.rotate(spin * 0.3);
         this.ctx.shadowColor = lootBox.colors.BRIGHT;
         this.ctx.shadowBlur = 20 * glowIntensity;
-        
-        // === CORPS PRINCIPAL DE LA LOOT BOX ===
-        // Forme de coffre/cube 3D
         this.ctx.fillStyle = lootBox.colors.MEDIUM;
         this.ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
-        
-        // Face sup�rieure (effet 3D)
         this.ctx.fillStyle = lootBox.colors.BRIGHT;
         this.ctx.beginPath();
         this.ctx.moveTo(-radius, -radius);
@@ -932,8 +776,6 @@ export const Renderer = {
         this.ctx.lineTo(radius, -radius);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // Face droite (effet 3D)
         this.ctx.fillStyle = lootBox.colors.DARK;
         this.ctx.beginPath();
         this.ctx.moveTo(radius, -radius);
@@ -942,88 +784,51 @@ export const Renderer = {
         this.ctx.lineTo(radius, radius);
         this.ctx.closePath();
         this.ctx.fill();
-        
-        // === SYMBOLE SELON LE TYPE ===
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = 'bold 16px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        
         let symbol = '?';
         switch(lootBox.lootType) {
-            case 'TREASURE':
-                symbol = '$';
-                break;
-            case 'WEAPON':
-                symbol = '?';
-                break;
-            case 'NUKE':
-                symbol = '??';
-                break;
-            case 'MAGNET':
-                symbol = '??';
-                break;
-            case 'ORB_SHIELD':
-                symbol = '??';
-                break;
-            case 'ORB_UPGRADE':
-                symbol = '?';
-                break;
-            case 'UTILITY':
-                symbol = '??';
-                break;
+            case 'TREASURE': symbol = '$'; break;
+            case 'WEAPON': symbol = '?'; break;
+            case 'NUKE': symbol = '??'; break;
+            case 'MAGNET': symbol = '??'; break;
+            case 'ORB_SHIELD': symbol = '??'; break;
+            case 'ORB_UPGRADE': symbol = '?'; break;
+            case 'UTILITY': symbol = '??'; break;
         }
-        
         this.ctx.fillText(symbol, 0, 0);
-        
-        // === CONTOUR BRILLANT ===
         this.ctx.strokeStyle = lootBox.colors.BRIGHT;
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(-radius, -radius, radius * 2, radius * 2);
-        
-        // === �TINCELLES AUTOUR ===
+        this.ctx.lineWidth = 2; this.ctx.strokeRect(-radius, -radius, radius * 2, radius * 2);
         if (Math.random() < 0.3) {
             for (let i = 0; i < 3; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 const distance = radius + 5 + Math.random() * 10;
                 const sx = Math.cos(angle) * distance;
                 const sy = Math.sin(angle) * distance;
-                
                 this.ctx.fillStyle = lootBox.colors.BRIGHT;
                 this.ctx.beginPath();
                 this.ctx.arc(sx, sy, 1 + Math.random() * 2, 0, Math.PI * 2);
                 this.ctx.fill();
             }
         }
-        
-        this.ctx.restore();
-        this.ctx.shadowBlur = 0;
+        this.ctx.restore(); this.ctx.shadowBlur = 0;
     },
     
     drawOrbs() {
         const zoom = Camera.getZoom ? Camera.getZoom() : (CONFIG.CAMERA.ZOOM || 1);
         if (!Player.data) return;
-        
         Orb.list.forEach(orb => {
             const screen = Camera.worldToScreen(orb.x, orb.y);
-            
-            this.ctx.fillStyle = orb.color;
-            this.ctx.shadowColor = orb.color;
-            this.ctx.shadowBlur = 12;
-            this.ctx.beginPath();
-            this.ctx.arc(screen.x, screen.y, orb.radius * zoom, 0, Math.PI * 2);
-            this.ctx.fill();
+            this.ctx.fillStyle = orb.color; this.ctx.shadowColor = orb.color; this.ctx.shadowBlur = 12;
+            this.ctx.beginPath(); this.ctx.arc(screen.x, screen.y, orb.radius * zoom, 0, Math.PI * 2); this.ctx.fill();
             this.ctx.shadowBlur = 0;
         });
-        
-        // Cercle orbital
         if (Orb.list.length > 0) {
             const playerScreen = Camera.worldToScreen(Player.data.x, Player.data.y);
             this.ctx.strokeStyle = CONFIG.ORBS.COLOR + '40';
-            this.ctx.lineWidth = 1;
-            this.ctx.beginPath();
-            this.ctx.arc(playerScreen.x, playerScreen.y, CONFIG.ORBS.DISTANCE * zoom, 0, Math.PI * 2);
-            this.ctx.stroke();
+            this.ctx.lineWidth = 1; this.ctx.beginPath(); this.ctx.arc(playerScreen.x, playerScreen.y, CONFIG.ORBS.DISTANCE * zoom, 0, Math.PI * 2); this.ctx.stroke();
         }
     },
 
@@ -1037,77 +842,45 @@ export const Renderer = {
             this.ctx.arc(screen.x, screen.y, particle.radius * alpha * zoom, 0, Math.PI * 2);
             this.ctx.fill();
         });
-
-        // Dessiner l'effet de t�l�portation proc�dural au-dessus des particules
         TeleportFX.draw(this.ctx);
     },
     
     drawUpgradeScreen() {
         if (Game.state !== 'upgrade') return;
-        
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
         this.ctx.fillStyle = '#0f0';
         this.ctx.font = '32px Courier New';
         this.ctx.textAlign = 'center';
         this.ctx.fillText('LEVEL UP!', this.canvas.width / 2, 150);
-        
-        // D�tection de hover
         let anyHover = false;
-        const left = 100;
-        const width = this.canvas.width - 200;
-        
+        const left = 100; const width = this.canvas.width - 200;
         this.ctx.font = '18px Courier New';
         for (let i = 0; i < Upgrades.options.length; i++) {
             const option = Upgrades.options[i];
-            const centerY = 250 + i * 80;
-            const top = centerY - 30;
-            const height = 60;
+            const centerY = 250 + i * 80; const top = centerY - 30; const height = 60;
             const hovered = (Input.mouse.x >= left && Input.mouse.x <= left + width && Input.mouse.y >= top && Input.mouse.y <= top + height);
             if (hovered) anyHover = true;
-            
-            // Fond hover
-            if (hovered) {
-                this.ctx.fillStyle = 'rgba(255, 255, 0, 0.12)';
-                this.ctx.fillRect(left, top, width, height);
-            }
-            
-            // Cadre
+            if (hovered) { this.ctx.fillStyle = 'rgba(255, 255, 0, 0.12)'; this.ctx.fillRect(left, top, width, height); }
             this.ctx.strokeStyle = hovered ? '#ff0' : '#0f0';
-            this.ctx.lineWidth = hovered ? 3 : 2;
-            this.ctx.strokeRect(left, top, width, height);
-            
-            // Texte
+            this.ctx.lineWidth = hovered ? 3 : 2; this.ctx.strokeRect(left, top, width, height);
             this.ctx.fillStyle = hovered ? '#ff0' : '#0f0';
             this.ctx.textAlign = 'left';
             this.ctx.fillText(`${i + 1}. ${option.name}`, left + 20, centerY - 5);
-            this.ctx.font = '14px Courier New';
-            this.ctx.fillStyle = '#888';
+            this.ctx.font = '14px Courier New'; this.ctx.fillStyle = '#888';
             this.ctx.fillText(option.desc, left + 20, centerY + 15);
             this.ctx.font = '18px Courier New';
         }
-        
-        // Curseur
         this.canvas.style.cursor = anyHover ? 'pointer' : 'default';
-        
-        this.ctx.font = '16px Courier New';
-        this.ctx.fillStyle = '#fff';
-        this.ctx.textAlign = 'center';
+        this.ctx.font = '16px Courier New'; this.ctx.fillStyle = '#fff'; this.ctx.textAlign = 'center';
         this.ctx.fillText('Press 1, 2, 3 or click to choose', this.canvas.width / 2, this.canvas.height - 50);
     },
     
     drawWaveAnnouncement() {
         if (Game.state !== 'waveAnnouncement') return;
-        
-        // Fond semi-transparent
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Animation de pulsation
         const pulseIntensity = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-        
-        // Titre principal
         this.ctx.fillStyle = `rgba(255, 215, 0, ${pulseIntensity})`;
         this.ctx.font = 'bold 48px Courier New';
         this.ctx.textAlign = 'center';
@@ -1115,266 +888,109 @@ export const Renderer = {
         this.ctx.lineWidth = 3;
         this.ctx.strokeText(`WAVE ${Game.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
         this.ctx.fillText(`WAVE ${Game.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
-        
-        // Sous-titre
         this.ctx.fillStyle = '#FFD700';
         this.ctx.font = '24px Courier New';
         this.ctx.fillText('INCOMING HOSTILES', this.canvas.width / 2, this.canvas.height / 2 + 20);
-        
-        // Informations de progression
         const enemyCount = Enemy.maxEnemiesPerWave || Math.min(15 + Game.wave * 2.5, 40);
         const difficultyText = Game.wave <= 3 ? 'EASY' : Game.wave <= 6 ? 'MEDIUM' : Game.wave <= 10 ? 'HARD' : 'EXTREME';
-        
         this.ctx.fillStyle = '#FFFF88';
         this.ctx.font = '18px Courier New';
         this.ctx.fillText(`Enemies: ${Math.floor(enemyCount)} | Difficulty: ${difficultyText}`, this.canvas.width / 2, this.canvas.height / 2 + 60);
-        
-        // Barre de progression du timer
         const progress = (180 - Game.waveAnnouncementTimer) / 180;
-        const barWidth = 300;
-        const barHeight = 6;
-        const barX = this.canvas.width / 2 - barWidth / 2;
-        const barY = this.canvas.height / 2 + 100;
-        
-        this.ctx.fillStyle = '#444';
-        this.ctx.fillRect(barX, barY, barWidth, barHeight);
-        this.ctx.fillStyle = '#FFD700';
-        this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+        const barWidth = 300; const barHeight = 6; const barX = this.canvas.width / 2 - barWidth / 2; const barY = this.canvas.height / 2 + 100;
+        this.ctx.fillStyle = '#444'; this.ctx.fillRect(barX, barY, barWidth, barHeight);
+        this.ctx.fillStyle = '#FFD700'; this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
     },
     
     drawOffscreenEnemyIndicators() {
         if (!Player.data || Enemy.list.length === 0) return;
-        
-        const margin = 20; // Distance du bord de l'�cran
-        const indicatorSize = 8; // Taille des indicateurs
-        
+        const margin = 20; // Distance bord
         Enemy.list.forEach(enemy => {
-            // V�rifier si l'ennemi est hors �cran
             if (Camera.isVisible(enemy.x, enemy.y, 50)) return;
-            
-            // Calculer la direction de l'ennemi par rapport au joueur
             const playerScreen = Camera.worldToScreen(Player.data.x, Player.data.y);
             const enemyScreen = Camera.worldToScreen(enemy.x, enemy.y);
-            
-            // Vecteur du joueur vers l'ennemi
-            const dx = enemyScreen.x - playerScreen.x;
-            const dy = enemyScreen.y - playerScreen.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance === 0) return;
-            
-            // Normaliser la direction
-            const dirX = dx / distance;
-            const dirY = dy / distance;
-            
-            // Calculer l'intersection avec les bords de l'�cran
-            let indicatorX, indicatorY;
-            
-            // Limites de l'�cran avec marge
-            const minX = margin;
-            const maxX = this.canvas.width - margin;
-            const minY = margin;
-            const maxY = this.canvas.height - margin;
-            
-            // Trouver l'intersection avec le bord de l'�cran
-            const centerX = this.canvas.width / 2;
-            const centerY = this.canvas.height / 2;
-            
-            // �chelle pour aller du centre vers les bords
+            const dx = enemyScreen.x - playerScreen.x; const dy = enemyScreen.y - playerScreen.y;
+            const distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return;
+            const dirX = dx / distance; const dirY = dy / distance;
+            const minX = margin; const maxX = this.canvas.width - margin; const minY = margin; const maxY = this.canvas.height - margin;
+            const centerX = this.canvas.width / 2; const centerY = this.canvas.height / 2;
             const scaleX = dirX !== 0 ? Math.abs((dirX > 0 ? maxX : minX) - centerX) / Math.abs(dirX) : Infinity;
             const scaleY = dirY !== 0 ? Math.abs((dirY > 0 ? maxY : minY) - centerY) / Math.abs(dirY) : Infinity;
-            
             const scale = Math.min(scaleX, scaleY);
-            
-            indicatorX = centerX + dirX * scale;
-            indicatorY = centerY + dirY * scale;
-            
-            // S'assurer que l'indicateur reste dans les limites
-            indicatorX = Math.max(minX, Math.min(maxX, indicatorX));
-            indicatorY = Math.max(minY, Math.min(maxY, indicatorY));
-            
-            // Dessiner l'indicateur
+            let indicatorX = centerX + dirX * scale; let indicatorY = centerY + dirY * scale;
+            indicatorX = Math.max(minX, Math.min(maxX, indicatorX)); indicatorY = Math.max(minY, Math.min(maxY, indicatorY));
             this.drawEnemyIndicator(indicatorX, indicatorY, enemy, dirX, dirY);
         });
     },
     
     drawEnemyIndicator(x, y, enemy, dirX, dirY) {
         this.ctx.save();
-        
-        // Couleur selon le type d'ennemi
         let indicatorColor = enemy.color;
         let pulseIntensity = Math.sin(Date.now() * 0.008) * 0.4 + 0.6;
-        
-        // Effet de pulsation plus intense pour les ennemis dangereux
         if (enemy.type === 'tank' || enemy.type === 'splitter') {
             pulseIntensity = Math.sin(Date.now() * 0.012) * 0.6 + 0.4;
             indicatorColor = enemy.color;
         }
-        
-        // Triangle pointant vers l'ennemi
-        const size = 8;
-        const angle = Math.atan2(dirY, dirX);
-        
-        this.ctx.translate(x, y);
-        this.ctx.rotate(angle);
-        
-        // Ombre pour la visibilit�>
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 1;
-        this.ctx.shadowOffsetY = 1;
-        
-        // Corps de l'indicateur (triangle)
-        this.ctx.fillStyle = indicatorColor;
-        this.ctx.globalAlpha = pulseIntensity;
-        this.ctx.beginPath();
-        this.ctx.moveTo(size, 0);
-        this.ctx.lineTo(-size * 0.6, -size * 0.7);
-        this.ctx.lineTo(-size * 0.6, size * 0.7);
-        this.ctx.closePath();
-        this.ctx.fill();
-        
-        // Contour pour la visibilit�>
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 1;
-        this.ctx.globalAlpha = pulseIntensity * 0.8;
-        this.ctx.stroke();
-        
-        // Point central selon le type d'ennemi
-        this.ctx.fillStyle = enemy.type === 'tank' ? '#fff' : 
-                           enemy.type === 'splitter' ? '#ff0' : 
-                           enemy.type === 'fast' ? '#f00' : '#fff';
-        this.ctx.globalAlpha = 1;
-        this.ctx.beginPath();
-        this.ctx.arc(-1, 0, 2, 0, Math.PI * 2);
-        this.ctx.fill();
-        
+        const size = 8; const angle = Math.atan2(dirY, dirX);
+        this.ctx.translate(x, y); this.ctx.rotate(angle);
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'; this.ctx.shadowBlur = 4; this.ctx.shadowOffsetX = 1; this.ctx.shadowOffsetY = 1;
+        this.ctx.fillStyle = indicatorColor; this.ctx.globalAlpha = pulseIntensity;
+        this.ctx.beginPath(); this.ctx.moveTo(size, 0); this.ctx.lineTo(-size * 0.6, -size * 0.7); this.ctx.lineTo(-size * 0.6, size * 0.7); this.ctx.closePath(); this.ctx.fill();
+        this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 1; this.ctx.globalAlpha = pulseIntensity * 0.8; this.ctx.stroke();
+        this.ctx.fillStyle = enemy.type === 'tank' ? '#fff' : enemy.type === 'splitter' ? '#ff0' : enemy.type === 'fast' ? '#f00' : '#fff';
+        this.ctx.globalAlpha = 1; this.ctx.beginPath(); this.ctx.arc(-1, 0, 2, 0, Math.PI * 2); this.ctx.fill();
         this.ctx.restore();
     },
     
     drawMiniRadar() {
         if (!Player.data || Enemy.list.length === 0) return;
-        
-        const radarSize = 80;
-        const radarX = this.canvas.width - radarSize - 15;
-        const radarY = 15;
-        const radarRadius = radarSize / 2;
-        
-        // Fond du radar
-        this.ctx.save();
-        this.ctx.globalAlpha = 0.7;
-        this.ctx.fillStyle = 'rgba(0, 40, 40, 0.8)';
-        this.ctx.beginPath();
-        this.ctx.arc(radarX + radarRadius, radarY + radarRadius, radarRadius, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Contour du radar
-        this.ctx.strokeStyle = '#0ff';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        // Lignes de grille
-        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-        this.ctx.lineWidth = 1;
-        this.ctx.beginPath();
-        // Lignes crois�es
-        this.ctx.moveTo(radarX, radarY + radarRadius);
-        this.ctx.lineTo(radarX + radarSize, radarY + radarRadius);
-        this.ctx.moveTo(radarX + radarRadius, radarY);
-        this.ctx.lineTo(radarX + radarRadius, radarY + radarSize);
-        this.ctx.stroke();
-        
-        // Cercles concentriques
-        this.ctx.beginPath();
-        this.ctx.arc(radarX + radarRadius, radarY + radarRadius, radarRadius * 0.5, 0, Math.PI * 2);
-        this.ctx.stroke();
-        
-        // Joueur au centre
-        this.ctx.fillStyle = '#0ff';
-        this.ctx.beginPath();
-        this.ctx.arc(radarX + radarRadius, radarY + radarRadius, 3, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Ennemis sur le radar
-        const radarRange = 600; // Port�e du radar en unit�s monde
-        const scale = radarRadius / radarRange;
-        
+        const radarSize = 80; const radarX = this.canvas.width - radarSize - 15; const radarY = 15; const radarRadius = radarSize / 2;
+        this.ctx.save(); this.ctx.globalAlpha = 0.7; this.ctx.fillStyle = 'rgba(0, 40, 40, 0.8)';
+        this.ctx.beginPath(); this.ctx.arc(radarX + radarRadius, radarY + radarRadius, radarRadius, 0, Math.PI * 2); this.ctx.fill();
+        this.ctx.strokeStyle = '#0ff'; this.ctx.lineWidth = 2; this.ctx.stroke();
+        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)'; this.ctx.lineWidth = 1; this.ctx.beginPath();
+        this.ctx.moveTo(radarX, radarY + radarRadius); this.ctx.lineTo(radarX + radarSize, radarY + radarRadius);
+        this.ctx.moveTo(radarX + radarRadius, radarY); this.ctx.lineTo(radarX + radarRadius, radarY + radarSize); this.ctx.stroke();
+        this.ctx.beginPath(); this.ctx.arc(radarX + radarRadius, radarY + radarRadius, radarRadius * 0.5, 0, Math.PI * 2); this.ctx.stroke();
+        this.ctx.fillStyle = '#0ff'; this.ctx.beginPath(); this.ctx.arc(radarX + radarRadius, radarY + radarRadius, 3, 0, Math.PI * 2); this.ctx.fill();
+        const radarRange = 600; const scale = radarRadius / radarRange;
         Enemy.list.forEach(enemy => {
-            const dx = enemy.x - Player.data.x;
-            const dy = enemy.y - Player.data.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
+            const dx = enemy.x - Player.data.x; const dy = enemy.y - Player.data.y; const distance = Math.sqrt(dx * dx + dy * dy);
             if (distance > radarRange) return;
-            
             const enemyRadarX = radarX + radarRadius + dx * scale;
             const enemyRadarY = radarY + radarRadius + dy * scale;
-            
-            // Couleur selon le type et la distance
             let enemyColor = enemy.color;
             let enemySize = 2;
-            
-            if (enemy.type === 'tank') {
-                enemySize = 3;
-                enemyColor = '#84f';
-            } else if (enemy.type === 'splitter') {
-                enemySize = 2.5;
-                enemyColor = '#f80';
-            } else if (enemy.type === 'fast') {
-                enemySize = 1.5;
-                enemyColor = '#f44';
-            }
-            
-            // Pulsation pour les ennemis proches
+            if (enemy.type === 'tank') { enemySize = 3; enemyColor = '#84f'; }
+            else if (enemy.type === 'splitter') { enemySize = 2.5; enemyColor = '#f80'; }
+            else if (enemy.type === 'fast') { enemySize = 1.5; enemyColor = '#f44'; }
             if (distance < 150) {
                 const pulse = Math.sin(Date.now() * 0.02) * 0.5 + 0.5;
-                enemySize += pulse;
-                this.ctx.globalAlpha = 0.8 + pulse * 0.2;
-            } else {
-                this.ctx.globalAlpha = 0.6;
-            }
-            
-            this.ctx.fillStyle = enemyColor;
-            this.ctx.beginPath();
-            this.ctx.arc(enemyRadarX, enemyRadarY, enemySize, 0, Math.PI * 2);
-            this.ctx.fill();
+                enemySize += pulse; this.ctx.globalAlpha = 0.8 + pulse * 0.2;
+            } else this.ctx.globalAlpha = 0.6;
+            this.ctx.fillStyle = enemyColor; this.ctx.beginPath(); this.ctx.arc(enemyRadarX, enemyRadarY, enemySize, 0, Math.PI * 2); this.ctx.fill();
         });
-        
         this.ctx.restore();
     },
     
     drawDeathFlash() {
         if (Game.state !== 'deathSequence') return;
-        const t = Game.deathSequenceTimer / 180; // 0..1
-        const alpha = Math.min(0.8, 1 - t); // plus opaque au début
-        const grd = this.ctx.createRadialGradient(
-            this.canvas.width/2, this.canvas.height/2, 50,
-            this.canvas.width/2, this.canvas.height/2, Math.max(this.canvas.width,this.canvas.height)/1.2
-        );
-        grd.addColorStop(0, `rgba(255,0,40,${alpha*0.55})`);
-        grd.addColorStop(1, 'rgba(0,0,0,0)');
-        this.ctx.fillStyle = grd;
-        this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-        // flash blanc court frame initiale
+        const t = Game.deathSequenceTimer / 180; const alpha = Math.min(0.8, 1 - t);
+        const grd = this.ctx.createRadialGradient(this.canvas.width/2, this.canvas.height/2, 50, this.canvas.width/2, this.canvas.height/2, Math.max(this.canvas.width,this.canvas.height)/1.2);
+        grd.addColorStop(0, `rgba(255,0,40,${alpha*0.55})`); grd.addColorStop(1, 'rgba(0,0,0,0)');
+        this.ctx.fillStyle = grd; this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
         if (Game.deathSequenceTimer > 150) {
-            const f = (Game.deathSequenceTimer-150)/30; // 1 -> 0
-            this.ctx.fillStyle = `rgba(255,255,255,${f*0.6})`;
-            this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+            const f = (Game.deathSequenceTimer-150)/30;
+            this.ctx.fillStyle = `rgba(255,255,255,${f*0.6})`; this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
         }
     },
     
     render() {
         this.clear();
         Camera.update();
-
-        // R�initialiser le curseur si pas en upgrade
-        if (Game.state !== 'upgrade') {
-            this.canvas.style.cursor = 'default';
-        }
-
-        // Dessiner le sol avant les entit�s
+        if (Game.state !== 'upgrade') { this.canvas.style.cursor = 'default'; }
         this.drawFloor();
-        
-        this.drawWorldBoundaries(); // Nouveau: dessiner les murs après le sol
+        this.drawWorldBoundaries();
         this.drawPlayer();
         this.drawBullets();
         this.drawEnemies();
@@ -1386,17 +1002,11 @@ export const Renderer = {
         this.drawUpgradeScreen();
         this.drawWaveAnnouncement();
         this.drawDeathFlash();
-
-        // Overlay pause
         if (typeof Game !== 'undefined' && Game.state === 'paused') {
-            this.ctx.fillStyle = 'rgba(0,0,0,0.55)';
-            this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-            this.ctx.fillStyle = '#fff';
-            this.ctx.font = 'bold 48px Courier New';
-            this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = 'rgba(0,0,0,0.55)'; this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+            this.ctx.fillStyle = '#fff'; this.ctx.font = 'bold 48px Courier New'; this.ctx.textAlign = 'center';
             this.ctx.fillText('PAUSED', this.canvas.width/2, this.canvas.height/2 - 10);
-            this.ctx.font = '18px Courier New';
-            this.ctx.fillStyle = '#ccc';
+            this.ctx.font = '18px Courier New'; this.ctx.fillStyle = '#ccc';
             this.ctx.fillText('Press P to resume', this.canvas.width/2, this.canvas.height/2 + 30);
         }
     }
