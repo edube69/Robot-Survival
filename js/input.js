@@ -41,6 +41,15 @@ export const Input = {
         const k = e.key.toLowerCase();
         this.keys[k] = true;
 
+        // Toggle pause
+        if (k === 'p' && typeof Game !== 'undefined') {
+            if (Game.state === 'playing' || Game.state === 'paused') {
+                e.preventDefault();
+                Game.togglePause();
+                return;
+            }
+        }
+
         // Espace pour restart au game over (empêche aussi un éventuel scroll)
         if ((k === ' ' || k === 'spacebar') && typeof Game !== 'undefined' && Game.state === 'gameOver') {
             e.preventDefault();

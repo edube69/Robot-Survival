@@ -1218,7 +1218,7 @@ export const Renderer = {
         this.ctx.translate(x, y);
         this.ctx.rotate(angle);
         
-        // Ombre pour la visibilit�
+        // Ombre pour la visibilit�>
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 1;
@@ -1234,7 +1234,7 @@ export const Renderer = {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Contour pour la visibilit�
+        // Contour pour la visibilit�>
         this.ctx.strokeStyle = '#fff';
         this.ctx.lineWidth = 1;
         this.ctx.globalAlpha = pulseIntensity * 0.8;
@@ -1386,5 +1386,18 @@ export const Renderer = {
         this.drawUpgradeScreen();
         this.drawWaveAnnouncement();
         this.drawDeathFlash();
+
+        // Overlay pause
+        if (typeof Game !== 'undefined' && Game.state === 'paused') {
+            this.ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = 'bold 48px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('PAUSED', this.canvas.width/2, this.canvas.height/2 - 10);
+            this.ctx.font = '18px Courier New';
+            this.ctx.fillStyle = '#ccc';
+            this.ctx.fillText('Press P to resume', this.canvas.width/2, this.canvas.height/2 + 30);
+        }
     }
 };

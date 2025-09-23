@@ -37,8 +37,13 @@ const Game = {
     comboMultiplier: 1,
     bestCombo: 0,
 
+    // === PAUSE TRACKING ===
+    pauseStart: 0,
+    totalPaused: 0,
+
     init() {
         this.startTime = Date.now();
+        this.totalPaused = 0; this.pauseStart = 0;
         Audio.init();
         Input.init();
         Player.init();
@@ -82,6 +87,8 @@ const Game = {
         this.kills = 0;
         // reset combo
         this.combo = 0; this.comboMultiplier = 1; this.comboTimer = 0; this.bestCombo = 0;
+        // reset timers pause
+        this.startTime = Date.now(); this.totalPaused = 0; this.pauseStart = 0;
         Player.reset();
         Camera.init();
         Enemy.init();
@@ -96,6 +103,25 @@ const Game = {
         for (let i = 0; i < initialSpawn; i++) {
             setTimeout(() => { Enemy.create(); Enemy.waveEnemiesSpawned++; }, i * 200);
         }
+    },
+
+    // === PAUSE HELPERS ===
+    togglePause() {
+        if (this.state === 'playing') {
+            this.state = 'paused';
+            this.pauseStart = Date.now();
+        } else if (this.state === 'paused') {
+            if (this.pauseStart) {
+                this.totalPaused += Date.now() - this.pauseStart;
+                this.pauseStart = 0;
+            }
+            this.state = 'playing';
+        }
+    },
+    getElapsedGameTimeSeconds() {
+        const now = Date.now();
+        const pausedAccum = this.totalPaused + (this.state === 'paused' && this.pauseStart ? (now - this.pauseStart) : 0);
+        return Math.max(0, Math.floor((now - this.startTime - pausedAccum) / 1000));
     },
 
     returnToMenu() {
@@ -198,6 +224,7 @@ const Game = {
     },
 
     update() {
+        if (this.state === 'paused') { this.updateUI(); return; }
         if (this.state === 'upgrade') {
             if (Input.isKeyPressed('1')) { Upgrades.select(0); } else if (Input.isKeyPressed('2')) { Upgrades.select(1); } else if (Input.isKeyPressed('3')) { Upgrades.select(2); }
             return;
@@ -225,7 +252,7 @@ const Game = {
     // showGameOverModal()
     async showGameOverModal() {
         Input.suspend();
-        const gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+        const gameTime = this.getElapsedGameTimeSeconds();
         const existingModal = document.querySelector('.game-over-modal');
         if (existingModal) existingModal.remove();
         const modal = document.createElement('div');
@@ -280,7 +307,7 @@ const Game = {
 
         const finalScore = this.score;
         const finalKills = this.kills;
-        const finalTime = Math.floor((Date.now() - this.startTime) / 1000);
+        const finalTime = this.getElapsedGameTimeSeconds();
 
         try {
             const user = await getCurrentUser();
