@@ -9,6 +9,8 @@ export const Enemy = {
     list: [],
     waveEnemiesSpawned: 0, // Compteur d'ennemis g�n�r�s pour cette vague
     maxEnemiesPerWave: 0, // Maximum d'ennemis � g�n�rer pour cette vague
+    targetedId: null, // id de l'ennemi actuellement visé pour halo
+    _nextId: 1,
     
     init() {
         this.list = [];
@@ -17,13 +19,14 @@ export const Enemy = {
         this.bonusWaveSpawned = 0; // Compteur d'ennemis de la vague bonus
         this.bonusWaveTarget = 0; // Objectif d'ennemis pour la vague bonus
         this.setWaveLimit();
+        this.targetedId = null;
     },
     
     setWaveLimit() {
-        // Nombre d'ennemis plus �lev� pour des vagues plus longues
-        const baseEnemies = 15; // Augment� de 8 � 15
-        const enemiesPerWave = Math.floor(Game.wave * 2.5); // Augment� de 1.2 � 2.5
-        this.maxEnemiesPerWave = Math.min(baseEnemies + enemiesPerWave, 40); // Max augment� de 25 � 40
+        // Nombre d'ennemis plus élev� pour des vagues plus longues
+        const baseEnemies = 20; // Augmenté de 15 à 20
+        const enemiesPerWave = Math.floor(Game.wave * 3.5); // Augmenté de 2.5 à 3.5
+        this.maxEnemiesPerWave = Math.min(baseEnemies + enemiesPerWave, 60); // Max augment� de 40 à 60
         console.log(`Wave ${Game.wave}: Max enemies = ${this.maxEnemiesPerWave}`);
     },
     
@@ -110,6 +113,7 @@ export const Enemy = {
         const healthBonus = Math.floor((Game.wave - 1) / 3); // +1 HP toutes les 3 vagues
         
         const enemy = {
+            id: this._nextId++,
             x, y,
             radius: enemyData.radius,
             speed: (enemyData.speedBase + Math.random() * enemyData.speedVariation) * speedMultiplier,
@@ -271,6 +275,9 @@ export const Enemy = {
                 }
             }
         }
+        // mettre à jour le ciblage pour halo (nearest)
+        const nearest = this.findNearest();
+        this.targetedId = nearest ? nearest.enemy.id : null;
     },
     
     findNearest() {
@@ -298,6 +305,10 @@ export const Enemy = {
             // Increment kill counter
             Game.addKill();
 
+            // Score avec combo multiplier
+            Game.applyScore(enemy.points);
+            Game.updateCombo(1); // kill -> feed combo
+
             // Effets sp�cialis�s par type d'ennemi
             this.createEnemyDeathEffects(enemy);
             
@@ -322,7 +333,6 @@ export const Enemy = {
             if (index > -1) {
                 this.list.splice(index, 1);
             }
-            Game.score += enemy.points;
             return true;
         } else {
             // Effet de d�g�t selon le type d'ennemi
@@ -556,7 +566,7 @@ export const Enemy = {
         // Ne pas spawner pendant les annonces de vagues
         if (Game.state !== 'playing') return;
         
-        // Debug: afficher l'�tat actuel avec plus de d�tails
+        // Debug: afficher l'état actuel avec plus de détails
         if (this.list.length === 0 && Math.random() < 0.01) { // Log occasionnel pour debug
             console.log(`SPAWN DEBUG - Wave: ${Game.wave}, Enemies: ${this.list.length}, Spawned: ${this.waveEnemiesSpawned}/${this.maxEnemiesPerWave}, Upgrades: ${Game.upgradesThisWave}, BonusActive: ${this.bonusWaveActive}, BonusSpawned: ${this.bonusWaveSpawned}/${this.bonusWaveTarget}, Gems: ${Game.gems}/${Game.gemsForUpgrade}`);
         }
@@ -564,15 +574,15 @@ export const Enemy = {
         // Conditions pour terminer la vague:
         // 1. Tous les ennemis sont morts
         // 2. Maximum d'ennemis atteint pour cette vague
-        // 3. ET au moins une upgrade a �t� obtenue (� partir de la vague 2)
-        const hasMinimumUpgrades = Game.wave === 1 || Game.upgradesThisWave >= 1;
+        // 3. ET au moins 2 upgrades ont été obtenues (augmenté de 1 à 2)
+        const hasMinimumUpgrades = Game.wave === 1 || Game.upgradesThisWave >= 2; // Exiger plus d'upgrades
         const waveComplete = this.list.length === 0 && 
                             this.waveEnemiesSpawned >= this.maxEnemiesPerWave && 
                             hasMinimumUpgrades;
         
         if (waveComplete) {
             console.log(`Wave ${Game.wave} completed! Spawned: ${this.waveEnemiesSpawned}/${this.maxEnemiesPerWave}, Upgrades: ${Game.upgradesThisWave}`);
-            // R�initialiser les flags de vague bonus
+            // Réinitialiser les flags de vague bonus
             this.bonusWaveActive = false;
             this.bonusWaveSpawned = 0;
             this.bonusWaveTarget = 0;
@@ -580,18 +590,18 @@ export const Enemy = {
             return;
         }
         
-        // Si tous les ennemis sont morts mais qu'on n'a pas encore d'upgrade,
-        // relancer une vague compl�te pour maintenir l'action !
+        // Si tous les ennemis sont morts mais qu'on n'a pas encore assez d'upgrades,
+        // relancer une vague complète pour maintenir l'action !
         if (this.list.length === 0 && 
             this.waveEnemiesSpawned >= this.maxEnemiesPerWave && 
             !hasMinimumUpgrades &&
-            !this.bonusWaveActive) { // �viter de relancer plusieurs fois
+            !this.bonusWaveActive) { // éviter de relancer plusieurs fois
             
-            console.log(`No upgrades yet this wave, launching full bonus wave for gems!`);
+            console.log(`Need ${2 - Game.upgradesThisWave} more upgrades this wave, launching full bonus wave for gems!`);
             
             // Calculer le nombre d'ennemis pour une vague bonus substantielle
-            const bonusWaveSize = Math.max(8, Math.floor(this.maxEnemiesPerWave * 0.6)); // 60% de la vague normale, minimum 8
-            const maxActiveBonus = Math.min(15, 6 + Math.floor(Game.wave * 0.8)); // Limite d'ennemis actifs pour la vague bonus
+            const bonusWaveSize = Math.max(12, Math.floor(this.maxEnemiesPerWave * 0.8)); // Augmenté de 0.6 à 0.8
+            const maxActiveBonus = Math.min(20, 8 + Math.floor(Game.wave * 1.2)); // Limites augmentées
             
             // Spawn initial rapide de la vague bonus
             const initialBonusSpawn = Math.min(bonusWaveSize, maxActiveBonus);
@@ -612,7 +622,7 @@ export const Enemy = {
         
         // Gestion du spawn continu pour la vague bonus
         if (this.bonusWaveActive && !hasMinimumUpgrades) {
-            const maxActiveBonus = Math.min(15, 6 + Math.floor(Game.wave * 0.8));
+            const maxActiveBonus = Math.min(20, 8 + Math.floor(Game.wave * 1.2));
             const bonusSpawnRate = 0.08; // Taux de spawn pour maintenir l'action
             
             if (this.list.length < maxActiveBonus && 
@@ -624,18 +634,18 @@ export const Enemy = {
                 console.log(`Bonus wave: ${this.bonusWaveSpawned}/${this.bonusWaveTarget} spawned`);
             }
             
-            // NOUVEAU: Si tous les ennemis bonus sont g�n�r�s et tu�s, mais pas d'upgrade
-            // Relancer automatiquement une nouvelle vague bonus pour �viter le blocage
+            // NOUVEAU: Si tous les ennemis bonus sont générés et tués, mais pas assez d'upgrades
+            // Relancer automatiquement une nouvelle vague bonus pour éviter le blocage
             if (this.list.length === 0 && 
                 this.bonusWaveSpawned >= this.bonusWaveTarget) {
                 
-                console.log(`Bonus wave completed but no upgrade yet. Launching new bonus wave to continue...`);
+                console.log(`Bonus wave completed but need more upgrades. Launching new bonus wave to continue...`);
                 
-                // R�initialiser et relancer une nouvelle vague bonus
-                const newBonusWaveSize = Math.max(6, Math.floor(this.maxEnemiesPerWave * 0.4)); // Plus petite cette fois
-                const maxActiveBonus = Math.min(12, 4 + Math.floor(Game.wave * 0.6));
+                // Réinitialiser et relancer une nouvelle vague bonus
+                const newBonusWaveSize = Math.max(8, Math.floor(this.maxEnemiesPerWave * 0.5)); 
+                const maxActiveBonus = Math.min(15, 6 + Math.floor(Game.wave * 0.8));
                 
-                // Spawn imm�diat de nouveaux ennemis
+                // Spawn immédiat de nouveaux ennemis
                 const newInitialSpawn = Math.min(newBonusWaveSize, maxActiveBonus);
                 for (let i = 0; i < newInitialSpawn; i++) {
                     setTimeout(() => {
@@ -644,16 +654,16 @@ export const Enemy = {
                     }, i * 150);
                 }
                 
-                // R�initialiser les compteurs pour la nouvelle vague bonus
+                // Réinitialiser les compteurs pour la nouvelle vague bonus
                 this.bonusWaveSpawned = newInitialSpawn;
                 this.bonusWaveTarget = newBonusWaveSize;
                 
                 return;
             }
             
-            // Terminer la vague bonus si le joueur obtient une upgrade
+            // Terminer la vague bonus si le joueur obtient suffisamment d'upgrades
             if (hasMinimumUpgrades) {
-                console.log(`Upgrade obtained! Ending bonus wave and proceeding to next wave.`);
+                console.log(`Sufficient upgrades obtained! Ending bonus wave and proceeding to next wave.`);
                 this.bonusWaveActive = false;
                 this.bonusWaveSpawned = 0;
                 this.bonusWaveTarget = 0;
@@ -668,11 +678,11 @@ export const Enemy = {
             return;
         }
         
-        // Fallback de s�curit� am�lior� : si on est bloqu� sans ennemis
+        // Fallback de sécurité amélioré : si on est bloqué sans ennemis
         if (this.list.length === 0 && 
             this.waveEnemiesSpawned >= this.maxEnemiesPerWave) {
             
-            // Si on est en vague bonus mais bloqu� sans upgrade depuis trop longtemps
+            // Si on est en vague bonus mais bloqué sans upgrade depuis trop longtemps
             if (this.bonusWaveActive && this.bonusWaveSpawned >= this.bonusWaveTarget) {
                 console.log(`EMERGENCY FALLBACK: Bonus wave exhausted, forcing progression to prevent infinite loop`);
                 this.bonusWaveActive = false;
@@ -690,11 +700,11 @@ export const Enemy = {
             }
         }
         
-        // Spawn normal
-        const maxActiveEnemies = Math.min(18, 8 + Math.floor(Game.wave * 1.2));
-        const baseSpawnRate = 0.06; // L�g�rement r�duit pour des vagues plus g�rables
-        const waveSpawnBonus = Game.wave * 0.008; // R�duits le bonus par vague
-        const spawnRate = Math.min(baseSpawnRate + waveSpawnBonus, 0.12); // Cap r�duit
+        // Spawn normal - ralentir légèrement le spawn pour vagues plus longues
+        const maxActiveEnemies = Math.min(25, 10 + Math.floor(Game.wave * 1.5)); // Augmenté
+        const baseSpawnRate = 0.04; // Réduit de 0.06 à 0.04 pour spawn plus lent
+        const waveSpawnBonus = Game.wave * 0.005; // Réduction du bonus par vague
+        const spawnRate = Math.min(baseSpawnRate + waveSpawnBonus, 0.08); // Cap réduit
         
         if (this.list.length < maxActiveEnemies && 
             this.waveEnemiesSpawned < this.maxEnemiesPerWave && 

@@ -9,6 +9,14 @@ export const Particle = {
     },
     
     createExplosion(x, y, color, count = CONFIG.PARTICLES.COUNT) {
+        // Limitation dynamique : si au-dessus du soft cap on réduit le nombre créé
+        const total = this.list.length;
+        if (total > CONFIG.PARTICLES.MAX_ACTIVE) {
+            return; // stop dur
+        }
+        if (total > CONFIG.PARTICLES.SOFT_CAP) {
+            count = Math.max(1, Math.floor(count * CONFIG.PARTICLES.REDUCTION_FACTOR));
+        }
         for (let i = 0; i < count; i++) {
             this.list.push({
                 x: x,

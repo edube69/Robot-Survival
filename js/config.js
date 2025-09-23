@@ -28,7 +28,7 @@ export const CONFIG = {
     // Configuration de la cam�ra
     CAMERA: {
         FOLLOW_SPEED: 0.08, // L�g�rement plus rapide pour r�duire la latence
-        ZOOM: 1.8 // Zoom > 1 rapproche la cam�ra (tout appara�t plus gros)
+        ZOOM: 1.25 // Zoom > 1 rapproche la cam�ra (tout appara�t plus gros)
     },
     
     // Sol / motif du fond
@@ -96,7 +96,10 @@ export const CONFIG = {
     // Configuration des particules
     PARTICLES: {
         LIFE: 30,
-        COUNT: 8
+        COUNT: 8,
+        MAX_ACTIVE: 1200, // Limite dure pour freiner la surcharge
+        SOFT_CAP: 800,    // Au-dessus on r�duit le spawn
+        REDUCTION_FACTOR: 0.5 // Cr�ation divis�e par 2 au-dessus du SOFT_CAP
     },
     
     // Configuration des gemmes/pi�ces d'or
@@ -220,7 +223,15 @@ export const CONFIG = {
     
     // Limites du jeu
     LIMITS: {
-        MAX_RESURRECTIONS: 0,
+        MAX_RESURRECTIONS: 1, // Autoriser au moins une r�surrection maintenant
         MAX_LIVES: 3
+    },
+
+    // Syst�me de combo / score
+    COMBO: {
+        WINDOW_FRAMES: 90,    // Temps max entre deux kills pour garder le combo (~1.5s)
+        MULTIPLIER_STEP: 0.25, // Incr�ment par palier de kills
+        KILLS_PER_STEP: 3,     // Tous les 3 kills le multiplicateur monte
+        MAX_MULTIPLIER: 5      // Limite de s�curit�
     }
 };

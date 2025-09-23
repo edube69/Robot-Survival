@@ -1,4 +1,4 @@
-* {
+﻿* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -24,6 +24,22 @@ body {
     align-items: center;
     background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
     z-index: 1000;
+}
+
+/* Canvas d’animation en arrière-plan de l’écran d’accueil */
+#attractCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0; /* le contenu reste au-dessus */
+}
+
+/* Optionnel : s’assurer que le contenu est au-dessus du canvas */
+#startScreen > *:not(#attractCanvas) {
+    position: relative;
+    z-index: 1;
 }
 
 .title {
@@ -255,28 +271,27 @@ canvas {
     font-style: italic;
 }
 
-.highscores-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 1rem;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 8px;
+
+/* Couleur de la date */
+.date {
+    color: #9fe29f;
+    font-weight: 600;
+    text-shadow: 0 0 6px rgba(0,255,0,0.25);
 }
 
-.score-entry {
-    display: grid;
-    grid-template-columns: 50px 1fr 1fr 1fr 1fr;
-    gap: 1rem;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+/* Sur mobile, on compacte: garde Rang, Nom, Score; masque colonnes 4-6 (dont Date) */
+@media (max-width: 720px) {
+    .score-entry {
+        grid-template-columns: 44px 1fr 1fr; /* Rang, Nom, Score */
+    }
+
+        .score-entry > :nth-child(4),
+        .score-entry > :nth-child(5),
+        .score-entry > :nth-child(6) {
+            display: none;
+        }
 }
 
-.score-entry:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
 
 .rank {
     font-weight: bold;
@@ -442,7 +457,7 @@ canvas {
         transform: scale(1.05);
     }
 
-/* 2) Formulaire de high score (Game Over) - verre d�poli + n�on */
+/* 2) Formulaire de high score (Game Over) - verre dépoli + néon */
 #gameOver .score-form {
     margin-top: 20px;
     padding: 16px 18px;
@@ -499,7 +514,7 @@ canvas {
             background: rgba(0,0,0,0.65);
         }
 
-    /* Bouton Submit = coh�rent avec Start */
+    /* Bouton Submit = cohérent avec Start */
     #gameOver .score-form .submit-button {
         grid-area: button;
         align-self: stretch;
@@ -545,7 +560,7 @@ canvas {
 
 
 
-/* 3) Highscores list - rendu plus premium et coh�rent */
+/* 3) Highscores list - rendu plus premium et cohérent */
 .highscores-container {
     max-width: 900px;
     margin: 2rem auto;
@@ -557,18 +572,6 @@ canvas {
     backdrop-filter: blur(5px);
 }
 
-.score-entry {
-    display: grid;
-    grid-template-columns: 60px 1fr 1fr 1fr 1fr;
-    gap: 1rem;
-    align-items: center;
-    padding: .75rem 1rem;
-    margin: .5rem 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-    border: 1px solid rgba(0,255,0,0.2);
-    border-radius: 8px;
-    transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
-}
 
     .score-entry:hover {
         transform: translateY(-2px);
@@ -592,24 +595,27 @@ canvas {
     text-shadow: 0 0 8px rgba(0,255,0,0.45);
 }
 
+/* Mobile : masquer les colonnes 4-6 (Kills, Temps, Date) */
 @media (max-width: 720px) {
     .score-entry {
         grid-template-columns: 44px 1fr 1fr;
     }
 
         .score-entry > :nth-child(4),
-        .score-entry > :nth-child(5) {
-            display: none; /* compacter sur mobile */
+        .score-entry > :nth-child(5),
+        .score-entry > :nth-child(6) {
+            display: none;
         }
 }
 
-/* Screen High Scores = m�me gabarit que le start */
+
+/* Screen High Scores = même gabarit que le start */
 #highscoresScreen {
     position: fixed;
     inset: 0;
     width: 100vw;
     height: 100vh;
-    display: none; /* sera mis � flex via JS */
+    display: none; /* sera mis à flex via JS */
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -643,19 +649,22 @@ canvas {
     opacity: .08;
 }
 
-/* Titre r�tro cyan + flash quand le top change */
+/* Titre rétro cyan + flash quand le top change */
 .leaderboard-title {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: bold;
     text-align: center;
     margin-bottom: 1rem;
-    color: #0ff;
-    text-shadow: 0 0 18px rgba(0,255,255,.35);
+    /* dégradé animé comme ton titre Robotron */
+    background: linear-gradient(45deg, #00ff41, #0ff, #f0f, #ff0);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease-in-out infinite, glowPulse 2.8s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
     letter-spacing: .06em;
-    animation: glowPulse 2.8s ease-in-out infinite;
 }
-
-    .leaderboard-title.flash {
-        animation: flashOnce .7s linear 1;
-    }
 
 @keyframes glowPulse {
     0%,100% {
@@ -681,7 +690,7 @@ canvas {
     }
 }
 
-/* Barre de contr�le musique */
+/* Barre de contrôle musique */
 .leaderboard-controls {
     display: flex;
     align-items: center;
@@ -721,12 +730,6 @@ canvas {
         width: 160px;
     }
 
-/* Apparition douce des lignes */
-.appear {
-    opacity: 0;
-    transform: translateY(6px);
-    animation: slideUp .35s ease forwards;
-}
 
 @keyframes slideUp {
     to {
@@ -764,19 +767,39 @@ canvas {
     z-index: 2;
 }
 
-/* Titre r�tro cyan + flash quand le top change */
+/* Titre rétro cyan + flash quand le top change */
 .leaderboard-title {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: bold;
     text-align: center;
     margin-bottom: 1rem;
-    color: #0ff;
-    text-shadow: 0 0 18px rgba(0,255,255,.35);
+    /* Dégradé multicolore animé */
+    background: linear-gradient(45deg, #00ff41, #0ff, #f0f, #ff0);
+    background-size: 400% 400%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent; /* ← obligatoire */
+    -webkit-text-fill-color: transparent;
+    /* Animation de dégradé */
+    animation: gradientShift 6s ease infinite;
     letter-spacing: .06em;
-    animation: glowPulse 2.8s ease-in-out infinite;
+    /* Glow discret en plus */
+    text-shadow: 0 0 12px rgba(0, 255, 65, 0.4);
 }
 
-    .leaderboard-title.flash {
-        animation: flashOnce .7s linear 1;
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
     }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
 
 @keyframes glowPulse {
     0%,100% {
@@ -802,7 +825,7 @@ canvas {
     }
 }
 
-/* Barre de contr�le */
+/* Barre de contrôle */
 .leaderboard-controls {
     display: flex;
     align-items: center;
@@ -847,12 +870,18 @@ canvas {
     font-size: .9rem;
 }
 
-/* Apparition douce des lignes + top highlight (tu as d�j� une base) */
+/* animation d’apparition par défaut */
 .appear {
     opacity: 0;
     transform: translateY(6px);
     animation: slideUp .35s ease forwards;
 }
+
+/* pour le top #1 : on joue slideUp PUIS crownPulse */
+.score-entry.is-top.appear {
+    animation: slideUp .35s ease forwards, crownPulse .8s ease .35s;
+}
+
 
 @keyframes slideUp {
     to {
@@ -861,8 +890,614 @@ canvas {
     }
 }
 
-.score-entry.is-top {
-    border-color: rgba(255,215,0,0.45);
-    box-shadow: 0 0 22px rgba(255,215,0,.22);
+
+/* =========================
+   High Scores — polish v2
+   ========================= */
+:root {
+    --c-bg: rgba(0,0,0,.70);
+    --c-panel: rgba(0,0,0,.75);
+    --c-border: rgba(0,255,0,.28);
+    --c-border-strong: rgba(0,255,0,.45);
+    --c-glow: rgba(0,255,162,.14);
+    --c-text: #e8ffe8;
+    --c-sub: #9fe29f;
+    --c-score: #00ff41;
+    --c-date: #a6ffd1;
+    --radius: 12px;
 }
 
+.highscores-container {
+    max-width: 980px;
+    margin: 2rem auto;
+    padding: 1rem 1.25rem 1.5rem;
+    background: var(--c-panel);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    box-shadow: 0 0 30px var(--c-glow);
+    backdrop-filter: blur(6px);
+    /* rendre l’en-tête sticky possible */
+    max-height: calc(100vh - 120px);
+    overflow: auto;
+}
+
+/* header sticky */
+.score-entry.header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: linear-gradient(180deg, rgba(18,18,18,.9), rgba(18,18,18,.7));
+    border: 1px solid rgba(0,255,255,.25);
+    box-shadow: 0 6px 14px rgba(0,0,0,.35);
+    font-weight: 800;
+}
+
+/* grille à 6 colonnes (Rank, Nom, Score, Kills, Temps, Date) */
+.score-entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 64px 1fr 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: .85rem 1rem;
+    margin: .6rem 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+/* Compactage des lignes highscore */
+.page-highscores .score-entry { padding: 0.55rem 0.75rem !important; margin: 0.35rem 0 !important; }
+.page-highscores .score-entry.header { padding: 0.55rem 0.75rem !important; }
+.page-highscores .score-entry .rank, 
+.page-highscores .score-entry .name, 
+.page-highscores .score-entry .score, 
+.page-highscores .score-entry .kills, 
+.page-highscores .score-entry .time, 
+.page-highscores .score-entry .date { line-height:1.1; }
+.page-highscores .score-entry.player-rank { margin-top:0.5rem !important; }
+
+/* alternance subtile */
+#highscores-list > .score-entry:nth-of-type(odd) {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+}
+
+.score-entry.header {
+    top: 0;
+}
+
+#highscores-list {
+    margin-top: .5rem;
+    scroll-margin-top: 64px;
+}
+
+/* hover + top */
+.score-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 22px var(--c-glow);
+    border-color: var(--c-border-strong);
+}
+
+.score-entry.is-top {
+    border-color: rgba(255,215,0,.55);
+    box-shadow: 0 0 26px rgba(255,215,0,.22);
+}
+
+/* chiffres alignés proprement */
+.score, .rank, .date, .kills, .time {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "liga" 0;
+}
+
+/* rang + médailles */
+.rank {
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+/* médailles 1/2/3 — robustes même si un header précède */
+#highscores-list .score-entry[data-rank="1"] .rank::before,
+#highscores-list .score-entry[data-rank="2"] .rank::before,
+#highscores-list .score-entry[data-rank="3"] .rank::before {
+    content: "";
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    border-radius: 50%;
+    vertical-align: -4px;
+    box-shadow: 0 0 10px currentColor;
+}
+
+#highscores-list .score-entry[data-rank="1"] .rank::before {
+    background: radial-gradient(circle at 30% 30%, #fff8b0, #ffd700);
+}
+
+#highscores-list .score-entry[data-rank="2"] .rank::before {
+    background: radial-gradient(circle at 30% 30%, #f5f5f5, #c0c0c0);
+}
+
+#highscores-list .score-entry[data-rank="3"] .rank::before {
+    background: radial-gradient(circle at 30% 30%, #ffd9b0, #cd7f32);
+}
+
+
+/* nom + score plus lisibles */
+.name {
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 0 6px rgba(255,255,255,.08);
+}
+
+.score {
+    color: var(--c-score);
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(0,255,0,.35);
+}
+
+/* chips Kills/Temps */
+.kills, .time {
+    color: var(--c-sub);
+    font-weight: 700;
+    padding: 6px 10px;
+    border: 1px solid rgba(0,255,255,.25);
+    border-radius: 999px;
+    background: rgba(0,0,0,.35);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    justify-self: start;
+}
+
+/* badge Date à droite */
+.date {
+    justify-self: end;
+    color: var(--c-date);
+    font-weight: 800;
+    padding: 6px 12px;
+    border: 1px solid rgba(0,255,0,.35);
+    border-radius: 999px;
+    background: rgba(0,40,0,.35);
+    box-shadow: 0 0 12px rgba(0,255,0,.15), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+
+/* micro-anim du top quand il change (tu déclenches déjà .flash sur le titre) */
+@keyframes crownPulse {
+    0% {
+        filter: brightness(1);
+        transform: translateY(0);
+    }
+
+    40% {
+        filter: brightness(1.35);
+        transform: translateY(-1px);
+    }
+
+    100% {
+        filter: brightness(1);
+        transform: translateY(0);
+    }
+}
+
+
+/* mobile : compacter, garder Rank/Nom/Score */
+@media (max-width: 720px) {
+    .score-entry {
+        grid-template-columns: 48px 1fr 1fr;
+    }
+
+        .score-entry > :nth-child(4),
+        .score-entry > :nth-child(5),
+        .score-entry > :nth-child(6) {
+            display: none;
+        }
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    margin-top: 1rem;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 2px solid rgba(0,255,0,.35);
+    background: rgba(0,0,0,.35);
+    color: #aef7ae;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: .04em;
+    box-shadow: 0 0 14px rgba(0,255,0,.18), inset 0 0 0 1px rgba(255,255,255,.04);
+    transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease, background .2s;
+}
+
+    .back-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(0,255,0,.55);
+        background: rgba(0,30,0,.45);
+        box-shadow: 0 0 20px rgba(0,255,0,.28);
+    }
+
+    .back-button:active {
+        transform: translateY(0);
+    }
+
+.back-icon {
+    filter: drop-shadow(0 0 6px rgba(0,255,0,.35));
+}
+
+.back-text {
+    text-decoration: none;
+}
+
+/* petit style “lien secondaire” si tu conserves l’ancien */
+a.back-button, a.back-button:visited {
+    color: #aef7ae;
+}
+
+/* Conteneur centré pour le bouton */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    margin: 2rem auto 0; /* auto = centré horizontalement */
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 2px solid rgba(0,255,0,.35);
+    background: rgba(0,0,0,.35);
+    color: #aef7ae;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: .04em;
+    box-shadow: 0 0 14px rgba(0,255,0,.18), inset 0 0 0 1px rgba(255,255,255,.04);
+    transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease, background .2s;
+}
+
+    /* effet hover */
+    .back-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(0,255,0,.55);
+        background: rgba(0,30,0,.45);
+        box-shadow: 0 0 20px rgba(0,255,0,.28);
+    }
+
+    .back-button:active {
+        transform: translateY(0);
+    }
+
+.back-icon {
+    filter: drop-shadow(0 0 6px rgba(0,255,0,.35));
+}
+
+.back-text {
+    text-decoration: none;
+}
+
+/* le wrapper parent centre le bouton */
+.highscores-container {
+    text-align: center; /* centre inline-blocks comme ton bouton */
+}
+
+
+.neon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    padding: 14px 28px;
+    margin: 1rem auto;
+    border-radius: 999px;
+    border: 3px solid rgba(0,255,0,.35);
+    background: rgba(0,0,0,.35);
+    color: #aef7ae;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease, background .2s;
+    box-shadow: 0 0 14px rgba(0,255,0,.18), inset 0 0 0 1px rgba(255,255,255,.04);
+}
+
+    .neon-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(0,255,0,.55);
+        background: rgba(0,30,0,.45);
+        box-shadow: 0 0 22px rgba(0,255,0,.35);
+    }
+
+    .neon-button:active {
+        transform: translateY(0);
+    }
+
+
+#attractCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+#startScreen > *:not(#attractCanvas) {
+    position: relative;
+    z-index: 1;
+}
+
+/* === CORRECTIF DÉFINITIF MODAL GAME OVER === */
+.game-over-modal.neon-theme {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: rgba(0, 0, 10, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 99999 !important;
+    opacity: 0;
+    transition: opacity .4s ease-in-out;
+    padding: 1rem;
+    margin: 0 !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+}
+
+.game-over-modal.neon-theme.show {
+    opacity: 1 !important;
+}
+
+/* Contenu de la modal */
+.gom-header, .gom-body {
+    position: relative;
+    z-index: 100000;
+}
+
+.gom-header {
+    max-width: 760px;
+    width: 90%;
+    background: linear-gradient(180deg, rgba(0,0,0,.85), rgba(0,0,0,.65));
+    border: 2px solid rgba(0,255,255,.5);
+    border-radius: 14px;
+    padding: 24px 28px;
+    box-shadow: 0 0 40px rgba(0,255,255,.4), inset 0 0 0 1px rgba(255,255,255,.1);
+    margin-bottom: 20px;
+}
+
+.gom-title {
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    text-align: center;
+    margin: 0 0 12px;
+    background: linear-gradient(45deg, #00ff41, #0ff, #f0f, #ff0);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: gradientShift 6s ease infinite;
+    letter-spacing: .08em;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.gom-divider {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #0ff, transparent);
+    margin: 15px 0 20px;
+    border-radius: 2px;
+}
+
+.gom-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 14px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 10px;
+    border: 1px solid rgba(0,255,255,.35);
+    border-radius: 10px;
+    background: rgba(0,15,20,.7);
+    box-shadow: 0 0 20px rgba(0,255,255,.2) inset, 0 0 15px rgba(0,255,255,.1);
+}
+
+.stat.wide {
+    grid-column: span 2;
+}
+
+.lbl {
+    font-size: .75rem;
+    letter-spacing: .15em;
+    color: #8ff;
+    text-shadow: 0 0 8px rgba(0,255,255,.6);
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.val {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255,255,255,.6);
+    font-family: 'Courier New', monospace;
+}
+
+.gom-body {
+    max-width: 640px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.prompt {
+    letter-spacing: .2em;
+    color: #0ff;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 0 0 12px rgba(0,255,255,.5);
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+.gom-form {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 15px;
+    width: 100%;
+}
+
+.gom-input {
+    padding: 16px 18px;
+    border: 2px solid rgba(0,255,0,.4);
+    border-radius: 10px;
+    background: rgba(0,0,0,.7);
+    color: #e8ffe8;
+    font-weight: 700;
+    letter-spacing: .08em;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    transition: border-color .2s, box-shadow .25s, transform .08s;
+    font-size: 1rem;
+}
+
+.gom-input:focus {
+    border-color: #0f0;
+    box-shadow: 0 0 0 3px rgba(0,255,0,.3), 0 0 30px rgba(0,255,0,.3);
+    transform: translateY(-1px);
+}
+
+.gom-btn {
+    padding: 16px 22px;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid #0ff;
+    background: rgba(0,30,40,.6);
+    color: #bff;
+    transition: transform .08s, box-shadow .25s, border-color .25s;
+    font-size: .9rem;
+}
+
+.gom-btn.primary {
+    border-color: #0f0;
+    color: #dfd;
+}
+
+.gom-btn.secondary {
+    border-color: #f0f;
+    color: #fcf;
+}
+
+.gom-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px currentColor;
+}
+
+.gom-btn:active {
+    transform: translateY(0);
+}
+
+.hint {
+    margin-top: 20px;
+    font-size: .8rem;
+    color: #8da;
+    text-shadow: 0 0 8px rgba(0,255,255,.4);
+    font-family: 'Courier New', monospace;
+    text-align: center;
+}
+
+.rank-feedback {
+    margin-top: 25px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: .15em;
+    color: #ffda44;
+    text-shadow: 0 0 20px rgba(255,215,0,.8);
+    animation: rankReveal .6s ease;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+}
+
+.rank-feedback .rank-num {
+    font-size: 2.2rem;
+    color: #fff;
+    text-shadow: 0 0 25px rgba(255,255,255,.8);
+}
+
+@keyframes rankReveal {
+    0% {
+        transform: scale(.6);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.rank-feedback.pulse {
+    animation: rankPulse 4s ease forwards;
+}
+
+@keyframes rankPulse {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    40% {
+        filter: brightness(1.5);
+    }
+}
+
+/* Mobile responsif */
+@media (max-width: 680px) {
+    .gom-form {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+        gap: 12px;
+    }
+    
+    .gom-btn {
+        width: 100%;
+    }
+    
+    .stat.wide {
+        grid-column: span 1;
+    }
+    
+    .gom-header {
+        padding: 20px 24px;
+    }
+    
+    .gom-title {
+        font-size: 2rem;
+    }
+}
+
+/* Highscore page adjustments: no internal scroll, show only top 10 normally */
+.page-highscores body, body.page-highscores { overflow:hidden; }
+.highscores-container { max-height:none; overflow:visible; }
+.score-entry.ellipsis { text-align:center; font-weight:700; letter-spacing:.3em; color:#0ff; background:rgba(0,0,0,.4); }
+.score-entry.player-rank { border-color:rgba(255,215,0,.6); box-shadow:0 0 18px rgba(255,215,0,.35); position:relative; }
+.score-entry.player-rank::after { content:'YOU'; position:absolute; top:-8px; right:12px; font-size:.6rem; padding:3px 6px; background:#ff0; color:#000; border-radius:4px; font-weight:900; box-shadow:0 0 8px #ff0; }
+.collapse-out { animation: collapseFade .55s ease forwards; }
+@keyframes collapseFade { to { opacity:0; transform:translateY(-6px) scale(.9); } }
