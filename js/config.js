@@ -47,7 +47,8 @@ export const CONFIG = {
         MAX_COUNT: 35,
         TYPES: {
             basic: { 
-                radius: 6, 
+                // Augment� de 6 � 8 pour une meilleure lisibilit�
+                radius: 8, 
                 speedBase: 1.5,
                 speedVariation: 1.5,
                 color: '#f0f', 
@@ -58,7 +59,8 @@ export const CONFIG = {
                 description: 'Fast and agile recon unit'
             },
             fast: { 
-                radius: 4, 
+                // Augment� de 4 � 6 (�tait trop petit)
+                radius: 6, 
                 speedBase: 2.8, // R�duit de 3.5 � 2.8 pour moins de vitesse initiale
                 speedVariation: 1.0, // R�duit de 1.5 � 1.0 pour moins de variation
                 color: '#f44', 
@@ -69,7 +71,8 @@ export const CONFIG = {
                 description: 'High-speed assault drone'
             },
             tank: { 
-                radius: 11, 
+                // L�gerement plus gros : 11 -> 13
+                radius: 13, 
                 speedBase: 1,
                 speedVariation: 0.8,
                 color: '#84f', 
@@ -80,7 +83,8 @@ export const CONFIG = {
                 description: 'Heavy armored destroyer'
             },
             splitter: { 
-                radius: 8, 
+                // Augment� de 8 � 11
+                radius: 11, 
                 speedBase: 1.5,
                 speedVariation: 1, 
                 color: '#f80', 
