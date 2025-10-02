@@ -6,7 +6,7 @@ export const CONFIG = {
         HEIGHT: 1800
     },
     
-    // Dimensions du canvas (ratio de r�f�rence)
+    // Dimensions du canvas (ratio de référence)
     CANVAS: {
         WIDTH: 1000,
         HEIGHT: 600
@@ -17,28 +17,29 @@ export const CONFIG = {
         RADIUS: 12,
         SPEED: 4,
         COLOR: '#0ff',
-        FIRE_RATE: 18,
+        FIRE_RATE: 30,
+        MIN_FIRE_RATE: 12, // cadence minimale (frames entre tirs) pour l'équilibrage
         BULLET_SPEED: 7,
         BULLET_SIZE: 3,
         BULLET_LENGTH: 10,
-        RANGE: 280,
+        RANGE: 260,
         MAGNET_RANGE: 60
     },
     
-    // Configuration de la cam�ra
+    // Configuration de la caméra
     CAMERA: {
-        FOLLOW_SPEED: 0.08, // L�g�rement plus rapide pour r�duire la latence
-        ZOOM: 1.25 // Zoom > 1 rapproche la cam�ra (tout appara�t plus gros)
+        FOLLOW_SPEED: 0.08, // Légèrement plus rapide pour réduire la latence
+        ZOOM: 1.25 // Zoom > 1 rapproche la caméra (tout apparaît plus gros)
     },
     
     // Sol / motif du fond
     FLOOR: {
-        TILE: 64, // taille de la tuile en pixels (unit�s monde)
+        TILE: 64, // taille de la tuile en pixels (unités monde)
         LINE_COLOR: 'rgba(0,255,255,0.07)',
         MAJOR_LINE_COLOR: 'rgba(0,255,255,0.12)',
         DOT_COLOR: 'rgba(0,255,255,0.10)',
         DOT_SIZE: 2,
-        MAJOR_EVERY: 4 // une ligne renforc�e toutes les N tuiles
+        MAJOR_EVERY: 4 // une ligne renforcée toutes les N tuiles
     },
     
     // Configuration des ennemis
@@ -47,7 +48,7 @@ export const CONFIG = {
         MAX_COUNT: 35,
         TYPES: {
             basic: { 
-                // Augment� de 6 � 8 pour une meilleure lisibilit�
+                // Augmenté de 6 à 8 pour une meilleure lisibilité
                 radius: 8, 
                 speedBase: 1.5,
                 speedVariation: 1.5,
@@ -59,10 +60,10 @@ export const CONFIG = {
                 description: 'Fast and agile recon unit'
             },
             fast: { 
-                // Augment� de 4 � 6 (�tait trop petit)
+                // Augmenté de 4 à 6 (était trop petit)
                 radius: 6, 
-                speedBase: 2.8, // R�duit de 3.5 � 2.8 pour moins de vitesse initiale
-                speedVariation: 1.0, // R�duit de 1.5 � 1.0 pour moins de variation
+                speedBase: 2.8, // Réduit de 3.5 à 2.8 pour moins de vitesse initiale
+                speedVariation: 1.0, // Réduit de 1.5 à 1.0 pour moins de variation
                 color: '#f44', 
                 health: 1, 
                 points: 150, 
@@ -71,7 +72,7 @@ export const CONFIG = {
                 description: 'High-speed assault drone'
             },
             tank: { 
-                // L�gerement plus gros : 11 -> 13
+                // Légèrement plus gros : 11 -> 13
                 radius: 13, 
                 speedBase: 1,
                 speedVariation: 0.8,
@@ -83,7 +84,7 @@ export const CONFIG = {
                 description: 'Heavy armored destroyer'
             },
             splitter: { 
-                // Augment� de 8 � 11
+                // Augmenté de 8 à 11
                 radius: 11, 
                 speedBase: 1.5,
                 speedVariation: 1, 
@@ -102,11 +103,11 @@ export const CONFIG = {
         LIFE: 30,
         COUNT: 8,
         MAX_ACTIVE: 1200, // Limite dure pour freiner la surcharge
-        SOFT_CAP: 800,    // Au-dessus on r�duit le spawn
-        REDUCTION_FACTOR: 0.5 // Cr�ation divis�e par 2 au-dessus du SOFT_CAP
+        SOFT_CAP: 800,    // Au-dessus on réduit le spawn
+        REDUCTION_FACTOR: 0.5 // Création divisée par 2 au-dessus du SOFT_CAP
     },
     
-    // Configuration des gemmes/pi�ces d'or
+    // Configuration des gemmes/pièces d'or
     CURRENCY: {
         HIGH_VALUE_CHANCE: 0.2,
         HIGH_VALUE: 3,
@@ -129,8 +130,8 @@ export const CONFIG = {
     
     // Configuration des loot boxes
     LOOT_BOXES: {
-        DROP_CHANCE: 0.08,  // R�duit de 15% � 8% pour �tre moins fr�quent
-        ELITE_DROP_CHANCE: 0.15, // R�duit de 25% � 15% pour les �lites
+        DROP_CHANCE: 0.08,  // Réduit de 15% à 8% pour être moins fréquent
+        ELITE_DROP_CHANCE: 0.15, // Réduit de 25% à 15% pour les élites
         TYPES: {
             TREASURE: {
                 COLOR: '#FFD700',
@@ -165,50 +166,50 @@ export const CONFIG = {
     // Configuration des orbes
     ORBS: {
         RADIUS: 5,
-        DISTANCE: 40,        // Distance de la premi�re orbite
-        DISTANCE_INCREMENT: 25, // Distance suppl�mentaire pour chaque orbite
+        DISTANCE: 40,        // Distance de la première orbite
+        DISTANCE_INCREMENT: 25, // Distance supplémentaire pour chaque orbite
         COLOR: '#ff8800',
         DAMAGE: 40,
-        MAX_PER_ORBIT: 3,    // === R�DUIT DE 6 � 3 ORBES PAR ORBITE ===
-        MAX_TOTAL: 9,        // === AJUST� : 3 orbites � 3 orbes = 9 orbes max ===
-        BASE_SPEED: 0.06,    // === R�DUIT DE MOITI� : �tait 0.12, maintenant 0.06 ===
-        SPEED_INCREMENT: 0.015, // === R�DUIT DE MOITI� : �tait 0.03, maintenant 0.015 ===
+        MAX_PER_ORBIT: 3,    // === RÉDUIT DE 6 à 3 ORBES PAR ORBITE ===
+        MAX_TOTAL: 9,        // === AJUSTÉ : 3 orbites à 3 orbes = 9 orbes max ===
+        BASE_SPEED: 0.06,    // === RÉDUIT DE MOITIÉ : était 0.12, maintenant 0.06 ===
+        SPEED_INCREMENT: 0.015, // === RÉDUIT DE MOITIÉ : était 0.03, maintenant 0.015 ===
         SPEED_MULTIPLIER: 1.0, // Multiplicateur de vitesse global pour upgrade
-        MAX_SPEED: 1.0,      // === R�DUIT : vitesse maximale de 1.5x � 1.0x ===
+        MAX_SPEED: 1.0,      // === RÉDUIT : vitesse maximale de 1.5x à 1.0x ===
         SHOOTING_ENABLED: false, // Les orbes peuvent-elles tirer ?
-        SHOOTING_RATE: 120,  // === DOUBL� : �tait 60, maintenant 120 (tire 2x moins vite) ===
+        SHOOTING_RATE: 120,  // === DOUBLÉ : était 60, maintenant 120 (tire 2x moins vite) ===
         BULLET_SPEED: 5,     // Vitesse des projectiles d'orbes
-        BULLET_DAMAGE: 25    // D�g�ts des projectiles d'orbes
+        BULLET_DAMAGE: 25    // Dégâts des projectiles d'orbes
     },
     
-    // Configuration des armements avanc�s
+    // Configuration des armements avancés
     WEAPONS: {
         TRIPLE_SHOT: {
             ENABLED: false,
-            SPREAD_ANGLE: 0.3,  // Angle d'�cartement en radians
-            SPEED_MULTIPLIER: 0.9 // L�g�rement plus lent
+            SPREAD_ANGLE: 0.3,  // Angle d'écartement en radians
+            SPEED_MULTIPLIER: 0.9 // Légèrement plus lent
         },
         HOMING_MISSILE: {
             ENABLED: false,
             SPEED: 3,
             TURN_RATE: 0.08,    // Vitesse de rotation vers la cible
             LOCK_RANGE: 200,    // Distance de verrouillage
-            DAMAGE: 60,         // Plus de d�g�ts que les balles normales
+            DAMAGE: 60,         // Plus de dégâts que les balles normales
             COOLDOWN: 90        // Cooldown plus long
         },
         EXPLOSIVE_CANNON: {
             ENABLED: false,
             SPEED: 4,
             BLAST_RADIUS: 50,   // Rayon d'explosion
-            DAMAGE: 80,         // Gros d�g�ts
-            COOLDOWN: 120       // Cooldown tr�s long
+            DAMAGE: 80,         // Gros dégâts
+            COOLDOWN: 120       // Cooldown très long
         },
         LASER_BEAM: {
             ENABLED: false,
             WIDTH: 3,
             LENGTH: 300,
-            DAMAGE: 15,         // D�g�ts continus
-            ENERGY_COST: 2     // Co�t en �nergie par frame
+            DAMAGE: 15,         // Dégâts continus
+            ENERGY_COST: 2     // Coût en énergie par frame
         },
         SHOTGUN_BLAST: {
             ENABLED: false,
@@ -219,23 +220,23 @@ export const CONFIG = {
         }
     },
     
-    // Configuration des am�liorations
+    // Configuration des améliorations
     UPGRADES: {
-        BASE_COST: 50, // R�duit de 75 � 50 car les gems ont plus de valeur maintenant
-        COST_MULTIPLIER: 1.4 // R�duit de 1.5 � 1.4 pour une progression plus douce
+        BASE_COST: 50, // Réduit de 75 à 50 car les gems ont plus de valeur maintenant
+        COST_MULTIPLIER: 1.4 // Réduit de 1.5 à 1.4 pour une progression plus douce
     },
     
     // Limites du jeu
     LIMITS: {
-        MAX_RESURRECTIONS: 1, // Autoriser au moins une r�surrection maintenant
+        MAX_RESURRECTIONS: 1, // Autoriser au moins une résurrection maintenant
         MAX_LIVES: 3
     },
 
-    // Syst�me de combo / score
+    // Système de combo / score
     COMBO: {
         WINDOW_FRAMES: 90,    // Temps max entre deux kills pour garder le combo (~1.5s)
-        MULTIPLIER_STEP: 0.25, // Incr�ment par palier de kills
+        MULTIPLIER_STEP: 0.25, // Incrément par palier de kills
         KILLS_PER_STEP: 3,     // Tous les 3 kills le multiplicateur monte
-        MAX_MULTIPLIER: 5      // Limite de s�curit�
+        MAX_MULTIPLIER: 5      // Limite de sécurité
     }
 };

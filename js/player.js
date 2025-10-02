@@ -37,13 +37,13 @@ export const Player = {
             invulnerableTime: 0,
             vampiric: false,
             flameMode: false,
-            // Nouveaux syst�mes d'armes
+            // Nouveaux systèmes d'armes
             tripleShot: false,
             homingMissiles: false,
             explosiveCannon: false,
             laserBeam: false,
             shotgunBlast: false,
-            // Cooldowns pour armes sp�ciales
+            // Cooldowns pour armes spéciales
             missileCooldown: 0,
             cannonCooldown: 0,
             laserEnergy: 100,
@@ -55,7 +55,7 @@ export const Player = {
     update() {
         if (Game.state !== 'playing' || !this.data) return;
         
-        // Gestion de l'invuln�rabilit�
+        // Gestion de l'invulnérabilité
         if (this.data.invulnerable && this.data.invulnerableTime > 0) {
             this.data.invulnerableTime--;
             if (this.data.invulnerableTime <= 0) {
@@ -72,7 +72,7 @@ export const Player = {
         let moveX = 0, moveY = 0;
         
         if (this.data.followMouse) {
-            // Convertir la position de la souris en coordonn�es du monde
+            // Convertir la position de la souris en coordonnées du monde
             const worldMouse = Camera.screenToWorld(Input.mouse.x, Input.mouse.y);
             
             const dx = worldMouse.x - this.data.x;
@@ -130,7 +130,7 @@ export const Player = {
                 const x = i * cellWidth + cellWidth / 2;
                 const y = j * cellHeight + cellHeight / 2;
                 
-                // Compter les ennemis dans un rayon de s�curit�
+                // Compter les ennemis dans un rayon de sécurité
                 let enemyCount = 0;
                 const safeRadius = 200;
                 
@@ -160,7 +160,7 @@ export const Player = {
         
         this.data.lastHitTimer = 30; // active le flash
         
-        // D�clencher la s�quence de mort dramatique
+        // Déclencher la séquence de mort dramatique
         this.createDeathExplosion();
         
         Game.lives--;
@@ -168,35 +168,35 @@ export const Player = {
         // Jouer le son de mort dramatique au lieu du simple playerHit
         Audio.playSoundEffect('playerDeath');
         
-        // D�marrer la s�quence de ralenti dramatique
+        // Démarrer la séquence de ralenti dramatique
         Game.startDeathSequence();
         
         return true;
     },
     
     createTeleportationEffect(targetX, targetY) {
-        // Effet de t�l�portation optimis� et plus fluide
+        // Effet de téléportation optimisé et plus fluide
         
-        // 1. Portal d'ouverture simplifi� (r�duite de 25 � 15 particules)
+        // 1. Portal d'ouverture simplifié (réduite de 25 à 15 particules)
         Particle.createExplosion(targetX, targetY, '#00ffff', 15);
         
-        // 2. Anneaux �nerg�tiques concentriques (3 au lieu de 5)
+        // 2. Anneaux énergétiques concentriques (3 au lieu de 5)
         for (let ring = 0; ring < 3; ring++) {
             setTimeout(() => {
                 const radius = 25 + ring * 20;
-                const particleCount = 8 + ring; // R�duite: 8, 9, 10 particules
+                const particleCount = 8 + ring; // Réduite: 8, 9, 10 particules
                 
                 for (let i = 0; i < particleCount; i++) {
                     const angle = (i * Math.PI * 2) / particleCount;
                     const x = targetX + Math.cos(angle) * radius;
                     const y = targetY + Math.sin(angle) * radius;
                     
-                    Particle.createExplosion(x, y, '#44ffff', 4); // R�duite de 8 � 4
+                    Particle.createExplosion(x, y, '#44ffff', 4); // Réduite de 8 à 4
                 }
             }, ring * 100);
         }
         
-        // 3. Spirales �nerg�tiques simplifi�es (2 au lieu de 3, 12 au lieu de 20)
+        // 3. Spirales énergétiques simplifiées (2 au lieu de 3, 12 au lieu de 20)
         for (let spiral = 0; spiral < 2; spiral++) {
             for (let i = 0; i < 12; i++) {
                 setTimeout(() => {
@@ -208,12 +208,12 @@ export const Player = {
                     
                     const colors = ['#00ffff', '#44ffff', '#88ffff'];
                     const color = colors[Math.floor(progress * colors.length)];
-                    Particle.createExplosion(x, y, color, 3); // R�duite de 6 � 3
+                    Particle.createExplosion(x, y, color, 3); // Réduite de 6 à 3
                 }, spiral * 60 + i * 25);
             }
         }
         
-        // 4. Colonnes d'�nergie simplifi�es (6 au lieu de 8, 4 au lieu de 6 �tages)
+        // 4. Colonnes d'énergie simplifiées (6 au lieu de 8, 4 au lieu de 6 étages)
         for (let col = 0; col < 6; col++) {
             setTimeout(() => {
                 const angle = (col * Math.PI * 2) / 6;
@@ -230,12 +230,12 @@ export const Player = {
             }, col * 80);
         }
         
-        // 5. Explosion finale de mat�rialisation (r�duite)
+        // 5. Explosion finale de matérialisation (réduite)
         setTimeout(() => {
             Particle.createExplosion(targetX, targetY, '#ffffff', 25); // R�duite de 40 � 25
         }, 400); // Plus t�t: 400ms au lieu de 500ms
         
-        // 6. Ondes de choc simplifi�es (2 au lieu de 3)
+        // 6. Ondes de choc simplifiées (2 au lieu de 3)
         setTimeout(() => {
             for (let wave = 0; wave < 2; wave++) {
                 setTimeout(() => {
@@ -253,7 +253,7 @@ export const Player = {
             }
         }, 500);
         
-        // 7. Particules flottantes r�duites (15 au lieu de 30)
+        // 7. Particules flottantes réduites (15 au lieu de 30)
         for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
@@ -267,7 +267,7 @@ export const Player = {
             }, 300 + Math.random() * 400); // Dur�e r�duite
         }
         
-        // 8. �clairs simplifi�s (4 au lieu de 6, 6 au lieu de 8 segments)
+        // 8. �clairs simplifiés (4 au lieu de 6, 6 au lieu de 8 segments)
         setTimeout(() => {
             for (let bolt = 0; bolt < 4; bolt++) {
                 const angle = (bolt * Math.PI * 2) / 4;
@@ -294,7 +294,7 @@ export const Player = {
         
         // EXPLOSION MASSIVE avec beaucoup plus de particules
         
-        // Explosion principale gigantesque (imm�diate)
+        // Explosion principale gigantesque (immédiate)
         Particle.createExplosion(centerX, centerY, '#ff2222', 80);
         
         // Premi�re onde - cercle rapproch� avec plus d'explosions
@@ -413,10 +413,11 @@ export const Player = {
     upgrade(type, value) {
         switch(type) {
             case 'fireRate':
-                const newFireRate = this.data.fireRate - value;
-                // Limite minimum plus basse pour permettre plus d'am�liorations
-                this.data.fireRate = Math.max(3, newFireRate);
-                console.log(`Fire rate upgraded: ${this.data.fireRate} (reduced by ${value})`);
+                // Applique un delta, mais ne descend pas sous MIN_FIRE_RATE configuré
+                const baseMin = CONFIG.PLAYER.MIN_FIRE_RATE ?? 8;
+                const next = (this.data.fireRate || 0) + value;
+                this.data.fireRate = Math.max(baseMin, next);
+                console.log(`Fire rate upgraded: now ${this.data.fireRate} (delta ${value})`);
                 break;
             case 'speed':
                 this.data.speed += value;

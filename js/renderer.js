@@ -1009,5 +1009,58 @@ export const Renderer = {
             this.ctx.font = '18px Courier New'; this.ctx.fillStyle = '#ccc';
             this.ctx.fillText('Press P to resume', this.canvas.width/2, this.canvas.height/2 + 30);
         }
+        // === DEBUG MODE (DOM panel sous COMBO) ===
+        try {
+            const screen = document.getElementById('gameScreen');
+            let panel = document.getElementById('debugPanel');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'debugPanel';
+                panel.style.cssText = 'position:absolute;left:12px;top:160px;color:#fff;font-family:Courier New;font-size:14px;pointer-events:none;'+
+                    'background:rgba(12,18,24,0.9);border:1px solid #0ff;padding:8px 10px;white-space:pre;';
+                screen.appendChild(panel);
+            }
+            if (debugMode && Player?.data) {
+                const d = Player.data;
+                panel.style.display = 'block';
+                panel.textContent = [
+                    'DEBUG MODE',
+                    `Fire Rate: ${d.fireRate}`,
+                    `Bullet Speed: ${d.bulletSpeed}`,
+                    `Speed: ${d.speed}`,
+                    `Range: ${d.range}`,
+                    `Magnet Range: ${d.magnetRange}`,
+                    `Orb Count: ${d.orbCount}`,
+                    `Orb Speed: ${d.orbSpeed}`,
+                    `Triple Shot: ${d.tripleShot ? 'ON' : 'OFF'}`,
+                    `Homing Missiles: ${d.homingMissiles ? 'ON' : 'OFF'}`,
+                    `Explosive Cannon: ${d.explosiveCannon ? 'ON' : 'OFF'}`,
+                    `Shotgun Blast: ${d.shotgunBlast ? 'ON' : 'OFF'}`
+                ].join('\n');
+            } else {
+                if (panel) panel.style.display = 'none';
+            }
+        } catch { /* DOM not ready yet */ }
     }
 };
+
+let debugMode = false;
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'd' || e.key === 'D') {
+        debugMode = !debugMode;
+        try { const p = document.getElementById('debugPanel'); if (p) p.style.display = debugMode ? 'block' : 'none'; } catch {}
+        window.debugMode = debugMode;
+        return;
+    }
+
+    // Debug hotkeys to tweak Fire Rate live
+    if (debugMode && Player?.data) {
+        if (e.key === 'F') { // increase value (slower fire)
+            Player.data.fireRate = Math.min(120, (Player.data.fireRate || 0) + 1);
+            e.preventDefault();
+        } else if (e.key === 'f') { // decrease value (faster fire)
+            Player.data.fireRate = Math.max(3, (Player.data.fireRate || 0) - 1);
+            e.preventDefault();
+        }
+    }
+});

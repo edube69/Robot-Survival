@@ -12,19 +12,21 @@ export const Upgrades = {
     
     generateOptions() {
         // === NOUVELLE FONCTION : Calculer les informations de niveau ===
-        const getUpgradeInfo = (upgradeName, currentValue, increment, maxValue) => {
+        const getUpgradeInfo = (upgradeName, currentValue, increment, minValue) => {
             let nextValue;
             if (upgradeName === 'fireRate') {
                 // Pour fireRate, on diminue la valeur (frames entre tirs)
-                nextValue = Math.max(maxValue, currentValue + increment); // increment est n�gatif, maxValue est plus petit
+                nextValue = Math.max(minValue, currentValue + increment); // increment est négatif, minValue est la valeur minimale
+                // S'assurer que nextValue n'est jamais supérieur à currentValue
+                if (nextValue > currentValue) nextValue = currentValue;
             } else {
-                nextValue = Math.min(maxValue, currentValue + increment);
+                nextValue = Math.min(minValue, currentValue + increment);
             }
             
             return {
                 current: currentValue,
                 next: nextValue,
-                max: maxValue
+                max: minValue
             };
         };
         
@@ -33,14 +35,17 @@ export const Upgrades = {
             const upgrades = [];
             
             // === UPGRADES DE BASE (toujours disponibles avec limites) ===
-            if (Player.data.fireRate > 8) {
-                const info = getUpgradeInfo('fireRate', Player.data.fireRate, -3, 8);
-                upgrades.push({ 
-                    name: "Fire Rate+", 
-                    desc: `Shoot faster (${info.current}?${info.next} frames, max: ${info.max})`, 
-                    priority: 3,
-                    apply: () => Player.upgrade('fireRate', -3)
-                });
+            if (Player.data.fireRate > (CONFIG.PLAYER.MIN_FIRE_RATE ?? 8)) {
+                const info = getUpgradeInfo('fireRate', Player.data.fireRate, -1, (CONFIG.PLAYER.MIN_FIRE_RATE ?? 8));
+                // Ne proposer l'upgrade que si nextValue < current
+                if (info.next < info.current) {
+                    upgrades.push({ 
+                        name: "Fire Rate+", 
+                        desc: `Shoot faster (${info.current}->${info.next} frames, max: ${info.max})`, 
+                        priority: 3,
+                        apply: () => Player.upgrade('fireRate', -1)
+                    });
+                }
             }
             
             if (Player.data.speed < 6) {
@@ -172,12 +177,12 @@ export const Upgrades = {
         
         if (availableUpgrades.length === 0) {
             // === FALLBACK : Si aucune upgrade disponible, donner des gems ===
+            const bonus = 25 + Math.floor(Game.wave * 5);
             this.options = [
                 {
-                    name: "?? Gem Bonus",
+                    name: `${bonus} Gem Bonus`,
                     desc: "Receive extra gems",
                     apply: () => {
-                        const bonus = 25 + Math.floor(Game.wave * 5);
                         Game.gems += bonus;
                         console.log(`?? All upgrades maxed! Received ${bonus} gems bonus!`);
                     }
@@ -374,7 +379,7 @@ export const Upgrades = {
                 desc: "Extended invincibility + speed boost", 
                 benefit: "12 seconds invulnerable + speed",
                 apply: () => {
-                    // Boost de vitesse �quilibr�
+                    // Boost de vitesse �quilibr� 
                     const currentSpeed = Player.data.speed;
                     const speedBoost = Math.min(1.5, 6 - currentSpeed); // Respecter la limite de vitesse
                     Player.upgrade('speed', speedBoost);

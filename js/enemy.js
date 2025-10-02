@@ -7,10 +7,22 @@ import { Currency } from './currency.js';
 // Module des ennemis
 export const Enemy = {
     list: [],
-    waveEnemiesSpawned: 0, // Compteur d'ennemis g�n�r�s pour cette vague
-    maxEnemiesPerWave: 0, // Maximum d'ennemis � g�n�rer pour cette vague
+    waveEnemiesSpawned: 0, // Compteur d'ennemis générés pour cette vague
+    maxEnemiesPerWave: 0, // Maximum d'ennemis à générer pour cette vague
     targetedId: null, // id de l'ennemi actuellement visé pour halo
     _nextId: 1,
+
+    // Multiplieur dynamique basé sur le Fire Rate du joueur
+    getDynamicSpeedMultiplier() {
+        if (!Player?.data) return 1;
+        const base = CONFIG.PLAYER.FIRE_RATE || 18; // frames
+        const minCap = CONFIG.PLAYER.MIN_FIRE_RATE ?? 12;
+        const current = Player.data.fireRate ?? base;
+        const improvement = Math.max(0, Math.min(base, base - Math.max(current, minCap))); // frames gagnées effectives
+        const perFrameBoost = 0.05; // +3% par frame gagnée (plus fort pour compenser)
+        const cap = 1.6; // +60% max
+        return Math.min(1 + improvement * perFrameBoost, cap);
+    },
     
     init() {
         this.list = [];
@@ -23,17 +35,17 @@ export const Enemy = {
     },
     
     setWaveLimit() {
-        // Nombre d'ennemis plus élev� pour des vagues plus longues
+        // Nombre d'ennemis plus élevé pour des vagues plus longues
         const baseEnemies = 20; // Augmenté de 15 à 20
         const enemiesPerWave = Math.floor(Game.wave * 3.5); // Augmenté de 2.5 à 3.5
-        this.maxEnemiesPerWave = Math.min(baseEnemies + enemiesPerWave, 60); // Max augment� de 40 à 60
+        this.maxEnemiesPerWave = Math.min(baseEnemies + enemiesPerWave, 60); // Max augmenté de 40 à 60
         console.log(`Wave ${Game.wave}: Max enemies = ${this.maxEnemiesPerWave}`);
     },
     
     create() {
         if (!Player.data) return;
         
-        // G�n�rer une position autour du joueur
+        // Générer une position autour du joueur
         const side = Math.floor(Math.random() * 4);
         let x, y;
         const spawnDistance = CONFIG.ENEMIES.SPAWN_DISTANCE;
@@ -61,11 +73,11 @@ export const Enemy = {
         x = Math.max(20, Math.min(CONFIG.WORLD.WIDTH - 20, x));
         y = Math.max(20, Math.min(CONFIG.WORLD.HEIGHT - 20, y));
         
-        // D�terminer le type d'ennemi avec une progression plus �quilibr�e
+        // Déterminer le type d'ennemi avec une progression plus équilibrée
         const rand = Math.random();
         let enemyType = 'basic';
         
-        // R�partition am�lior�e selon la vague avec difficult� progressive
+        // Répartition améliorée selon la vague avec difficulté progressive
         if (Game.wave === 1) {
             // Vague 1: principalement basic, quelques fast
             if (rand < 0.7) enemyType = 'basic';
@@ -76,19 +88,19 @@ export const Enemy = {
             else if (rand < 0.7) enemyType = 'fast';
             else enemyType = 'tank';
         } else if (Game.wave <= 5) {
-            // Vagues 3-5: tous les types avec �quilibre
+            // Vagues 3-5: tous les types avec équilibre
             if (rand < 0.3) enemyType = 'basic';
             else if (rand < 0.55) enemyType = 'fast';
             else if (rand < 0.8) enemyType = 'tank';
             else enemyType = 'splitter';
         } else if (Game.wave <= 10) {
-            // Vagues 6-10: plus de types avanc�s
+            // Vagues 6-10: plus de types avancés
             if (rand < 0.2) enemyType = 'basic';
             else if (rand < 0.4) enemyType = 'fast';
             else if (rand < 0.7) enemyType = 'tank';
             else enemyType = 'splitter';
         } else {
-            // Vagues 11+: principalement des ennemis avanc�s
+            // Vagues 11+: principalement des ennemis avancés
             if (rand < 0.1) enemyType = 'basic';
             else if (rand < 0.25) enemyType = 'fast';
             else if (rand < 0.6) enemyType = 'tank';
@@ -97,20 +109,20 @@ export const Enemy = {
         
         const enemyData = CONFIG.ENEMIES.TYPES[enemyType];
         
-        // Scaling de difficult� plus �quilibr� 
+        // Scaling de difficulté plus équilibré 
         const waveMultiplier = 1 + (Game.wave - 1) * 0.1; // +10% par vague
         
         // Vitesse plus progressive, surtout pour les fast
         let speedMultiplier;
         if (enemyType === 'fast') {
-            // Les interceptors ont une croissance de vitesse plus limit�e
-            speedMultiplier = 1 + (Game.wave - 1) * 0.025; // +2.5% par vague au lieu de 5%
+            // Les interceptors ont une croissance de vitesse plus limitée
+            speedMultiplier = 1 + (Game.wave - 1) * 0.05; // +2.5%/vague
         } else {
-            // Autres types gardent la croissance normale
-            speedMultiplier = 1 + (Game.wave - 1) * 0.04; // +4% par vague au lieu de 5%
+            // Autres types
+            speedMultiplier = 1 + (Game.wave - 1) * 0.05; // +4%/vague
         }
         
-        const healthBonus = Math.floor((Game.wave - 1) / 3); // +1 HP toutes les 3 vagues
+        const healthBonus = Math.floor((Game.wave - 3) / 3); // +1 HP toutes les 3 vagues
         
         const enemy = {
             id: this._nextId++,
@@ -123,12 +135,12 @@ export const Enemy = {
             points: Math.floor(enemyData.points * waveMultiplier),
             shape: enemyData.shape,
             type: enemyType,
-            // Propri�t�s d'animation
+            // Propriétés d'animation
             animTime: Math.random() * Math.PI * 2,
             thrusterFlicker: 0,
             rotationAngle: Math.random() * Math.PI * 2,
             pulsePhase: Math.random() * Math.PI * 2,
-            // Propri�t�s d'apparition
+            // Propriétés d'apparition
             spawning: true,
             spawnTimer: 30, // 0.5 seconde d'effet de spawn
             spawnScale: 0.1 // Commence petit
@@ -142,7 +154,7 @@ export const Enemy = {
     
     // Nouveaux effets visuels et sonores pour le spawn
     createSpawnEffects(x, y, enemyType) {
-        // Stocker les coordonn�es pour �viter les probl�mes avec setTimeout
+        // Stocker les coordonnées pour éviter les problèmes avec setTimeout
         const spawnX = x;
         const spawnY = y;
         
@@ -161,10 +173,10 @@ export const Enemy = {
         // 1. Portal d'apparition
         Particle.createExplosion(spawnX, spawnY, spawnColor, 12);
         
-        // 2. Anneaux d'�nergie qui se contractent
+        // 2. Anneaux d'énergie qui se contractent
         for (let ring = 0; ring < 3; ring++) {
             setTimeout(() => {
-                const radius = 60 - ring * 15; // Se contracte: 60 ? 45 ? 30
+                const radius = 60 - ring * 15; // Se contracte
                 const particleCount = 8;
                 
                 for (let i = 0; i < particleCount; i++) {
@@ -177,7 +189,7 @@ export const Enemy = {
             }, ring * 100);
         }
         
-        // 3. Colonnes d'�nergie verticales
+        // 3. Colonnes d'énergie verticales
         for (let col = 0; col < 4; col++) {
             setTimeout(() => {
                 const angle = (col * Math.PI * 2) / 4;
@@ -185,7 +197,7 @@ export const Enemy = {
                 const px = spawnX + Math.cos(angle) * distance;
                 const py = spawnY + Math.sin(angle) * distance;
                 
-                // Colonne d'�nergie qui monte
+                // Colonne d'énergie qui monte
                 for (let height = 0; height < 5; height++) {
                     setTimeout(() => {
                         Particle.createExplosion(px, py - height * 8, spawnColor, 2);
@@ -194,7 +206,7 @@ export const Enemy = {
             }, col * 50);
         }
         
-        // 4. �tincelles qui jaillissent
+        // 4. Étincelles qui jaillissent
         setTimeout(() => {
             for (let spark = 0; spark < 8; spark++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -210,7 +222,7 @@ export const Enemy = {
         this.playSpawnSound(enemyType);
     },
     
-    // Sons sp�cialis�s pour le spawn selon le type d'ennemi
+    // Sons spécialisés pour le spawn selon le type d'ennemi
     playSpawnSound(enemyType) {
         switch(enemyType) {
             case 'basic':
@@ -233,6 +245,8 @@ export const Enemy = {
     update() {
         if (Game.state !== 'playing' || !Player.data) return;
         
+        const dynSpeed = this.getDynamicSpeedMultiplier();
+        
         for (let i = this.list.length - 1; i >= 0; i--) {
             const enemy = this.list[i];
             
@@ -251,27 +265,29 @@ export const Enemy = {
                 continue;
             }
             
-            // Mouvement vers le joueur (seulement apr�s le spawn)
+            // Mouvement vers le joueur (seulement après le spawn)
             const dx = Player.data.x - enemy.x;
             const dy = Player.data.y - enemy.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance > 0) {
-                enemy.x += (dx / distance) * enemy.speed;
-                enemy.y += (dy / distance) * enemy.speed;
+                // Appliquer le multiplicateur dynamique basé sur le Fire Rate du joueur
+                const effectiveSpeed = enemy.speed * dynSpeed;
+                enemy.x += (dx / distance) * effectiveSpeed;
+                enemy.y += (dy / distance) * effectiveSpeed;
             }
             
-            // Mise � jour des animations
+            // Mise à jour des animations
             enemy.animTime += 0.1;
             enemy.thrusterFlicker = Math.random();
             enemy.rotationAngle += (enemy.type === 'fast' ? 0.15 : 0.05);
             enemy.pulsePhase += 0.08;
             
-            // Collision avec le joueur (seulement apr�s le spawn)
+            // Collision avec le joueur (seulement après le spawn)
             const playerDistance = Math.sqrt((enemy.x - Player.data.x) ** 2 + (enemy.y - Player.data.y) ** 2);
             if (playerDistance < enemy.radius + Player.data.radius) {
                 if (Player.takeDamage()) {
-                    // Le joueur a pris des d�g�ts, on peut continuer
+                    // Le joueur a pris des dégâts, on peut continuer
                 }
             }
         }
@@ -309,10 +325,10 @@ export const Enemy = {
             Game.applyScore(enemy.points);
             Game.updateCombo(1); // kill -> feed combo
 
-            // Effets sp�cialis�s par type d'ennemi
+            // Effets spéalisisés par type d'ennemi
             this.createEnemyDeathEffects(enemy);
             
-            // === NOUVEAU SYST�ME DE LOOT ===
+            // === NOUVEAU SYSTÈME DE LOOT ===
             // Chance de drop loot box au lieu de gems normales
             const lootDropped = this.tryDropLootBox(enemy);
             
@@ -322,7 +338,7 @@ export const Enemy = {
                 Currency.create(enemy.x, enemy.y, baseGemValue);
             }
 
-            // Son sp�cialis� par type d'ennemi
+            // Son spéciialisé par type d'ennemi
             this.playEnemyDeathSound(enemy.type);
 
             if (Player.data.vampiric && Game.lives < CONFIG.LIMITS.MAX_LIVES) {
@@ -335,13 +351,13 @@ export const Enemy = {
             }
             return true;
         } else {
-            // Effet de d�g�t selon le type d'ennemi
+            // Effet de dégâts selon le type d'ennemi
             this.createEnemyHitEffect(enemy);
             return false;
         }
     },
     
-    // Nouvelle m�thode pour essayer de drop une loot box
+    // Nouvelle méthode pour essayer de drop une loot box
     tryDropLootBox(enemy) {
         // Calculer les chances selon le type d'ennemi
         let dropChance = CONFIG.LOOT_BOXES.DROP_CHANCE;
@@ -349,7 +365,7 @@ export const Enemy = {
             dropChance = CONFIG.LOOT_BOXES.ELITE_DROP_CHANCE;
         }
         
-        // V�rifier si on doit cr�er une loot box
+        // Vériifier si on doit créer une loot box
         if (Math.random() <= dropChance) {
             return this.createLootBox(enemy.x, enemy.y, enemy.type);
         }
@@ -357,31 +373,31 @@ export const Enemy = {
         return false;
     },
     
-    // Cr�er une loot box (cette m�thode sera li�e au module LootBox)
+    // Créer une loot box (cette méthode sera liée au module LootBox)
     createLootBox(x, y, enemyType) {
-        // Pour l'instant, on va cr�er un syst�me simple ici
-        // Plus tard on pourra utiliser un module LootBox s�par� 
+        // Pour l'instant, on va créer un systême simple ici
+        // Plus tard on pourra utiliser un module LootBox séparé 
         
         const lootTypes = ['TREASURE', 'WEAPON', 'NUKE', 'MAGNET', 'ORB_SHIELD', 'ORB_UPGRADE', 'UTILITY'];
         const lootType = lootTypes[Math.floor(Math.random() * lootTypes.length)];
         
-        // Cr�er l'objet loot box temporairement dans Currency
+        // Créer l'objet loot box temporairement dans Currency
         Currency.createLootBox(x, y, lootType);
         
         console.log(`Loot box dropped: ${lootType} from ${enemyType}`);
         return true;
     },
     
-    // Effets visuels sp�cialis�s � la mort de l'ennemi
+    // Effets visuels spéciisés à la mort de l'ennemi
     createEnemyDeathEffects(enemy) {
-        // Stocker les coordonn�es pour �viter les probl�mes avec setTimeout
+        // Stocker les coordonnés pour éviter les problêmes avec setTimeout
         const enemyX = enemy.x;
         const enemyY = enemy.y;
         
         switch(enemy.type) {
             case 'basic': // Scout - explosion simple et rapide
                 Particle.createExplosion(enemyX, enemyY, enemy.color, 8);
-                // �tincelles qui s'�chappent
+                // Étincelles qui s'échappent
                 for (let i = 0; i < 6; i++) {
                     setTimeout(() => {
                         const angle = Math.random() * Math.PI * 2;
@@ -393,9 +409,9 @@ export const Enemy = {
                 }
                 break;
                 
-            case 'fast': // Interceptor - explosion rapide avec tra�n�es
+            case 'fast': // Interceptor - explosion rapide avec traînées
                 Particle.createExplosion(enemyX, enemyY, enemy.color, 12);
-                // Tra�n�es de vitesse qui se dissipent
+                // Traînées de vitesse qui se dissipent
                 for (let i = 0; i < 8; i++) {
                     const angle = (i * Math.PI * 2) / 8;
                     for (let j = 0; j < 4; j++) {
@@ -409,9 +425,9 @@ export const Enemy = {
                 }
                 break;
                 
-            case 'tank': // Crusher - explosion massive et prolong�e
+            case 'tank': // Crusher - explosion massive et prolongée
                 Particle.createExplosion(enemyX, enemyY, enemy.color, 20);
-                // Explosions secondaires en cha�ne
+                // Explosions secondaires en chaîne
                 for (let i = 0; i < 12; i++) {
                     setTimeout(() => {
                         const angle = Math.random() * Math.PI * 2;
@@ -468,7 +484,7 @@ export const Enemy = {
         }
     },
     
-    // Effets visuels quand l'ennemi prend des d�g�ts sans mourir
+    // Effets visuels quand l'ennemi prend des dégâts sans mourir
     createEnemyHitEffect(enemy) {
         switch(enemy.type) {
             case 'basic':
@@ -479,7 +495,7 @@ export const Enemy = {
                 break;
             case 'tank':
                 Particle.createExplosion(enemy.x, enemy.y, '#9966ff', 5);
-                // �tincelles sur l'armure
+                // Étincelles sur l'armure
                 for (let i = 0; i < 3; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     const distance = enemy.radius + Math.random() * 10;
@@ -496,7 +512,7 @@ export const Enemy = {
         }
     },
     
-    // Sons sp�cialis�s par type d'ennemi
+    // Sons spéciialisés par type d'ennemi
     playEnemyDeathSound(enemyType) {
         switch(enemyType) {
             case 'basic':
@@ -516,7 +532,7 @@ export const Enemy = {
         }
     },
     
-    // Nouvelle m�thode pour calculer la valeur des gems selon l'ennemi
+    // Nouvelle méthode pour calculer la valeur des gems selon l'ennemi
     calculateGemValue(enemy) {
         const enemyData = CONFIG.ENEMIES.TYPES[enemy.type];
         
@@ -533,13 +549,13 @@ export const Enemy = {
                 baseValue = 4; // Plus de vie = plus de gems
                 break;
             case 'splitter':
-                baseValue = 3; // Type avanc� = plus de gems
+                baseValue = 3; // Type avancé = plus de gems
                 break;
             default:
                 baseValue = 1;
         }
         
-        // Multiplicateur bas� sur la vague (ennemis plus forts = plus de gems)
+        // Multiplicateur basé sur la vague (ennemis plus forts = plus de gems)
         const waveMultiplier = 1 + (Game.wave - 1) * 0.15; // +15% par vague
         
         // Bonus pour les ennemis avec bonus de vie
