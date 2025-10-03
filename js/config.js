@@ -16,6 +16,7 @@ export const CONFIG = {
     PLAYER: {
         RADIUS: 12,
         SPEED: 4,
+        MAX_SPEED: 6,
         COLOR: '#0ff',
         FIRE_RATE: 30,
         MIN_FIRE_RATE: 12, // cadence minimale (frames entre tirs) pour l'équilibrage
@@ -23,7 +24,8 @@ export const CONFIG = {
         BULLET_SIZE: 3,
         BULLET_LENGTH: 10,
         RANGE: 260,
-        MAGNET_RANGE: 60
+        MAGNET_RANGE: 60,
+        MAX_MAGNET_RANGE: 800
     },
     
     // Configuration de la caméra
@@ -130,8 +132,8 @@ export const CONFIG = {
     
     // Configuration des loot boxes
     LOOT_BOXES: {
-        DROP_CHANCE: 0.08,  // Réduit de 15% à 8% pour être moins fréquent
-        ELITE_DROP_CHANCE: 0.15, // Réduit de 25% à 15% pour les élites
+        DROP_CHANCE: 0.05,  // Réduit de 15% à 8% pour être moins fréquent
+        ELITE_DROP_CHANCE: 0.10, // Réduit de 25% à 15% pour les élites
         TYPES: {
             TREASURE: {
                 COLOR: '#FFD700',
@@ -175,7 +177,7 @@ export const CONFIG = {
         BASE_SPEED: 0.06,    // === RÉDUIT DE MOITIÉ : était 0.12, maintenant 0.06 ===
         SPEED_INCREMENT: 0.015, // === RÉDUIT DE MOITIÉ : était 0.03, maintenant 0.015 ===
         SPEED_MULTIPLIER: 1.0, // Multiplicateur de vitesse global pour upgrade
-        MAX_SPEED: 1.0,      // === RÉDUIT : vitesse maximale de 1.5x à 1.0x ===
+        MAX_SPEED: 3.0,      // === RÉDUIT : vitesse maximale de 1.5x à 1.0x ===
         SHOOTING_ENABLED: false, // Les orbes peuvent-elles tirer ?
         SHOOTING_RATE: 120,  // === DOUBLÉ : était 60, maintenant 120 (tire 2x moins vite) ===
         BULLET_SPEED: 5,     // Vitesse des projectiles d'orbes
@@ -222,8 +224,8 @@ export const CONFIG = {
     
     // Configuration des améliorations
     UPGRADES: {
-        BASE_COST: 50, // Réduit de 75 à 50 car les gems ont plus de valeur maintenant
-        COST_MULTIPLIER: 1.4 // Réduit de 1.5 à 1.4 pour une progression plus douce
+        BASE_COST: 100, // Réduit de 75 à 50 car les gems ont plus de valeur maintenant
+        COST_MULTIPLIER: 1.2 // Réduit de 1.5 à 1.4 pour une progression plus douce
     },
     
     // Limites du jeu

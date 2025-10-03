@@ -35,6 +35,8 @@ export const Player = {
             orbSpeed: 1.0, // Multiplicateur de vitesse des orbes
             invulnerable: false,
             invulnerableTime: 0,
+            // Durée d'invulnérabilité améliorée par les upgrades utilitaires (en frames)
+            shieldDuration: 0,
             vampiric: false,
             flameMode: false,
             // Nouveaux systèmes d'armes
@@ -224,7 +226,7 @@ export const Player = {
                     setTimeout(() => {
                         const x = baseX + (Math.random() - 0.5) * 8;
                         const y = baseY + (Math.random() - 0.5) * 8;
-                        Particle.createExplosion(x, y, '#66ffff', 6); // R�duite de 10 � 6
+                        Particle.createExplosion(x, y, '#66ffff', 6); // Réduite de 10 à 6
                     }, height * 40);
                 }
             }, col * 80);
@@ -232,22 +234,22 @@ export const Player = {
         
         // 5. Explosion finale de matérialisation (réduite)
         setTimeout(() => {
-            Particle.createExplosion(targetX, targetY, '#ffffff', 25); // R�duite de 40 � 25
-        }, 400); // Plus t�t: 400ms au lieu de 500ms
+            Particle.createExplosion(targetX, targetY, '#ffffff', 25); // Réduite de 40 à 25
+        }, 400); // Plus tôt: 400ms au lieu de 500ms
         
         // 6. Ondes de choc simplifiées (2 au lieu de 3)
         setTimeout(() => {
             for (let wave = 0; wave < 2; wave++) {
                 setTimeout(() => {
                     const radius = 50 + wave * 30;
-                    const particleCount = 12; // R�duite de 16 � 12
+                    const particleCount = 12; // Réduite de 16 à 12
                     
                     for (let i = 0; i < particleCount; i++) {
                         const angle = (i * Math.PI * 2) / particleCount;
                         const x = targetX + Math.cos(angle) * radius;
                         const y = targetY + Math.sin(angle) * radius;
                         
-                        Particle.createExplosion(x, y, '#00ccff', 3); // R�duite de 5 � 3
+                        Particle.createExplosion(x, y, '#00ccff', 3); // Réduite de 5 à 3
                     }
                 }, wave * 120);
             }
@@ -257,31 +259,31 @@ export const Player = {
         for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 60; // R�duite de 80 � 60
+                const distance = Math.random() * 60; // Réduite de 80 à 60
                 const x = targetX + Math.cos(angle) * distance;
                 const y = targetY + Math.sin(angle) * distance;
                 
                 const floatColors = ['#88ffff', '#aaffff'];
                 const color = floatColors[Math.floor(Math.random() * floatColors.length)];
-                Particle.createExplosion(x, y, color, 2); // R�duite de 4 � 2
-            }, 300 + Math.random() * 400); // Dur�e r�duite
+                Particle.createExplosion(x, y, color, 2); // Réduite de 4 à 2
+            }, 300 + Math.random() * 400); // Durée réduite
         }
         
-        // 8. �clairs simplifiés (4 au lieu de 6, 6 au lieu de 8 segments)
+        // 8. Éclairs simplifiés (4 au lieu de 6, 6 au lieu de 8 segments)
         setTimeout(() => {
             for (let bolt = 0; bolt < 4; bolt++) {
                 const angle = (bolt * Math.PI * 2) / 4;
                 const endX = targetX + Math.cos(angle) * 50;
                 const endY = targetY + Math.sin(angle) * 50;
                 
-                // Cr�er un �clair en segments r�duits
+                // Créer un éclair en segments réduits
                 for (let segment = 0; segment < 6; segment++) {
                     const progress = segment / 6;
                     const x = targetX + (endX - targetX) * progress + (Math.random() - 0.5) * 15;
                     const y = targetY + (endY - targetY) * progress + (Math.random() - 0.5) * 15;
                     
                     setTimeout(() => {
-                        Particle.createExplosion(x, y, '#ffff88', 2); // R�duite de 3 � 2
+                        Particle.createExplosion(x, y, '#ffff88', 2); // Réduite de 3 à 2
                     }, segment * 15);
                 }
             }
@@ -297,7 +299,7 @@ export const Player = {
         // Explosion principale gigantesque (immédiate)
         Particle.createExplosion(centerX, centerY, '#ff2222', 80);
         
-        // Premi�re onde - cercle rapproch� avec plus d'explosions
+        // Première onde - cercle rapproché avec plus d'explosions
         for (let i = 0; i < 20; i++) {
             const angle = (i * Math.PI * 2) / 20;
             const radius = 20 + Math.random() * 25;
@@ -309,7 +311,7 @@ export const Player = {
             }, 30 + i * 20);
         }
         
-        // Deuxi�me onde - cercle moyen avec variations
+        // Deuxième onde - cercle moyen avec variations
         for (let i = 0; i < 16; i++) {
             const angle = (i * Math.PI * 2) / 16 + Math.PI / 16;
             const radius = 45 + Math.random() * 35;
@@ -321,7 +323,7 @@ export const Player = {
             }, 150 + i * 40);
         }
         
-        // Troisi�me onde - cercle large
+        // Troisième onde - cercle large
         for (let i = 0; i < 12; i++) {
             const angle = (i * Math.PI * 2) / 12;
             const radius = 75 + Math.random() * 40;
@@ -333,7 +335,7 @@ export const Player = {
             }, 350 + i * 60);
         }
         
-        // Quatri�me onde - explosion lointaine
+        // Quatrième onde - explosion lointaine
         for (let i = 0; i < 8; i++) {
             const angle = (i * Math.PI * 2) / 8 + Math.PI / 8;
             const radius = 110 + Math.random() * 50;
@@ -345,7 +347,7 @@ export const Player = {
             }, 600 + i * 80);
         }
         
-        // �NORM�MENT de d�bris/fragments en vagues successives
+        // ÉNORMÉMENT de débris/fragments en vagues successives
         for (let wave = 0; wave < 5; wave++) {
             for (let i = 0; i < 25; i++) {
                 setTimeout(() => {
@@ -379,7 +381,7 @@ export const Player = {
             Particle.createExplosion(centerX, centerY, '#ffffdd', 120);
         }, 1000);
         
-        // Pluie d'�tincelles qui continue longtemps
+        // Pluie d'étincelles qui continue longtemps
         for (let i = 0; i < 60; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
@@ -393,7 +395,7 @@ export const Player = {
             }, 500 + Math.random() * 1200);
         }
         
-        // Explosions de r�sonance tardives (effet d'onde de choc)
+        // Explosions de résonance tardives (effet d'onde de choc)
         for (let i = 0; i < 10; i++) {
             setTimeout(() => {
                 const angle = Math.random() * Math.PI * 2;
@@ -468,6 +470,14 @@ export const Player = {
                 this.data.invulnerable = true;
                 this.data.invulnerableTime = value;
                 break;
+            case 'shieldDuration': {
+                // Augmente la durée max d'invulnérabilité utile (cap à 200 comme le UI)
+                const cap = 200;
+                const cur = this.data.shieldDuration || 0;
+                this.data.shieldDuration = Math.min(cap, cur + value);
+                console.log(`Shield duration upgraded: ${this.data.shieldDuration} frames`);
+                break;
+            }
             case 'vampiric':
                 this.data.vampiric = true;
                 break;

@@ -791,12 +791,12 @@ export const Renderer = {
         let symbol = '?';
         switch(lootBox.lootType) {
             case 'TREASURE': symbol = '$'; break;
-            case 'WEAPON': symbol = '?'; break;
-            case 'NUKE': symbol = '??'; break;
-            case 'MAGNET': symbol = '??'; break;
-            case 'ORB_SHIELD': symbol = '??'; break;
-            case 'ORB_UPGRADE': symbol = '?'; break;
-            case 'UTILITY': symbol = '??'; break;
+            case 'WEAPON': symbol = 'WA'; break;
+            case 'NUKE': symbol = 'NU'; break;
+            case 'MAGNET': symbol = 'MA'; break;
+            case 'ORB_SHIELD': symbol = 'OS'; break;
+            case 'ORB_UPGRADE': symbol = 'OU'; break;
+            case 'UTILITY': symbol = 'UT'; break;
         }
         this.ctx.fillText(symbol, 0, 0);
         this.ctx.strokeStyle = lootBox.colors.BRIGHT;
@@ -1060,6 +1060,22 @@ window.addEventListener('keydown', (e) => {
             e.preventDefault();
         } else if (e.key === 'f') { // decrease value (faster fire)
             Player.data.fireRate = Math.max(3, (Player.data.fireRate || 0) - 1);
+            e.preventDefault();
+        }
+
+        // Debug hotkeys to tweak Magnet Range live (support main and numpad)
+        const plusPressed = (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd');
+        const minusPressed = (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract');
+        if (plusPressed) {
+            const step = 10; // pixels
+            const maxRange = 4000; // clamp to avoid absurd values
+            Player.data.magnetRange = Math.min(maxRange, (Player.data.magnetRange || 0) + step);
+            console.log(`DEBUG: Magnet range increased to ${Player.data.magnetRange}`);
+            e.preventDefault();
+        } else if (minusPressed) {
+            const step = 10;
+            Player.data.magnetRange = Math.max(0, (Player.data.magnetRange || 0) - step);
+            console.log(`DEBUG: Magnet range decreased to ${Player.data.magnetRange}`);
             e.preventDefault();
         }
     }

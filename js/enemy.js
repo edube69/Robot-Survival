@@ -364,9 +364,20 @@ export const Enemy = {
         if (enemy.type === 'tank' || enemy.type === 'splitter') {
             dropChance = CONFIG.LOOT_BOXES.ELITE_DROP_CHANCE;
         }
+
+        // Réduction des chances si des lootboxes sont déjà présentes
+        // -10% par lootbox actuellement au sol (réduction multiplicative)
+        const activeLootboxes = Array.isArray(Currency.list) ? Currency.list.filter(i => i && i.type === 'lootbox').length : 0;
+        if (activeLootboxes > 0) {
+            dropChance *= Math.pow(0.9, activeLootboxes);
+        }
         
-        // Vériifier si on doit créer une loot box
+        // Vérifier si on doit créer une loot box
         if (Math.random() <= dropChance) {
+            // Validation: n'essaie pas de spawn si aucune loot utile
+            if (!Currency.shouldSpawnLootBox()) {
+                return false;
+            }
             return this.createLootBox(enemy.x, enemy.y, enemy.type);
         }
         
@@ -375,13 +386,15 @@ export const Enemy = {
     
     // Créer une loot box (cette méthode sera liée au module LootBox)
     createLootBox(x, y, enemyType) {
-        // Pour l'instant, on va créer un systême simple ici
-        // Plus tard on pourra utiliser un module LootBox séparé 
+        // Choisir uniquement des types bénéfiques au joueur actuellement
+        const beneficial = Currency.getBeneficialLootTypes();
+        if (!beneficial || beneficial.length === 0) {
+            return false; // Aucun intérêt à drop une lootbox
+        }
         
-        const lootTypes = ['TREASURE', 'WEAPON', 'NUKE', 'MAGNET', 'ORB_SHIELD', 'ORB_UPGRADE', 'UTILITY'];
-        const lootType = lootTypes[Math.floor(Math.random() * lootTypes.length)];
+        const lootType = beneficial[Math.floor(Math.random() * beneficial.length)];
         
-        // Créer l'objet loot box temporairement dans Currency
+        // Créer l'objet loot box via Currency
         Currency.createLootBox(x, y, lootType);
         
         console.log(`Loot box dropped: ${lootType} from ${enemyType}`);
@@ -512,7 +525,7 @@ export const Enemy = {
         }
     },
     
-    // Sons spéciialisés par type d'ennemi
+    // Sons spéciilisés par type d'ennemi
     playEnemyDeathSound(enemyType) {
         switch(enemyType) {
             case 'basic':
