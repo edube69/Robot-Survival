@@ -9,6 +9,7 @@ import { Currency } from './currency.js';
 import { Orb } from './orb.js';
 import { TeleportFX } from './teleportfx.js';
 import { Upgrades } from './upgrades.js';
+import { i18n } from './i18n.js';
 
 // Module de rendu
 export const Renderer = {
@@ -852,7 +853,7 @@ export const Renderer = {
         this.ctx.fillStyle = '#0f0';
         this.ctx.font = '32px Courier New';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('LEVEL UP!', this.canvas.width / 2, 150);
+        this.ctx.fillText(i18n.t('upgrade_levelup'), this.canvas.width / 2, 150);
         let anyHover = false;
         const left = 100; const width = this.canvas.width - 200;
         this.ctx.font = '18px Courier New';
@@ -873,7 +874,7 @@ export const Renderer = {
         }
         this.canvas.style.cursor = anyHover ? 'pointer' : 'default';
         this.ctx.font = '16px Courier New'; this.ctx.fillStyle = '#fff'; this.ctx.textAlign = 'center';
-        this.ctx.fillText('Press 1, 2, 3 or click to choose', this.canvas.width / 2, this.canvas.height - 50);
+        this.ctx.fillText(i18n.t('upgrade_choose'), this.canvas.width / 2, this.canvas.height - 50);
     },
     
     drawWaveAnnouncement() {
@@ -886,16 +887,18 @@ export const Renderer = {
         this.ctx.textAlign = 'center';
         this.ctx.strokeStyle = '#FFA500';
         this.ctx.lineWidth = 3;
-        this.ctx.strokeText(`WAVE ${Game.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
-        this.ctx.fillText(`WAVE ${Game.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 40);
+        const waveTitle = i18n.t('wave_title', { wave: Game.wave });
+        this.ctx.strokeText(waveTitle, this.canvas.width / 2, this.canvas.height / 2 - 40);
+        this.ctx.fillText(waveTitle, this.canvas.width / 2, this.canvas.height / 2 - 40);
         this.ctx.fillStyle = '#FFD700';
         this.ctx.font = '24px Courier New';
-        this.ctx.fillText('INCOMING HOSTILES', this.canvas.width / 2, this.canvas.height / 2 + 20);
+        this.ctx.fillText(i18n.t('wave_hostiles'), this.canvas.width / 2, this.canvas.height / 2 + 20);
         const enemyCount = Enemy.maxEnemiesPerWave || Math.min(15 + Game.wave * 2.5, 40);
-        const difficultyText = Game.wave <= 3 ? 'EASY' : Game.wave <= 6 ? 'MEDIUM' : Game.wave <= 10 ? 'HARD' : 'EXTREME';
+        const diffKey = Game.wave <= 3 ? 'difficulty_easy' : Game.wave <= 6 ? 'difficulty_medium' : Game.wave <= 10 ? 'difficulty_hard' : 'difficulty_extreme';
+        const difficultyText = i18n.t(diffKey);
         this.ctx.fillStyle = '#FFFF88';
         this.ctx.font = '18px Courier New';
-        this.ctx.fillText(`Enemies: ${Math.floor(enemyCount)} | Difficulty: ${difficultyText}`, this.canvas.width / 2, this.canvas.height / 2 + 60);
+        this.ctx.fillText(i18n.t('wave_stats', { count: Math.floor(enemyCount), diff: difficultyText }), this.canvas.width / 2, this.canvas.height / 2 + 60);
         const progress = (180 - Game.waveAnnouncementTimer) / 180;
         const barWidth = 300; const barHeight = 6; const barX = this.canvas.width / 2 - barWidth / 2; const barY = this.canvas.height / 2 + 100;
         this.ctx.fillStyle = '#444'; this.ctx.fillRect(barX, barY, barWidth, barHeight);
@@ -1005,9 +1008,9 @@ export const Renderer = {
         if (typeof Game !== 'undefined' && Game.state === 'paused') {
             this.ctx.fillStyle = 'rgba(0,0,0,0.55)'; this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
             this.ctx.fillStyle = '#fff'; this.ctx.font = 'bold 48px Courier New'; this.ctx.textAlign = 'center';
-            this.ctx.fillText('PAUSED', this.canvas.width/2, this.canvas.height/2 - 10);
+            this.ctx.fillText(i18n.t('pause_title'), this.canvas.width/2, this.canvas.height/2 - 10);
             this.ctx.font = '18px Courier New'; this.ctx.fillStyle = '#ccc';
-            this.ctx.fillText('Press P to resume', this.canvas.width/2, this.canvas.height/2 + 30);
+            this.ctx.fillText(i18n.t('pause_resume'), this.canvas.width/2, this.canvas.height/2 + 30);
         }
         // === DEBUG MODE (DOM panel sous COMBO) ===
         try {

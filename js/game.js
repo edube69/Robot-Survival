@@ -5,7 +5,7 @@ import { Audio } from './audio.js';
 import { Input } from './input.js';
 import { Renderer } from './renderer.js';
 import { Player } from './player.js';
-import { Camera } from './camera.js'; // <-- parenthèse corrigée
+import { Camera } from './camera.js';
 import { Enemy } from './enemy.js';
 import { Bullet } from './bullet.js';
 import { Particle } from './particle.js';
@@ -13,6 +13,7 @@ import { Currency } from './currency.js';
 import { Orb } from './orb.js';
 import { TeleportFX } from './teleportfx.js';
 import { Upgrades } from './upgrades.js';
+import { i18n } from './i18n.js';
 import { collection, query, where, getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const Game = {
@@ -259,25 +260,25 @@ const Game = {
         modal.className = 'game-over-modal neon-theme';
         modal.innerHTML = `
             <div class="gom-header">
-                <h2 class="gom-title">MISSION FAILED</h2>
+                <h2 class="gom-title">${i18n.t('gameover_title')}</h2>
                 <div class="gom-divider"></div>
                 <div class="gom-stats-grid">
-                    <div class="stat"><span class="lbl">SCORE</span><span class="val">${this.score.toLocaleString()}</span></div>
-                    <div class="stat"><span class="lbl">KILLS</span><span class="val">${this.kills}</span></div>
-                    <div class="stat"><span class="lbl">WAVE</span><span class="val">${this.wave}</span></div>
-                    <div class="stat"><span class="lbl">TIME</span><span class="val">${Math.floor(gameTime/60)}:${(gameTime%60).toString().padStart(2,'0')}</span></div>
-                    <div class="stat wide"><span class="lbl">BEST COMBO</span><span class="val">${this.bestCombo}x</span></div>
+                    <div class="stat"><span class="lbl">${i18n.t('gameover_score')}</span><span class="val">${this.score.toLocaleString()}</span></div>
+                    <div class="stat"><span class="lbl">${i18n.t('gameover_kills')}</span><span class="val">${this.kills}</span></div>
+                    <div class="stat"><span class="lbl">${i18n.t('gameover_wave')}</span><span class="val">${this.wave}</span></div>
+                    <div class="stat"><span class="lbl">${i18n.t('gameover_time')}</span><span class="val">${Math.floor(gameTime/60)}:${(gameTime%60).toString().padStart(2,'0')}</span></div>
+                    <div class="stat wide"><span class="lbl">${i18n.t('gameover_best_combo')}</span><span class="val">${this.bestCombo}x</span></div>
                 </div>
             </div>
             <div class="gom-body">
-                <p class="prompt">ENTER YOUR CALL SIGN</p>
+                <p class="prompt">${i18n.t('gameover_callsign')}</p>
                 <div class="gom-form">
-                    <input id="playerName" maxlength="15" autocomplete="off" placeholder="ACE PILOT" class="gom-input" />
-                    <button id="submitScoreBtn" class="gom-btn primary">SUBMIT</button>
-                    <button id="skipScoreBtn" class="gom-btn secondary">SKIP</button>
+                    <input id="playerName" maxlength="15" autocomplete="off" placeholder="${i18n.t('gameover_placeholder')}" class="gom-input" />
+                    <button id="submitScoreBtn" class="gom-btn primary">${i18n.t('gameover_submit')}</button>
+                    <button id="skipScoreBtn" class="gom-btn secondary">${i18n.t('gameover_skip')}</button>
                 </div>
                 <div class="rank-feedback" id="rankFeedback" style="display:none"></div>
-                <p class="hint">Press ENTER to submit, ESC to skip</p>
+                <p class="hint">${i18n.t('gameover_hint')}</p>
             </div>`;
         document.body.appendChild(modal);
         setTimeout(()=>modal.classList.add('show'),10);
@@ -296,13 +297,13 @@ const Game = {
         const playerName = playerNameInput.value.trim();
         if (!playerName) {
             playerNameInput.classList.add('error');
-            playerNameInput.placeholder = "Name required!";
-            setTimeout(()=>{ playerNameInput.classList.remove('error'); playerNameInput.placeholder='Your Call Sign'; },2000);
+            playerNameInput.placeholder = i18n.t('gameover_name_required');
+            setTimeout(()=>{ playerNameInput.classList.remove('error'); playerNameInput.placeholder=i18n.t('gameover_placeholder'); },2000);
             return;
         }
         const submitBtn = document.getElementById('submitScoreBtn');
         const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Submitting...</span>';
+        submitBtn.innerHTML = `<span class="btn-icon">\u23F3</span><span class="btn-text">${i18n.t('gameover_submitting')}</span>`;
         submitBtn.disabled = true;
 
         const finalScore = this.score;
@@ -330,7 +331,7 @@ const Game = {
                     rank
                 }));
 
-                submitBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">Saved!</span>';
+                submitBtn.innerHTML = `<span class="btn-icon">\u2705</span><span class="btn-text">${i18n.t('gameover_saved')}</span>`;
                 submitBtn.classList.add('success');
 
                 // Redirection rapide vers la page des highscores pour montrer le rang
@@ -342,7 +343,7 @@ const Game = {
             }
         } catch (error) {
             console.error('Erreur sauvegarde score:', error);
-            submitBtn.innerHTML = '<span class="btn-icon">❌</span><span class="btn-text">Error - Retry</span>';
+            submitBtn.innerHTML = `<span class="btn-icon">\u274C</span><span class="btn-text">${i18n.t('gameover_error')}</span>`;
             submitBtn.classList.add('error');
             submitBtn.disabled = false;
             setTimeout(()=>{ submitBtn.innerHTML = originalText; submitBtn.classList.remove('error'); }, 2600);
@@ -378,7 +379,7 @@ const Game = {
         if (gemMultiplier > 1) { document.getElementById('gems').textContent = `${this.gems} (x${gemMultiplier})`; } else { document.getElementById('gems').textContent = this.gems; }
         document.getElementById('nextUpgrade').textContent = Math.max(0, this.gemsForUpgrade - this.gems);
         document.getElementById('resurrections').textContent = this.resurrections;
-        document.getElementById('movementMode').textContent = Player.data && Player.data.followMouse ? 'MODE: MOUSE' : 'MODE: WASD';
+        document.getElementById('movementMode').textContent = Player.data && Player.data.followMouse ? i18n.t('hud_mode_mouse') : i18n.t('hud_mode_wasd');
         if (this.gems >= this.gemsForUpgrade && this.state === 'playing') { this.state = 'upgrade'; Upgrades.generateOptions(); }
         // UI combo ephemeral (utiliser un element existant ou text overlay)
         let comboEl = document.getElementById('combo');
@@ -387,10 +388,10 @@ const Game = {
             document.getElementById('gameScreen').appendChild(comboEl);
         }
         if (this.combo > 0) {
-            comboEl.textContent = `COMBO ${this.combo}  x${this.comboMultiplier.toFixed(2)}`;
+            comboEl.textContent = `${i18n.t('hud_combo')} ${this.combo}  x${this.comboMultiplier.toFixed(2)}`;
             comboEl.style.opacity = '1';
         } else {
-            comboEl.style.opacity = '0.3'; comboEl.textContent = 'COMBO x1';
+            comboEl.style.opacity = '0.3'; comboEl.textContent = `${i18n.t('hud_combo')} x1`;
         }
         // Wave progression panel
         let waveProg = document.getElementById('waveProgress');
@@ -402,7 +403,7 @@ const Game = {
         }
         const spawned = Enemy.waveEnemiesSpawned;
         const max = Enemy.maxEnemiesPerWave || 0;
-        waveProg.innerHTML = `Wave ${this.wave}<br>${spawned}/${max} spawned<br>Upgrades ${this.upgradesThisWave}/2`;
+        waveProg.innerHTML = `${i18n.t('wave_progress', {wave: this.wave})}<br>${i18n.t('wave_spawned', {spawned, max})}<br>${i18n.t('wave_upgrades', {count: this.upgradesThisWave})}`;
     },
 
     gameLoop() { this.update(); Renderer.render(); requestAnimationFrame(() => this.gameLoop()); }

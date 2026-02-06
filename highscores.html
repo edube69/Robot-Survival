@@ -1,5 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,43 +7,43 @@
     <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body class="page-highscores">
-    <!-- Fond étoiles + confettis -->
+    <!-- Background canvases -->
     <canvas id="bgCanvas"></canvas>
     <canvas id="fxCanvas"></canvas>
 
     <div class="highscores-container">
-        <h1 class="leaderboard-title">High Scores</h1>
+        <h1 class="leaderboard-title" data-i18n="hs_title">High Scores</h1>
 
         <div class="leaderboard-controls">
-            <button id="musicToggle" class="chip-btn" aria-pressed="false">Music: OFF</button>
+            <button id="musicToggle" class="chip-btn" aria-pressed="false" data-i18n="hs_music_off">Music: OFF</button>
             <label class="vol">
-                Volume
+                <span data-i18n="hs_volume">Volume</span>
                 <input id="volume" type="range" min="0" max="1" step="0.01" value="0.5" />
             </label>
+            <button class="lang-toggle chip-btn" id="hsLangToggle" aria-label="Toggle language">EN | FR</button>
             <div class="stats">
-                <span id="totalPlayers">0</span> joueurs •
-                Record: <span id="worldRecord">0</span>
+                <span id="totalPlayers">0</span> <span data-i18n="hs_players" id="playersLabel">players</span> &bull;
+                <span data-i18n="hs_record">Record</span>: <span id="worldRecord">0</span>
             </div>
         </div>
 
         <div class="score-entry header">
-            <div class="rank">#</div>
-            <div class="name">Nom</div>
-            <div class="score">Score</div>
-            <div class="kills">Kills</div>
-            <div class="time">Temps</div>
-            <div class="date">Date</div>
+            <div class="rank" data-i18n="hs_rank">#</div>
+            <div class="name" data-i18n="hs_name">Name</div>
+            <div class="score" data-i18n="hs_score">Score</div>
+            <div class="kills" data-i18n="hs_kills">Kills</div>
+            <div class="time" data-i18n="hs_time">Time</div>
+            <div class="date" data-i18n="hs_date">Date</div>
         </div>
 
-        <div id="highscores-list"><!-- rempli dynamiquement --></div>
+        <div id="highscores-list"><!-- filled dynamically --></div>
 
-        <a href="./index.html" class="back-button" aria-label="Retour au jeu">
-            <span class="back-icon">⮐</span>
-            <span class="back-text">Retour au jeu</span>
+        <a href="./index.html" class="back-button" aria-label="Back to game">
+            <span class="back-icon">&#11152;</span>
+            <span class="back-text" data-i18n="hs_back">Back to Game</span>
         </a>
     </div>
 
-    <!-- Musique : mets un mp3 ici si tu en as un -->
     <audio id="bgm" src="assets/audio/chiptune.mp3" loop preload="auto"></audio>
 
     <script type="module" src="js/highscores.js"></script>

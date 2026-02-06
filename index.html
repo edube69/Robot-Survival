@@ -10,33 +10,34 @@
     <!-- Start Screen -->
     <div id="startScreen">
         <canvas id="attractCanvas" aria-hidden="true"></canvas>
-        <h1 class="title">ROBOT SURVIVAL</h1>
-        <p class="subtitle">Retro Survival Arena</p>
+        <button class="lang-toggle" id="menuLangToggle" aria-label="Toggle language">EN | FR</button>
+        <h1 class="title" data-i18n="menu_title">ROBOT SURVIVAL</h1>
+        <p class="subtitle" data-i18n="menu_subtitle">Retro Survival Arena</p>
 
-        <button id="startButton" class="neon-button">Start Mission</button>
+        <button id="startButton" class="neon-button" data-i18n="menu_start">Start Mission</button>
 
         <div class="features">
             <div class="feature-grid">
                 <div class="feature">
-                    <h3>🎯 Auto-Targeting</h3>
-                    <p>Advanced AI targeting system locks onto the nearest threat</p>
+                    <h3><span>&#127919;</span> <span data-i18n="menu_feature_targeting_title">Auto-Targeting</span></h3>
+                    <p data-i18n="menu_feature_targeting_desc">Advanced AI targeting system locks onto the nearest threat</p>
                 </div>
                 <div class="feature">
-                    <h3>⚡ Power Upgrades</h3>
-                    <p>Collect gems to unlock devastating abilities and orbital shields</p>
+                    <h3><span>&#9889;</span> <span data-i18n="menu_feature_upgrades_title">Power Upgrades</span></h3>
+                    <p data-i18n="menu_feature_upgrades_desc">Collect gems to unlock devastating abilities and orbital shields</p>
                 </div>
                 <div class="feature">
-                    <h3>🤖 Enemy Variants</h3>
-                    <p>Face off against Fast Scouts, Heavy Tanks, and Splitter Units</p>
+                    <h3><span>&#129302;</span> <span data-i18n="menu_feature_enemies_title">Enemy Variants</span></h3>
+                    <p data-i18n="menu_feature_enemies_desc">Face off against Fast Scouts, Heavy Tanks, and Splitter Units</p>
                 </div>
                 <div class="feature">
-                    <h3>🔄 Resurrection</h3>
-                    <p>Death is not the end - revive with enhanced abilities</p>
+                    <h3><span>&#128260;</span> <span data-i18n="menu_feature_resurrection_title">Resurrection</span></h3>
+                    <p data-i18n="menu_feature_resurrection_desc">Death is not the end - revive with enhanced abilities</p>
                 </div>
             </div>
         </div>
 
-        <a href="./highscores.html" id="highscoresButton" class="neon-button">View High Scores</a>
+        <a href="./highscores.html" id="highscoresButton" class="neon-button" data-i18n="menu_highscores">View High Scores</a>
 
     </div>
 
@@ -44,15 +45,15 @@
     <div id="gameScreen">
         <div id="gameHUD">
             <div class="hud-section">
-                <div class="hud-item"><label>Score</label><span id="score">0</span></div>
-                <div class="hud-item"><label>Wave</label><span id="wave">1</span></div>
-                <div class="hud-item"><label>Lives</label><span id="lives">3</span></div>
+                <div class="hud-item"><label data-i18n="hud_score">Score</label><span id="score">0</span></div>
+                <div class="hud-item"><label data-i18n="hud_wave">Wave</label><span id="wave">1</span></div>
+                <div class="hud-item"><label data-i18n="hud_lives">Lives</label><span id="lives">3</span></div>
             </div>
             <div id="movementMode">MODE: WASD</div>
             <div class="hud-section">
-                <div class="hud-item"><label>Gems</label><span id="gems">0</span></div>
-                <div class="hud-item"><label>Next Upgrade</label><span id="nextUpgrade">75</span></div>
-                <div class="hud-item"><label>Resurrections</label><span id="resurrections">0</span></div>
+                <div class="hud-item"><label data-i18n="hud_gems">Gems</label><span id="gems">0</span></div>
+                <div class="hud-item"><label data-i18n="hud_next_upgrade">Next Upgrade</label><span id="nextUpgrade">75</span></div>
+                <div class="hud-item"><label data-i18n="hud_resurrections">Resurrections</label><span id="resurrections">0</span></div>
             </div>
         </div>
 
@@ -60,28 +61,29 @@
             <canvas id="gameCanvas" width="800" height="600"></canvas>
 
             <div id="gameOver">
-                <div class="glow">MISSION FAILED</div>
-                <div class="game-over-prompt">Press SPACE to restart or ESC for main menu</div>
+                <div class="glow" data-i18n="gameover_title">MISSION FAILED</div>
+                <div class="game-over-prompt" data-i18n="gameover_prompt">Press SPACE to restart or ESC for main menu</div>
                 <div class="score-form">
-                    <label for="username">Enter your name for the leaderboard:</label>
+                    <label for="username" data-i18n="gameover_enter_name">Enter your name for the leaderboard:</label>
                     <input type="text"
                            id="username"
                            class="username-input"
                            maxlength="10"
-                           placeholder="Ton nom (max 10)"
+                           data-i18n-placeholder="gameover_placeholder"
+                           placeholder="ACE PILOT"
                            autocomplete="username" />
-                    <button id="submitScore" class="submit-button">Submit Score</button>
+                    <button id="submitScore" class="submit-button" data-i18n="gameover_submit">Submit Score</button>
                 </div>
             </div>
 
             <div id="reviveScreen">
-                <div class="glow">RESURRECTION PROTOCOL</div>
-                <div class="revive-prompt">Choose your enhanced abilities:</div>
+                <div class="glow" data-i18n="revive_title">RESURRECTION PROTOCOL</div>
+                <div class="revive-prompt" data-i18n="revive_prompt">Choose your enhanced abilities:</div>
                 <div id="reviveOptions"></div>
-                <div class="revive-instructions">Press 1, 2, or 3 to choose • 4 to skip resurrection</div>
+                <div class="revive-instructions" data-i18n="revive_instructions">Press 1, 2, or 3 to choose &bull; 4 to skip resurrection</div>
             </div>
 
-            <div id="instructions">
+            <div id="instructions" data-i18n="instructions_text">
                 WASD: Move | M: Toggle Mouse Mode | S: Toggle Sound | 1,2,3: Choose upgrades | SPACE: Restart
             </div>
         </div>
@@ -99,22 +101,35 @@
 
     <script type="module">
         import { startAttract, stopAttract } from './js/attract-mode.js';
+        import { i18n } from './js/i18n.js';
 
-        // Démarrer au chargement de l’écran d’accueil
+        // Init i18n and apply translations
+        i18n.init();
+        i18n.applyTranslations();
+
+        // Language toggle button
+        document.getElementById('menuLangToggle').addEventListener('click', () => {
+            i18n.toggleLang();
+        });
+
+        // Start attract mode
         startAttract();
 
-        // Stopper dès qu’on quitte l’écran d’accueil
+        // Stop on leaving start screen
         [
             '#startButton',
-            '#viewHighscores',      // si tu as un bouton pour la page scores
-            '#highscoresButton',    // (selon ton id réel)
+            '#viewHighscores',
+            '#highscoresButton',
         ].forEach(sel => {
             const btn = document.querySelector(sel);
             if (btn) btn.addEventListener('click', stopAttract, { once: true });
         });
 
-        // Si tu reviens au menu depuis le jeu, relance l’attract :
-        document.addEventListener('game:returnToMenu', () => startAttract());
+        // Restart attract when returning to menu
+        document.addEventListener('game:returnToMenu', () => {
+            startAttract();
+            i18n.applyTranslations();
+        });
     </script>
 
 </body>

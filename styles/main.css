@@ -37,7 +37,7 @@ body {
 }
 
 /* Optionnel : s’assurer que le contenu est au-dessus du canvas */
-#startScreen > *:not(#attractCanvas) {
+#startScreen > *:not(#attractCanvas):not(.lang-toggle) {
     position: relative;
     z-index: 1;
 }
@@ -1222,7 +1222,7 @@ a.back-button, a.back-button:visited {
     z-index: 0;
 }
 
-#startScreen > *:not(#attractCanvas) {
+#startScreen > *:not(#attractCanvas):not(.lang-toggle) {
     position: relative;
     z-index: 1;
 }
@@ -1501,3 +1501,44 @@ a.back-button, a.back-button:visited {
 .score-entry.player-rank::after { content:'YOU'; position:absolute; top:-8px; right:12px; font-size:.6rem; padding:3px 6px; background:#ff0; color:#000; border-radius:4px; font-weight:900; box-shadow:0 0 8px #ff0; }
 .collapse-out { animation: collapseFade .55s ease forwards; }
 @keyframes collapseFade { to { opacity:0; transform:translateY(-6px) scale(.9); } }
+
+/* === Language Toggle Button === */
+.lang-toggle {
+    padding: 8px 16px;
+    border: 2px solid rgba(0,255,255,.45);
+    border-radius: 999px;
+    background: rgba(0,0,0,.45);
+    color: #0ff;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    font-size: .85rem;
+    letter-spacing: .1em;
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease, background .2s;
+    text-transform: uppercase;
+}
+
+.lang-toggle:hover {
+    transform: translateY(-1px);
+    border-color: rgba(0,255,255,.7);
+    background: rgba(0,30,40,.55);
+    box-shadow: 0 0 16px rgba(0,255,255,.35);
+}
+
+.lang-toggle:active {
+    transform: translateY(0);
+}
+
+/* Language toggle in start screen - top right */
+#startScreen > .lang-toggle {
+    position: absolute;
+    top: 4px;
+    right: 20px;
+    z-index: 100;
+}
+
+/* Language toggle in highscores controls - inherits chip-btn styles */
+#hsLangToggle {
+    border-color: rgba(0,255,255,.45);
+    color: #0ff;
+}
